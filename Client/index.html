@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Traveliccted</title>
+    <link rel="stylesheet" href="/src/index.css" />
+    <link rel="icon" href="/favicon.ico" id="favicon" />
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        fetch('http://localhost:8000/api/ui-content/logo-favicon')
+          .then(response => response.json())
+          .then(data => {
+            const faviconSection = data?.sections?.find(s => s.sectionId === 'favicon');
+            const faviconUrl = faviconSection?.content?.imageUrl;
+            if (faviconUrl) {
+              const faviconLink = document.getElementById('favicon');
+              faviconLink.href = faviconUrl;
+            }
+          })
+          .catch(err => console.error('Failed to load favicon:', err));
+      });
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script src="https://static.elfsight.com/platform/platform.js" async></script>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
