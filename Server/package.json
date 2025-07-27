@@ -1,21 +1,18 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "main": "index.js",
-  "files": [
-    "rooms.json"
-  ],
+  "main": "server.js",
+  "files": ["rooms.json"],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon server.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "axios": "^1.7.7",
-    "bcrypt": "^5.1.1",
-    "bcryptjs": "^2.4.3",
+    "bcrypt": "^5.1.1",              // ✅ only one: bcrypt or bcryptjs, not both
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -28,18 +25,15 @@
     "mongoose": "^8.7.3",
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^6.9.16",
-    "owl.carousel": "^2.3.4",
     "passport": "^0.7.0",
     "passport-facebook": "^3.0.0",
     "passport-google-oauth20": "^2.0.0",
-    "react-owl-carousel": "^2.3.3",
-    "react-responsive-carousel": "^3.2.23",
-    "react-router-dom": "^6.27.0",
     "twilio": "^5.3.6"
   },
   "devDependencies": {
-    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "nodemon": "^3.1.7"
   },
-  "description": ""
+  "engines": {
+    "node": ">=18.x"
+  }
 }
