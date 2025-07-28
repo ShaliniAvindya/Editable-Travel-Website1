@@ -162,8 +162,8 @@ const ActivityManagement = () => {
       try {
         setLoading(true);
         const [activitiesResponse, atollsResponse] = await Promise.all([
-          api.get('/api/activities'),
-          api.get('/api/atolls'),
+          api.get('https://editable-travel-website1-rpfv.vercel.app/api/activities'),
+          api.get('https://editable-travel-website1-rpfv.vercel.app/api/atolls'),
         ]);
         console.log('Fetched activities:', activitiesResponse.data);
         console.log('Fetched atolls:', atollsResponse.data);
