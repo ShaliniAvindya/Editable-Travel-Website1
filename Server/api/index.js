@@ -33,9 +33,13 @@ app.use('/api/inquiries', inquiryRoutes);
 app.use('/api/ui-content', uiContentRoutes);
 app.use('/api/promotions', promotionRoutes);
 
-// Health check route
+// Root and health check
+app.get('/', (req, res) => {
+  res.send('API is running. Try /api/health');
+});
+
 app.get('/api/health', (req, res) => {
-  res.status(200).json({ message: 'API is running!' });
+  res.json({ status: 'ok', message: 'Backend server is running' });
 });
 
 // MongoDB connection string
