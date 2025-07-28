@@ -1,5 +1,3 @@
-
-// api/server.js
 const express = require('express');
 const serverless = require('serverless-http');
 const mongoose = require('mongoose');
@@ -20,15 +18,10 @@ const promotionRoutes = require('../routes/promotionRoutes');
 
 const app = express();
 
-// Middleware
-app.use(cors({
-  origin: '*', // Or replace with your frontend URL for security
-  credentials: true
-}));
+app.use(cors({ origin: '*', credentials: true }));
 app.use(bodyParser.json());
 app.use(express.json());
 
-// Routes
 app.use('/api/users', userRoutes);
 app.use('/api/resorts', resortRoutes);
 app.use('/api/packages', packageRoutes);
@@ -39,7 +32,6 @@ app.use('/api/inquiries', inquiryRoutes);
 app.use('/api/ui-content', uiContentRoutes);
 app.use('/api/promotions', promotionRoutes);
 
-// MongoDB connection (one-time initialization)
 let dbConnected = false;
 async function connectToMongoDB() {
   if (!dbConnected) {
@@ -52,5 +44,5 @@ async function connectToMongoDB() {
 }
 connectToMongoDB();
 
-// Export for Vercel serverless function
-module.exports = serverless(app);
+module.exports = app;
+module.exports.handler = serverless(app); // This is the entry point Vercel needs
