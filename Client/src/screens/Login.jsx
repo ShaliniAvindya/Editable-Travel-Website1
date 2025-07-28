@@ -6,7 +6,7 @@ import { Mail, Lock } from 'lucide-react';
 import { AuthContext } from '../components/context/AuthContext';
 
 const api = axios.create({
-  baseURL: 'http://localhost:8000',
+  baseURL: 'https://editable-travel-website1-rpfv.vercel.app',
   headers: {
     'Content-Type': 'application/json'
   }
