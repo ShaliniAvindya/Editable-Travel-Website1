@@ -99,8 +99,8 @@ const ResortManagement = () => {
       try {
         setLoading(true);
         const [resortsResponse, atollsResponse] = await Promise.all([
-          api.get('/api/resorts'),
-          api.get('/api/atolls'),
+          api.get('https://editable-travel-website1-rpfv.vercel.app/api/resorts'),
+          api.get('https://editable-travel-website1-rpfv.vercel.app/api/atolls'),
         ]);
         console.log('Fetched resorts:', resortsResponse.data);
         console.log('Fetched atolls:', atollsResponse.data);
@@ -250,12 +250,12 @@ const ResortManagement = () => {
       };
       let response;
       if (selectedResort) {
-        response = await api.put(`/api/resorts/${selectedResort._id}`, data);
+        response = await api.put(`https://editable-travel-website1-rpfv.vercel.app/api/resorts/${selectedResort._id}`, data);
         setResorts(resorts.map((r) => (r._id === selectedResort._id ? response.data : r)));
         setSelectedResort(response.data);
         setSuccess('Resort updated successfully');
       } else {
-        response = await api.post('/api/resorts', data);
+        response = await api.post('https://editable-travel-website1-rpfv.vercel.app/api/resorts', data);
         setResorts([...resorts, response.data]);
         setSuccess('Resort added successfully');
       }
@@ -305,11 +305,11 @@ const ResortManagement = () => {
       };
       let response;
       if (editingRoomId) {
-        response = await api.put(`/api/resorts/${selectedResort._id}/rooms/${editingRoomId}`, data);
+        response = await api.put(`https://editable-travel-website1-rpfv.vercel.app/api/resorts/${selectedResort._id}/rooms/${editingRoomId}`, data);
       } else {
-        response = await api.post(`/api/resorts/${selectedResort._id}/rooms`, data);
+        response = await api.post(`https://editable-travel-website1-rpfv.vercel.app/api/resorts/${selectedResort._id}/rooms`, data);
       }
-      const resortResponse = await api.get(`/api/resorts/${selectedResort._id}`);
+      const resortResponse = await api.get(`https://editable-travel-website1-rpfv.vercel.app/api/resorts/${selectedResort._id}`);
       setSelectedResort(resortResponse.data);
       setResorts(resorts.map((r) => (r._id === selectedResort._id ? resortResponse.data : r)));
       setSuccess(editingRoomId ? 'Room updated successfully' : 'Room added successfully');
@@ -362,7 +362,7 @@ const ResortManagement = () => {
           setError('Invalid resort ID');
           return;
         }
-        await api.delete(`/api/resorts/${modal.id}`);
+        await api.delete(`https://editable-travel-website1-rpfv.vercel.app/api/resorts/${modal.id}`);
         setResorts(resorts.filter((r) => r._id !== modal.id));
         setSelectedResort(null);
         setSuccess('Resort deleted successfully');
@@ -373,7 +373,7 @@ const ResortManagement = () => {
           setError('Invalid resort or room ID');
           return;
         }
-        await api.delete(`/api/resorts/${selectedResort._id}/rooms/${modal.id}`);
+        await api.delete(`https://editable-travel-website1-rpfv.vercel.app/api/resorts/${selectedResort._id}/rooms/${modal.id}`);
         const updatedResort = await api.get(`/api/resorts/${selectedResort._id}`);
         setSelectedResort(updatedResort.data);
         setResorts(resorts.map((r) => (r._id === selectedResort._id ? updatedResort.data : r)));
