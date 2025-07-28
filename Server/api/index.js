@@ -45,10 +45,7 @@ let dbConnected = false;
 async function connectToMongoDB() {
   if (!dbConnected) {
     try {
-      await mongoose.connect(MONGO_URI, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      });
+      await mongoose.connect(MONGO_URI);
       dbConnected = true;
       console.log('MongoDB connected');
     } catch (err) {
