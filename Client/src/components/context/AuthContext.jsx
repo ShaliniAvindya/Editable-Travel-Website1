@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 export const AuthContext = createContext();
 
-const API_URL = 'http://localhost:8000';
+const API_URL = 'https://editable-travel-website1-rpfv.vercel.app';
 
 // Create axios instance with base configuration
 const api = axios.create({
