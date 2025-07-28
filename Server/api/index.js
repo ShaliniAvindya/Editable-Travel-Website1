@@ -2,10 +2,9 @@ const express = require('express');
 const serverless = require('serverless-http');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const bodyParser = require('body-parser');
 require('dotenv').config();
 
-// Import routes with relative paths (relative to api folder)
+// Import routes
 const userRoutes = require('../routes/userRoutes');
 const resortRoutes = require('../routes/resortRoutes');
 const packageRoutes = require('../routes/packageRoutes');
@@ -18,32 +17,32 @@ const promotionRoutes = require('../routes/promotionRoutes');
 
 const app = express();
 
+// Middlewares
 app.use(cors({ origin: '*', credentials: true }));
-app.use(bodyParser.json());
 app.use(express.json());
 
-// Register routes
-app.use('/api/users', userRoutes);
-app.use('/api/resorts', resortRoutes);
-app.use('/api/packages', packageRoutes);
-app.use('/api/activities', activityRoutes);
-app.use('/api/blogs', blogRoutes);
-app.use('/api/atolls', atollRoutes);
-app.use('/api/inquiries', inquiryRoutes);
-app.use('/api/ui-content', uiContentRoutes);
-app.use('/api/promotions', promotionRoutes);
+// ✅ Clean routes (no duplicate `/api`)
+app.use('/users', userRoutes);
+app.use('/resorts', resortRoutes);
+app.use('/packages', packageRoutes);
+app.use('/activities', activityRoutes);
+app.use('/blogs', blogRoutes);
+app.use('/atolls', atollRoutes);
+app.use('/inquiries', inquiryRoutes);
+app.use('/ui-content', uiContentRoutes);
+app.use('/promotions', promotionRoutes);
 
-// Root and health check
+// Health Check
 app.get('/', (req, res) => {
-  res.send('API is running. Try /api/health');
+  res.send('API is running. Try /health');
 });
 
-app.get('/api/health', (req, res) => {
+app.get('/health', (req, res) => {
   res.json({ status: 'ok', message: 'Backend server is running' });
 });
 
-// MongoDB connection string
-const MONGO_URI = 'mongodb+srv://shalini:xdRcDhrfKUa8yH75@cluster0.db6cuiv.mongodb.net/travel-app';
+// MongoDB Connection
+const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://shalini:xdRcDhrfKUa8yH75@cluster0.db6cuiv.mongodb.net/travel-app';
 
 let dbConnected = false;
 async function connectToMongoDB() {
@@ -54,11 +53,11 @@ async function connectToMongoDB() {
       console.log('MongoDB connected');
     } catch (err) {
       console.error('MongoDB connection error:', err);
-      throw err;
     }
   }
 }
 connectToMongoDB();
 
+// Export for Vercel
 module.exports = app;
 module.exports.handler = serverless(app);
