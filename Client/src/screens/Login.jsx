@@ -84,7 +84,7 @@ const Login = () => {
     setSnackbarType('');
     setLoading(true);
     try {
-      const response = await api.post('/api/users/login', {
+      const response = await api.post('https://editable-travel-website1-rpfv.vercel.app/api/users/login', {
         email: formData.email,
         password: formData.password
       });
