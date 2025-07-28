@@ -8,7 +8,7 @@ export default defineConfig({
     port: 5173,
     open:true,
     proxy: {      '/api': {
-        target: 'http://localhost:8000',
+        target: 'https://editable-travel-website1-rpfv.vercel.app',
         changeOrigin: true,
       },
     },
