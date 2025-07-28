@@ -78,7 +78,7 @@ const LogoFaviconManagement = () => {
     const fetchImages = async () => {
       try {
         setLoading(true);
-        const response = await api.get('/api/ui-content/logo-favicon');
+        const response = await api.get('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/logo-favicon');
         console.log('API Response:', response.data);
         setPageContent(response.data);
         const section = response.data?.sections?.find((s) => s.sectionId === selectedType);
@@ -161,7 +161,7 @@ const LogoFaviconManagement = () => {
         newSections.push(newSection);
       }
 
-      const response = await api.put('/api/ui-content/logo-favicon', { sections: newSections });
+      const response = await api.put('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/logo-favicon', { sections: newSections });
       console.log('Section saved:', response.data);
       setPageContent(response.data);
       setSuccess(`${selectedType === 'logo' ? 'Logo' : 'Favicon'} updated successfully`);
@@ -187,7 +187,7 @@ const LogoFaviconManagement = () => {
           content: { imageUrl: '' },
         });
       }
-      const response = await api.put('/api/ui-content/logo-favicon', { sections: newSections });
+      const response = await api.put('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/logo-favicon', { sections: newSections });
       setPageContent(response.data);
       setFormData({ imageUrl: '' });
       setSuccess(`${modal.id === 'logo' ? 'Logo' : 'Favicon'} removed successfully`);
@@ -214,7 +214,7 @@ const LogoFaviconManagement = () => {
           content: { imageUrl: '' },
         },
       ];
-      const response = await api.put('/api/ui-content/logo-favicon', { sections: defaultSections });
+      const response = await api.put('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/logo-favicon', { sections: defaultSections });
       console.log('Default sections initialized:', response.data);
       setPageContent(response.data);
       setSelectedType('logo');
