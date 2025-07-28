@@ -21,8 +21,8 @@ const Activities = () => {
       try {
         setLoading(true);
         const [activitiesResponse, contentResponse] = await Promise.all([
-          axios.get('/api/activities'),
-          axios.get('/api/ui-content/activities'),
+          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/activities'),
+          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/activities'),
         ]);
         console.log('API Response (Activities):', activitiesResponse.data);
         console.log('API Response (Content):', contentResponse.data);
