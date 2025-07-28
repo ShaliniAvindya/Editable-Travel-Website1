@@ -76,7 +76,7 @@ const Register = () => {
 
     try {
       const response = await axios.post(
-        'http://localhost:8000/api/users/register',
+        'https://editable-travel-website1-rpfv.vercel.app/api/users/register',
         {
           name: formData.name,
           email: formData.email,
