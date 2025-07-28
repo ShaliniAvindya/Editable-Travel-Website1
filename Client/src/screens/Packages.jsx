@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, Calendar, MapPin, Clock, Phone } from 'lucid
 import axios from 'axios';
 import InquiryFormModal from './InquiryFormModal';
 
-const API_URL = 'http://localhost:8000';
+const API_URL = 'https://editable-travel-website1-rpfv.vercel.app';
 
 const Packages = () => {
   const [selectedPackage, setSelectedPackage] = useState(null);
