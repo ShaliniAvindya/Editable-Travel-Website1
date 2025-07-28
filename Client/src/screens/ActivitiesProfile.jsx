@@ -49,7 +49,7 @@ const ActivityProfile = () => {
       try {
         setLoading(true);
         // Fetch all atolls
-        const atollsResponse = await axios.get('http://localhost:8000/api/atolls');
+        const atollsResponse = await axios.get('https://editable-travel-website1-rpfv.vercel.app/api/atolls');
         const atollsData = atollsResponse.data;
 
         const atollsWithData = await Promise.all(
@@ -57,12 +57,12 @@ const ActivityProfile = () => {
             try {
               // Fetch accommodations for this atoll
               const resortsResponse = await axios.get(
-                `http://localhost:8000/api/resorts/byAtoll/${atoll._id}`
+                `https://editable-travel-website1-rpfv.vercel.app/api/resorts/byAtoll/${atoll._id}`
               );
 
               // Fetch activities for this atoll
               const activitiesResponse = await axios.get(
-                `http://localhost:8000/api/activities/byAtoll/${atoll._id}`
+                `https://editable-travel-website1-rpfv.vercel.app/api/activities/byAtoll/${atoll._id}`
               );
 
               return {
@@ -96,7 +96,7 @@ const ActivityProfile = () => {
 
         // Fetch activity details with populated atoll data
         if (activityId) {
-          const activityResponse = await axios.get(`http://localhost:8000/api/activities/${activityId}`);
+          const activityResponse = await axios.get(`https://editable-travel-website1-rpfv.vercel.app/api/activities/${activityId}`);
           const activityData = activityResponse.data;
           
           // Make sure atoll IDs properly formatted
@@ -141,7 +141,7 @@ const ActivityProfile = () => {
 
   const handleModalSubmit = async (submissionData) => {
     try {
-      const response = await axios.post('http://localhost:8000/api/inquiries', submissionData);
+      const response = await axios.post('https://editable-travel-website1-rpfv.vercel.app/api/inquiries', submissionData);
       console.log('Anfrage erfolgreich übermittelt:', response.data);
     } catch (err) {
       console.error('Fehler beim Senden der Anfrage:', err);
