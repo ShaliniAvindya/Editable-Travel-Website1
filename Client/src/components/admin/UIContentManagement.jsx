@@ -89,7 +89,7 @@ const UIContentManagement = () => {
       try {
         setLoading(true);
         console.log(`Fetching content for page: ${selectedPage}`);
-        const response = await api.get(`/api/ui-content/${selectedPage}`);
+        const response = await api.get(`https://editable-travel-website1-rpfv.vercel.app/api/ui-content/${selectedPage}`);
         console.log('API Response:', response.data);
         setPageContent(response.data);
         const firstSectionId = response.data.sections[0]?.sectionId || 'hero';
@@ -324,7 +324,7 @@ const UIContentManagement = () => {
         setSuccess('Review deleted successfully');
       } else if (modal.type === 'section') {
         const newSections = pageContent.sections.filter((s) => s.sectionId !== modal.id);
-        await api.put(`/api/ui-content/${selectedPage}`, { sections: newSections });
+        await api.put(`https://editable-travel-website1-rpfv.vercel.app/api/ui-content/${selectedPage}`, { sections: newSections });
         setPageContent({ ...pageContent, sections: newSections });
         const newSectionId = newSections[0]?.sectionId || 'hero';
         setSelectedSection(newSectionId);
@@ -374,7 +374,7 @@ const UIContentManagement = () => {
           },
         });
       }
-      const response = await api.put(`/api/ui-content/${selectedPage}`, { sections: newSections });
+      const response = await api.put(`https://editable-travel-website1-rpfv.vercel.app/api/ui-content/${selectedPage}`, { sections: newSections });
       setPageContent(response.data);
       setSuccess('Section updated successfully');
       setEditingSlideIndex(null);
