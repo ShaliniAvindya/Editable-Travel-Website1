@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8000';
+const API_URL = 'https://editable-travel-website1-rpfv.vercel.app';
 
 const GoogleReviewsSection = () => {
   const [scriptLoaded, setScriptLoaded] = useState(false);
