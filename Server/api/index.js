@@ -18,15 +18,11 @@ const promotionRoutes = require('../routes/promotionRoutes');
 
 const app = express();
 
-// Allow CORS only from your frontend domain
-const allowedOrigin = process.env.FRONTEND_URL || 'https://editable-travel-website1.vercel.app';
+const cors = require('cors');
+app.use(cors({
+  origin: 'https://editable-travel-website1.vercel.app' // frontend domain
+}));
 
-app.use(
-  cors({
-    origin: allowedOrigin,
-    credentials: true, // Allow cookies/auth headers if needed
-  })
-);
 
 app.use(bodyParser.json());
 app.use(express.json());
