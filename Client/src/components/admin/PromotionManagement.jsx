@@ -87,7 +87,7 @@ const PromotionManagement = ({ searchTerm }) => {
         setLoading(true);
         const token = localStorage.getItem('token');
         console.log('Fetching promotions with token:', token);
-        const res = await axios.get('/api/promotions', {
+        const res = await axios.get('https://editable-travel-website1-rpfv.vercel.app/api/promotions', {
           headers: { 'x-auth-token': token },
         });
         setPromotions(res.data);
@@ -207,7 +207,7 @@ const PromotionManagement = ({ searchTerm }) => {
     try {
       const token = localStorage.getItem('token');
       console.log('Deleting promotion with token:', token);
-      await axios.delete(`/api/promotions/${modal.id}`, {
+      await axios.delete(`https://editable-travel-website1-rpfv.vercel.app/api/promotions/${modal.id}`, {
         headers: { 'x-auth-token': token },
       });
       setPromotions(promotions.filter((p) => p._id !== modal.id));
@@ -249,11 +249,11 @@ const PromotionManagement = ({ searchTerm }) => {
       const headers = { 'x-auth-token': token };
       let res;
       if (editingId) {
-        res = await axios.put(`/api/promotions/${editingId}`, promotionData, { headers });
+        res = await axios.put(`https://editable-travel-website1-rpfv.vercel.app/api/promotions/${editingId}`, promotionData, { headers });
         setPromotions(promotions.map((p) => (p._id === editingId ? res.data : p)));
         setSuccess('Promotion updated');
       } else {
-        res = await axios.post('/api/promotions', promotionData, { headers });
+        res = await axios.post('https://editable-travel-website1-rpfv.vercel.app/api/promotions', promotionData, { headers });
         setPromotions([...promotions, res.data]);
         setSuccess('Promotion added');
       }
