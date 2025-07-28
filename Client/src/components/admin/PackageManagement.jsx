@@ -82,7 +82,7 @@ const PackageManagement = () => {
     const fetchPackages = async () => {
       try {
         setLoading(true);
-        const response = await api.get('/api/packages');
+        const response = await api.get('https://editable-travel-website1-rpfv.vercel.app/api/packages');
         console.log('Fetched packages:', response.data);
         setPackages(response.data);
       } catch (err) {
@@ -176,11 +176,11 @@ const PackageManagement = () => {
       };
       let response;
       if (selectedPackage) {
-        response = await api.put(`/api/packages/${selectedPackage._id}`, data);
+        response = await api.put(`https://editable-travel-website1-rpfv.vercel.app/api/packages/${selectedPackage._id}`, data);
         setPackages(packages.map(p => p._id === selectedPackage._id ? response.data : p));
         setSuccess('Package updated successfully');
       } else {
-        response = await api.post('/api/packages', data);
+        response = await api.post('https://editable-travel-website1-rpfv.vercel.app/api/packages', data);
         setPackages([...packages, response.data]);
         setSuccess('Package created successfully');
       }
@@ -207,7 +207,7 @@ const PackageManagement = () => {
         setError('Invalid package ID:', modal.id);
         return;
       }
-      await api.delete(`/api/packages/${modal.id}`);
+      await api.delete(`https://editable-travel-website1-rpfv.vercel.app/api/packages/${modal.id}`);
       setPackages(packages.filter(p => p._id !== modal.id));
       setSuccess('Package deleted successfully');
       resetForm();
