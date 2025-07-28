@@ -165,7 +165,7 @@ ${htmlToLatex(content.description || 'No content available.')}
       try {
         setLoading(true);
         console.log(`Fetching content for ${selectedPage}`);
-        const response = await api.get(`/api/ui-content/${selectedPage}`);
+        const response = await api.get(`https://editable-travel-website1-rpfv.vercel.app/api/ui-content/${selectedPage}`);
         console.log('API Response:', response.data);
         setPageContent(response.data);
         const firstSectionId =
@@ -385,7 +385,7 @@ ${htmlToLatex(content.description || 'No content available.')}
         newSections.push(newSection);
       }
 
-      const response = await api.put(`/api/ui-content/${selectedPage}`, { sections: newSections });
+      const response = await api.put(`https://editable-travel-website1-rpfv.vercel.app/api/ui-content/${selectedPage}`, { sections: newSections });
       console.log('Section saved:', response.data);
       setPageContent(response.data);
       setSuccess('Section updated successfully');
@@ -565,7 +565,7 @@ ${htmlToLatex(content.description || 'No content available.')}
                   ]
                 : []),
             ];
-      const response = await api.put(`/api/ui-content/${selectedPage}`, { sections: defaultSections });
+      const response = await api.put(`https://editable-travel-website1-rpfv.vercel.app/api/ui-content/${selectedPage}`, { sections: defaultSections });
       console.log(`Default sections initialized for ${selectedPage}:`, response.data);
       setPageContent(response.data);
       setSelectedSection(selectedPage === 'legal' ? 'gtc' : 'hero');
