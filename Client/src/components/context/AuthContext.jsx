@@ -64,7 +64,7 @@ export const AuthProvider = ({ children }) => {
     if (token) {
       api.defaults.headers['Authorization'] = `Bearer ${token}`;
       api
-        .get('/api/users/me')
+        .get('https://editable-travel-website1-rpfv.vercel.app/api/users/me')
         .then((response) => {
           setUser(response.data);
           if (response.data.isAdmin && redirectPath) {
