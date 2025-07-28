@@ -125,7 +125,7 @@ const PrivacyPolicy = ({ isOpen, onClose }) => {
     if (isOpen) {
       const fetchPrivacyPolicy = async () => {
         try {
-          const response = await axios.get('/api/ui-content/legal');
+          const response = await axios.get('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/legal');
           const ppSection = response.data.sections?.find((s) => s.sectionId === 'privacy-policy');
           setContent(ppSection?.content.description || '<p>No content available.</p>');
         } catch (err) {
