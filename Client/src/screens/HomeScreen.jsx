@@ -25,11 +25,11 @@ const HomeScreen = () => {
       try {
         setLoading(true);
         const [uiContentRes, accommodationsRes, activitiesRes, packagesRes, blogsRes] = await Promise.all([
-          axios.get('/api/ui-content/home'),
-          axios.get('/api/resorts'),
-          axios.get('/api/activities'),
-          axios.get('/api/packages'),
-          axios.get('/api/blogs')
+          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/home'),
+          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/resorts'),
+          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/activities'),
+          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/packages'),
+          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/blogs')
         ]);
 
         setUIContent(uiContentRes.data);
