@@ -91,10 +91,10 @@ useEffect(() => {
     const fetchDropdownData = async () => {
       try {
         const [hotelsRes, resortsRes, adventuresRes, activitiesRes] = await Promise.all([
-          axios.get('/api/resorts?type=hotel'),
-          axios.get('/api/resorts?type=resort'),
-          axios.get('/api/resorts?type=adventure'),
-          axios.get('/api/activities'),
+          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/resorts?type=hotel'),
+          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/resorts?type=resort'),
+          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/resorts?type=adventure'),
+          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/activities'),
         ]);
 
         const hotelsData = (hotelsRes.data || [])
@@ -166,7 +166,7 @@ useEffect(() => {
   useEffect(() => {
     const fetchLogo = async () => {
       try {
-        const response = await axios.get('/api/ui-content/logo-favicon');
+        const response = await axios.get('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/logo-favicon');
         const logoSection = response.data?.sections?.find((s) => s.sectionId === 'logo');
         setLogoUrl(logoSection?.content?.imageUrl || null);
       } catch (err) {
