@@ -66,7 +66,7 @@ const PromotionPopup = ({ promotion: propPromotion, onClose }) => {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await api.get('/api/promotions', {
+      const response = await api.get('https://editable-travel-website1-rpfv.vercel.app/api/promotions', {
         headers: { 'x-auth-token': token },
       });
       
