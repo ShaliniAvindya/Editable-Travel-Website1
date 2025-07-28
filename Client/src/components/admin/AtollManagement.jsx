@@ -89,8 +89,8 @@ const AtollManagement = () => {
         setLoading(true);
         const cacheBuster = new Date().getTime();
         const [atollsResponse, resortsResponse] = await Promise.all([
-          api.get(`/api/atolls?_cb=${cacheBuster}`),
-          api.get(`/api/resorts?_cb=${cacheBuster}`),
+          api.get(`https://editable-travel-website1-rpfv.vercel.app/api/atolls?_cb=${cacheBuster}`),
+          api.get(`https://editable-travel-website1-rpfv.vercel.app/api/resorts?_cb=${cacheBuster}`),
         ]);
         console.log('Fetched atolls:', atollsResponse.data.map(a => ({
           _id: a._id,
@@ -221,12 +221,12 @@ const AtollManagement = () => {
       };
       let response;
       if (selectedAtoll) {
-        response = await api.put(`/api/atolls/${selectedAtoll._id}`, data);
+        response = await api.put(`https://editable-travel-website1-rpfv.vercel.app/api/atolls/${selectedAtoll._id}`, data);
         setAtolls(atolls.map((a) => (a._id === selectedAtoll._id ? response.data : a)));
         setSelectedAtoll({ ...response.data, accommodations: selectedAtoll.accommodations }); // Preserve accommodations
         setSuccess('Atoll updated successfully');
       } else {
-        response = await api.post('/api/atolls', data);
+        response = await api.post('https://editable-travel-website1-rpfv.vercel.app/api/atolls', data);
         setAtolls([...atolls, response.data]);
         setSuccess('Atoll created successfully');
       }
@@ -250,16 +250,16 @@ const AtollManagement = () => {
         setError('Invalid atoll or resort ID');
         return;
       }
-      const resortResponse = await api.get(`/api/resorts/${accommodationId}`);
+      const resortResponse = await api.get(`https://editable-travel-website1-rpfv.vercel.app/api/resorts/${accommodationId}`);
       if (!resortResponse.data) {
         setError('Selected resort does not exist');
         return;
       }
-      await api.post(`/api/atolls/${selectedAtoll._id}/accommodations`, {
+      await api.post(`https://editable-travel-website1-rpfv.vercel.app/api/atolls/${selectedAtoll._id}/accommodations`, {
         accommodationId,
       });
       // Fetch updated accommodations
-      const updatedAtollResponse = await api.get(`/api/resorts/byAtoll/${selectedAtoll._id}`);
+      const updatedAtollResponse = await api.get(`https://editable-travel-website1-rpfv.vercel.app/api/resorts/byAtoll/${selectedAtoll._id}`);
       const updatedAccommodations = updatedAtollResponse.data || [];
       console.log('Updated accommodations after adding:', updatedAccommodations.map(acc => ({
         _id: acc._id,
@@ -313,7 +313,7 @@ const AtollManagement = () => {
           setError('Invalid atoll ID');
           return;
         }
-        await api.delete(`/api/atolls/${modal.id}`);
+        await api.delete(`https://editable-travel-website1-rpfv.vercel.app/api/atolls/${modal.id}`);
         setAtolls(atolls.filter((a) => a._id !== modal.id));
         setSelectedAtoll(null);
         setSuccess('Atoll deleted successfully');
@@ -323,8 +323,8 @@ const AtollManagement = () => {
           setError('Invalid atoll or accommodation ID');
           return;
         }
-        await api.delete(`/api/atolls/${selectedAtoll._id}/accommodations/${modal.id}`);
-        const updatedAtollResponse = await api.get(`/api/resorts/byAtoll/${selectedAtoll._id}`);
+        await api.delete(`https://editable-travel-website1-rpfv.vercel.app/api/atolls/${selectedAtoll._id}/accommodations/${modal.id}`);
+        const updatedAtollResponse = await api.get(`https://editable-travel-website1-rpfv.vercel.app/api/resorts/byAtoll/${selectedAtoll._id}`);
         const updatedAccommodations = updatedAtollResponse.data || [];
         console.log('Updated accommodations after deletion:', updatedAccommodations.map(acc => ({
           _id: acc._id,
@@ -356,13 +356,13 @@ const AtollManagement = () => {
     }
     try {
       console.log('Fetching atoll and accommodations for edit:', atoll._id);
-      const atollResponse = await api.get(`/api/atolls/${atoll._id}`);
+      const atollResponse = await api.get(`https://editable-travel-website1-rpfv.vercel.app/api/atolls/${atoll._id}`);
       const fetchedAtoll = atollResponse.data;
       if (!fetchedAtoll) {
         throw new Error('Atoll not found');
       }
       // Fetch accommodations using the working endpoint
-      const accommodationsResponse = await api.get(`/api/resorts/byAtoll/${atoll._id}`);
+      const accommodationsResponse = await api.get(`https://editable-travel-website1-rpfv.vercel.app/api/resorts/byAtoll/${atoll._id}`);
       const accommodations = accommodationsResponse.data || [];
       console.log('Fetched atoll data:', {
         _id: fetchedAtoll._id,
