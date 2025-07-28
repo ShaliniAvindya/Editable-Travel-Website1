@@ -43,7 +43,7 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/api/users/all');
+      const response = await api.get('https://editable-travel-website1-rpfv.vercel.app/api/users/all');
       console.log('Fetched users:', response.data);
       setUsers(response.data);
     } catch (err) {
@@ -67,7 +67,7 @@ const UserManagement = () => {
   const executeDeleteUser = async (id) => {
     try {
       console.log('Executing delete for user:', id);
-      await api.delete(`/api/users/${id}`);
+      await api.delete(`https://editable-travel-website1-rpfv.vercel.app/api/users/${id}`);
       setUsers(users.filter(u => u._id !== id));
       setSuccess('User deleted successfully');
     } catch (err) {
@@ -90,7 +90,7 @@ const UserManagement = () => {
   const executeToggleAdmin = async (id, currentStatus) => {
     try {
       console.log('Executing toggle admin for user:', id);
-      const response = await api.put(`/api/users/${id}/toggle-admin`, {
+      const response = await api.put(`https://editable-travel-website1-rpfv.vercel.app/api/users/${id}/toggle-admin`, {
         isAdmin: !currentStatus
       });
       setUsers(users.map(u => u._id === id ? { ...u, isAdmin: response.data.user.isAdmin } : u));
