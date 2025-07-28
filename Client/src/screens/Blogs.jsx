@@ -32,11 +32,11 @@ const Blogs = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const uiContentResponse = await axios.get('/api/ui-content/blogs');
+        const uiContentResponse = await axios.get('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/blogs');
         setUiContent(uiContentResponse.data);
 
         // Fetch blogs
-        const blogsResponse = await axios.get('/api/blogs');
+        const blogsResponse = await axios.get('https://editable-travel-website1-rpfv.vercel.app/api/blogs');
         const mappedBlogs = blogsResponse.data.map((blog) => ({
           id: blog._id.toString(),
           title: blog.title,
