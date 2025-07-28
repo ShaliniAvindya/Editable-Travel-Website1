@@ -89,7 +89,7 @@ const BlogManagement = () => {
     const fetchBlogs = async () => {
       try {
         setLoading(true);
-        const response = await api.get('/api/blogs');
+        const response = await api.get('https://editable-travel-website1-rpfv.vercel.app/api/blogs');
         console.log('Fetched blogs:', response.data);
         setBlogs(response.data);
       } catch (err) {
@@ -192,11 +192,11 @@ const BlogManagement = () => {
       console.log('Submitting blog payload:', data);
       let response;
       if (selectedBlog) {
-        response = await api.put(`/api/blogs/${selectedBlog._id}`, data);
+        response = await api.put(`https://editable-travel-website1-rpfv.vercel.app/api/blogs/${selectedBlog._id}`, data);
         setBlogs(blogs.map(b => b._id === selectedBlog._id ? response.data : b));
         setSuccess('Blog updated successfully');
       } else {
-        response = await api.post('/api/blogs', data);
+        response = await api.post('https://editable-travel-website1-rpfv.vercel.app/api/blogs', data);
         setBlogs([...blogs, response.data]);
         setSuccess('Blog created successfully');
       }
@@ -227,7 +227,7 @@ const BlogManagement = () => {
       if (selectedBlog && isValidId(selectedBlog._id)) {
         const data = { content: updatedContentList };
         console.log('Submitting content payload:', data);
-        const response = await api.put(`/api/blogs/${selectedBlog._id}`, data);
+        const response = await api.put(`https://editable-travel-website1-rpfv.vercel.app/api/blogs/${selectedBlog._id}`, data);
         console.log('Content saved to database:', response.data.content);
         setBlogs(blogs.map(b => b._id === selectedBlog._id ? response.data : b));
         setSuccess(editingContentIndex !== null ? 'Content section updated' : 'Content section added');
@@ -260,7 +260,7 @@ const BlogManagement = () => {
         setError('Invalid blog ID');
         return;
       }
-      await api.delete(`/api/blogs/${modal.id}`);
+      await api.delete(`https://editable-travel-website1-rpfv.vercel.app/api/blogs/${modal.id}`);
       setBlogs(blogs.filter(b => b._id !== modal.id));
       setSuccess('Blog deleted successfully');
       resetForm();
@@ -286,7 +286,7 @@ const BlogManagement = () => {
       if (selectedBlog && isValidId(selectedBlog._id)) {
         const data = { content: updatedContentList };
         console.log('Deleting content payload:', data);
-        const response = await api.put(`/api/blogs/${selectedBlog._id}`, data);
+        const response = await api.put(`https://editable-travel-website1-rpfv.vercel.app/api/blogs/${selectedBlog._id}`, data);
         console.log('Content updated in database:', response.data.content);
         setBlogs(blogs.map(b => b._id === selectedBlog._id ? response.data : b));
       }
