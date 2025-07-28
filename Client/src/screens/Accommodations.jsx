@@ -22,8 +22,8 @@ const Accommodations = () => {
       try {
         setLoading(true);
         const [resortsResponse, contentResponse] = await Promise.all([
-          axios.get('/api/resorts'),
-          axios.get('/api/ui-content/accommodations'),
+          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/resorts'),
+          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/accommodations'),
         ]);
         console.log('API Response (Resorts):', resortsResponse.data);
         console.log('API Response (Content):', contentResponse.data);
@@ -97,7 +97,7 @@ const Accommodations = () => {
   };
 
   const handleViewDetails = (item) => {
-    navigate(`/resort/${item.type}/${item._id}`, { state: { item } });
+    navigate(`https://editable-travel-website1-rpfv.vercel.app/resort/${item.type}/${item._id}`, { state: { item } });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
