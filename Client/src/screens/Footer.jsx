@@ -20,7 +20,7 @@ const Footer = () => {
   useEffect(() => {
     const fetchSocialMedia = async () => {
       try {
-        const response = await axios.get('/api/ui-content/contact');
+        const response = await axios.get('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/contact');
         const socialMediaSection = response.data.sections?.find(
           (s) => s.sectionId === 'social-media'
         )?.content || {};
