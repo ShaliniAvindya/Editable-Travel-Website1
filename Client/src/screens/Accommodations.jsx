@@ -97,7 +97,7 @@ const Accommodations = () => {
   };
 
   const handleViewDetails = (item) => {
-    navigate(`https://editable-travel-website1-rpfv.vercel.app/resort/${item.type}/${item._id}`, { state: { item } });
+    navigate(`/resort/${item.type}/${item._id}`, { state: { item } });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
