@@ -5,7 +5,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 require('dotenv').config();
 
-// Import routes with relative paths (make sure these paths are correct)
+// Import routes (ensure these are correct relative paths)
 const userRoutes = require('../routes/userRoutes');
 const resortRoutes = require('../routes/resortRoutes');
 const packageRoutes = require('../routes/packageRoutes');
@@ -18,16 +18,27 @@ const promotionRoutes = require('../routes/promotionRoutes');
 
 const app = express();
 
-const cors = require('cors');
+// ✅ CORS Setup: Allow frontend and backend Vercel URLs
+const allowedOrigins = [
+  'https://editable-travel-website1.vercel.app',
+  'https://editable-travel-website1-rpfv.vercel.app'
+];
+
 app.use(cors({
-  origin: 'https://editable-travel-website1.vercel.app' // frontend domain
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  }
 }));
 
-
+// Body parsers
 app.use(bodyParser.json());
 app.use(express.json());
 
-// Register API routes
+// ✅ Route setup
 app.use('/api/users', userRoutes);
 app.use('/api/resorts', resortRoutes);
 app.use('/api/packages', packageRoutes);
@@ -38,7 +49,7 @@ app.use('/api/inquiries', inquiryRoutes);
 app.use('/api/ui-content', uiContentRoutes);
 app.use('/api/promotions', promotionRoutes);
 
-// Root and health check endpoints
+// ✅ Root routes
 app.get('/', (req, res) => {
   res.send('API is running. Try /api/health');
 });
@@ -47,7 +58,7 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Backend server is running' });
 });
 
-// Use MongoDB URI from environment variables for security
+// ✅ MongoDB Connection
 const MONGO_URI =
   process.env.MONGO_URI ||
   'mongodb+srv://shalini:xdRcDhrfKUa8yH75@cluster0.db6cuiv.mongodb.net/travel-app';
@@ -72,6 +83,6 @@ async function connectToMongoDB() {
 
 connectToMongoDB();
 
-// Export app and serverless handler for deployment on platforms like Vercel
+// ✅ Export for Vercel (serverless handler)
 module.exports = app;
 module.exports.handler = serverless(app);
