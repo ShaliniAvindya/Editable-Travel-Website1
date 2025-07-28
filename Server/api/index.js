@@ -3,19 +3,18 @@ const serverless = require('serverless-http');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+require('dotenv').config();
 
-const path = require('path');
-
-// Import routes
-const userRoutes = require(path.resolve('./routes/userRoutes'));
-const resortRoutes = require(path.resolve('./routes/resortRoutes'));
-const packageRoutes = require(path.resolve('./routes/packageRoutes'));
-const activityRoutes = require(path.resolve('./routes/activityRoutes'));
-const blogRoutes = require(path.resolve('./routes/blogRoutes'));
-const atollRoutes = require(path.resolve('./routes/atollRoutes'));
-const inquiryRoutes = require(path.resolve('./routes/inquiryRoutes'));
-const uiContentRoutes = require(path.resolve('./routes/uiContentRoutes'));
-const promotionRoutes = require(path.resolve('./routes/promotionRoutes'));
+// Import routes with relative paths (relative to api folder)
+const userRoutes = require('../routes/userRoutes');
+const resortRoutes = require('../routes/resortRoutes');
+const packageRoutes = require('../routes/packageRoutes');
+const activityRoutes = require('../routes/activityRoutes');
+const blogRoutes = require('../routes/blogRoutes');
+const atollRoutes = require('../routes/atollRoutes');
+const inquiryRoutes = require('../routes/inquiryRoutes');
+const uiContentRoutes = require('../routes/uiContentRoutes');
+const promotionRoutes = require('../routes/promotionRoutes');
 
 const app = express();
 
@@ -23,7 +22,7 @@ app.use(cors({ origin: '*', credentials: true }));
 app.use(bodyParser.json());
 app.use(express.json());
 
-// Routes
+// Register routes
 app.use('/api/users', userRoutes);
 app.use('/api/resorts', resortRoutes);
 app.use('/api/packages', packageRoutes);
@@ -39,7 +38,7 @@ app.get('/api/health', (req, res) => {
   res.status(200).json({ message: 'API is running!' });
 });
 
-// MongoDB connection string (your provided one)
+// MongoDB connection string
 const MONGO_URI = 'mongodb+srv://shalini:xdRcDhrfKUa8yH75@cluster0.db6cuiv.mongodb.net/travel-app';
 
 let dbConnected = false;
