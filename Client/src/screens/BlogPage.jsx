@@ -88,7 +88,7 @@ const BlogPage = () => {
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+      <div className="min-h-screen bg-white flex items-center justify-center" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
         <p className="text-2xl text-[#074a5b]">Blog wird geladen...</p>
       </div>
     );
@@ -97,14 +97,14 @@ const BlogPage = () => {
   // Error state
   if (error || !blog) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+      <div className="min-h-screen bg-white flex items-center justify-center" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
         <p className="text-2xl text-[#074a5b]">{error || 'Blog not found'}</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+    <div className="min-h-screen bg-white" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
       {/* Back Button */}
       <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-gray-100">
         <div className="max-w-4xl mx-auto px-4 py-5">
