@@ -34,7 +34,7 @@ const Contact = () => {
   useEffect(() => {
     const fetchContent = async () => {
       try {
-        const response = await axios.get('/api/ui-content/contact');
+        const response = await axios.get('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/contact');
         const sections = response.data.sections || [];
         const heroSection = sections.find((s) => s.sectionId === 'hero')?.content || {};
         const contactInfoSection = sections.find((s) => s.sectionId === 'contact-info')?.content || {};
@@ -88,7 +88,7 @@ const Contact = () => {
         throw new Error('Please fill in all fields.');
       }
 
-      const response = await axios.post('/api/inquiries/contact', {
+      const response = await axios.post('https://editable-travel-website1-rpfv.vercel.app/api/inquiries/contact', {
         name: formData.name,
         email: formData.email,
         message: formData.message,
