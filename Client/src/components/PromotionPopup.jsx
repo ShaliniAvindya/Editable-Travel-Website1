@@ -127,14 +127,14 @@ const PromotionPopup = ({ promotion: propPromotion, onClose }) => {
 
         {/* Main Content Layout */}
         <div className="flex flex-col sm:flex-row">
-          {/* Left Side - Image*/}
-          <div className="sm:w-2/5 relative">
+          {/* Left Side - Image (Mobile: Top, Desktop: Left) */}
+          <div className="sm:w-2/5 relative promo-img-col">
             {promotion.imageUrl ? (
-              <div className="relative h-40 xs:h-44 sm:h-52 md:h-60 lg:h-72 overflow-hidden">
+              <div className="relative h-40 xs:h-44 sm:h-full min-h-[160px] sm:min-h-0 overflow-hidden promo-img-container">
                 <img
                   src={promotion.imageUrl}
                   alt={promotion.title}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover promo-img"
                   onError={(e) => {
                     e.target.style.display = 'none';
                     e.target.nextSibling.style.display = 'flex';
@@ -143,11 +143,31 @@ const PromotionPopup = ({ promotion: propPromotion, onClose }) => {
                 <div className="absolute inset-0 bg-gradient-to-r from-[#074a5b]/20 to-[#1e809b]/20"></div>
               </div>
             ) : null}
-            <div className="hidden w-full h-40 xs:h-44 sm:h-52 md:h-60 lg:h-72 bg-gradient-to-br from-[#074a5b] via-[#1e809b] to-[#074a5b] items-center justify-center relative">
+            <div className="hidden w-full h-40 xs:h-44 sm:h-full bg-gradient-to-br from-[#074a5b] via-[#1e809b] to-[#074a5b] items-center justify-center relative">
               <Plane className="w-14 h-14 sm:w-18 sm:h-18 lg:w-24 lg:h-24 text-white opacity-30" />
               <div className="absolute inset-0 bg-black bg-opacity-10"></div>
             </div>
           </div>
+      {/* Desktop image full height adjustment */}
+      <style>{`
+        @media (min-width: 640px) {
+          .promo-img-col {
+            height: 100%;
+            min-height: 320px;
+            display: flex;
+            flex-direction: column;
+          }
+          .promo-img-container {
+            height: 100%;
+            min-height: 320px;
+          }
+          .promo-img {
+            height: 100% !important;
+            min-height: 520px;
+            object-fit: cover;
+          }
+        }
+      `}</style>
 
           {/* Right Side - Content */}
           <div className="sm:w-3/5 p-4 xs:p-5 sm:p-5 md:p-6 lg:p-7 flex flex-col justify-center bg-gradient-to-br from-gray-50 to-white">
