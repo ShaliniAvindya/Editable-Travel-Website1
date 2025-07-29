@@ -234,7 +234,7 @@ const HomeScreen = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+      <div className="min-h-screen bg-white flex items-center justify-center" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
         <p className="text-lg sm:text-xl md:text-2xl text-[#074a5b]">Inhalt wird geladen...</p>
       </div>
     );
@@ -242,14 +242,14 @@ const HomeScreen = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+      <div className="min-h-screen bg-white flex items-center justify-center" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
         <p className="text-lg sm:text-xl md:text-2xl text-[#074a5b]">{error}</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+    <div className="min-h-screen" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
       {/* Hero Section */}
       <section className="relative h-[60vh] sm:h-[80vh] md:h-screen overflow-hidden">
         {heroSection.map((slide, index) => (
