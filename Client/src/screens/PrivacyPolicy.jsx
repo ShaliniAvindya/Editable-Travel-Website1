@@ -163,7 +163,7 @@ const PrivacyPolicy = ({ isOpen, onClose }) => {
       <div
         ref={popupRef}
         className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-4xl max-h-[80vh] overflow-y-auto"
-        style={{ fontFamily: 'Comic Sans MS, cursive' }}
+        style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
         role="dialog"
         aria-labelledby="privacy-policy-title"
       >
@@ -175,7 +175,7 @@ const PrivacyPolicy = ({ isOpen, onClose }) => {
             <button
               onClick={handleDownload}
               className="bg-[#1e809b] hover:bg-[#074a5b] text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center"
-              style={{ fontFamily: 'Comic Sans MS, cursive' }}
+              style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
               aria-label="Download Privacy Policy as PDF"
             >
               <Download size={16} className="mr-2" />
