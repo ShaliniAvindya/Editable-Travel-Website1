@@ -104,7 +104,7 @@ const Accommodations = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-xl text-[#074a5b]" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+        <p className="text-xl text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
           Unterkünfte werden geladen...
         </p>
       </div>
@@ -114,7 +114,7 @@ const Accommodations = () => {
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-xl text-red-600" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+        <p className="text-xl text-red-600" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
           {error}
         </p>
       </div>
@@ -127,7 +127,7 @@ const Accommodations = () => {
   const adventureContent = getSectionContent('adventure');
 
   return (
-    <div className="min-h-screen bg-white" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+    <div className="min-h-screen bg-white" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
       {/* Hero Section */}
       {heroContent.imageUrl && heroContent.title && heroContent.description && (
         <section className="relative h-[68vh] overflow-hidden">
