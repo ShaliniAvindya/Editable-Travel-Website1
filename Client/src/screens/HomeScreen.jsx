@@ -311,11 +311,11 @@ const HomeScreen = () => {
           <div className="text-center text-white px-2 sm:px-4 max-w-3xl">
             <div className="flex flex-col items-center">
               <div className="h-24 sm:h-32 md:h-48"></div>
-              <div className="h-8 sm:h-12 md:h-20"></div>
+              <div className="h-28 sm:h-12 md:h-20"></div>
               <div className="pointer-events-auto">
                 <button
                   onClick={() => handleExploreParadise(heroSection[currentSlide]?.buttonLink)}
-                  className="group relative px-4 py-2 sm:px-6 sm:py-3 md:px-8 md:py-4 text-sm sm:text-base md:text-lg font-semibold rounded-full overflow-hidden transition-all duration-500 hover:scale-105 hover:shadow-2xl bg-gradient-to-r from-[#1e809b] to-[#074a5b] text-white border-2 border-transparent hover:border-white/30 drop-shadow-xl"
+                  className="group relative px-4 py-3 sm:px-6 sm:py-3 md:px-8 md:py-4 text-sm sm:text-base md:text-lg font-semibold rounded-full overflow-hidden transition-all duration-500 hover:scale-105 hover:shadow-2xl bg-gradient-to-r from-[#1e809b] to-[#074a5b] text-white border-2 border-transparent hover:border-white/30 drop-shadow-xl"
                 >
                   <span className="relative z-10 flex items-center">
                     {heroSection[currentSlide]?.buttonText || 'Explore Paradise'}
