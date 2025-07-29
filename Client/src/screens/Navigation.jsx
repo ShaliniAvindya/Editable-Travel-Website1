@@ -22,6 +22,7 @@ const Header = () => {
   const [activities, setActivities] = useState([]);
   const [logoUrl, setLogoUrl] = useState(null);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  const [mobileLangDropdownOpen, setMobileLangDropdownOpen] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState('German');
   const [isLangReady, setIsLangReady] = useState(false);
   const langInitialized = useRef(false);
@@ -38,22 +39,20 @@ const Header = () => {
   const location = useLocation();
   const isAdminPanel = location.pathname.startsWith('/admin');
 
-  // Fetch dropdown data 
-useEffect(() => {
-  if (isAdminPanel) return;
-  // Always clear and set to German
-  document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=' + window.location.hostname;
-  document.cookie = `googtrans=/de/de; path=/; domain=${window.location.hostname}`;
-  setSelectedLanguage('German');
-  setTimeout(() => {
-    const translateElement = document.querySelector('.goog-te-combo');
-    if (translateElement && translateElement.value !== 'de') {
-      translateElement.value = 'de';
-      translateElement.dispatchEvent(new Event('change', { bubbles: true }));
-      translateElement.dispatchEvent(new Event('input', { bubbles: true }));
-    }
-  }, 500);
-}, [isAdminPanel]);
+  useEffect(() => {
+    if (isAdminPanel) return;
+    document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=' + window.location.hostname;
+    document.cookie = `googtrans=/de/de; path=/; domain=${window.location.hostname}`;
+    setSelectedLanguage('German');
+    setTimeout(() => {
+      const translateElement = document.querySelector('.goog-te-combo');
+      if (translateElement && translateElement.value !== 'de') {
+        translateElement.value = 'de';
+        translateElement.dispatchEvent(new Event('change', { bubbles: true }));
+        translateElement.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    }, 500);
+  }, [isAdminPanel]);
 
   useEffect(() => {
     if (isAdminPanel) return;
@@ -73,7 +72,6 @@ useEffect(() => {
     }
   }, [selectedLanguage, isAdminPanel]);
 
-  // Function to trigger translation for non-admin routes
   const translateContent = (langCode) => {
     const translateElement = document.querySelector('.goog-te-combo');
     if (translateElement && translateElement.value !== langCode) {
@@ -84,7 +82,6 @@ useEffect(() => {
   };
 
   useEffect(() => {
-    // Always clear any googtrans cookie before setting language to avoid admin/user conflict
     if (!isAdminPanel) {
       document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=' + window.location.hostname;
     }
@@ -193,6 +190,8 @@ useEffect(() => {
         !event.target.closest('.google-translate-container')
       ) {
         closeAllDropdowns();
+        setLangDropdownOpen(false);
+        setMobileLangDropdownOpen(false);
       }
     };
 
@@ -200,6 +199,8 @@ useEffect(() => {
       if (event.key === 'Escape') {
         closeAllDropdowns();
         setMobileMenuOpen(false);
+        setLangDropdownOpen(false);
+        setMobileLangDropdownOpen(false);
       }
     };
 
@@ -263,21 +264,9 @@ useEffect(() => {
       href: '/accommodations',
       hasDropdown: true,
       subDropdowns: [
-        {
-          name: 'Hotels',
-          key: 'hotels',
-          items: hotels,
-        },
-        {
-          name: 'Resorts',
-          key: 'resorts',
-          items: resorts,
-        },
-        {
-          name: 'Abenteuer',
-          key: 'adventures',
-          items: adventures,
-        },
+        { name: 'Hotels', key: 'hotels', items: hotels },
+        { name: 'Resorts', key: 'resorts', items: resorts },
+        { name: 'Abenteuer', key: 'adventures', items: adventures },
       ],
     },
     {
@@ -286,17 +275,12 @@ useEffect(() => {
       hasDropdown: true,
       dropdownItems: activities,
     },
-    {
-      name: 'Paketangebote',
-      href: '/packageoffers',
-      hasDropdown: false,
-    },
+    { name: 'Paketangebote', href: '/packageoffers', hasDropdown: false },
     { name: 'Blogs', href: '/blogs', hasDropdown: false },
   ];
 
-  // Google Translate widget loader
   useEffect(() => {
-    if (isAdminPanel) return; 
+    if (isAdminPanel) return;
     const addGoogleTranslateScript = () => {
       if (!document.getElementById('google-translate-script')) {
         const script = document.createElement('script');
@@ -359,6 +343,7 @@ useEffect(() => {
 
   const handleLanguageSelect = (langCode, langName) => {
     setLangDropdownOpen(false);
+    setMobileLangDropdownOpen(false);
     setSelectedLanguage(langName);
 
     const attemptTranslate = (langCode, attempts = 20, delay = 100) => {
@@ -422,6 +407,44 @@ useEffect(() => {
             )}
           </NavLink>
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Mobile Language Menu */}
+            <div className="md:hidden relative notranslate">
+              {isAdminPanel ? (
+                <AdminTranslationWidget />
+              ) : (
+                <div>
+                  <button
+                    onClick={() => setMobileLangDropdownOpen((prev) => !prev)}
+                    className="flex items-center justify-between px-2 py-1 rounded-lg bg-cyan-800 text-white hover:bg-cyan-700 transition-colors duration-200 text-xs focus:outline-none focus:ring-2 focus:ring-cyan-300"
+                    aria-expanded={mobileLangDropdownOpen}
+                    aria-haspopup="true"
+                    aria-label="Toggle language selection"
+                    disabled={!isLangReady}
+                    style={{ opacity: isLangReady ? 1 : 0.5, cursor: isLangReady ? 'pointer' : 'not-allowed' }}
+                  >
+                    <span>{isLangReady ? selectedLanguage : 'Loading...'}</span>
+                    <ChevronDown
+                      size={12}
+                      className={`ml-1 transition-transform duration-200 ${mobileLangDropdownOpen ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+                  {mobileLangDropdownOpen && isLangReady && (
+                    <div className="absolute top-full right-0 mt-1 w-28 bg-white rounded-lg shadow-xl border border-gray-100 py-1 animate-in fade-in-0 zoom-in-95 duration-200 z-50">
+                      {languages.map((lang) => (
+                        <button
+                          key={lang.code}
+                          onClick={() => handleLanguageSelect(lang.code, lang.name)}
+                          className="block w-full text-left px-3 py-1 text-gray-700 hover:bg-cyan-50 hover:text-cyan-700 transition-colors duration-200 text-xs focus:outline-none focus:bg-cyan-50 focus:text-cyan-700"
+                        >
+                          {lang.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            {/* Desktop Navigation and Language Menu */}
             <nav className="hidden md:flex items-center space-x-1">
               {navigationItems.map((item) => (
                 <div key={item.name} className="relative dropdown-container">
@@ -718,40 +741,6 @@ useEffect(() => {
                   )}
                 </div>
               ))}
-              <div className="mt-4 px-3 sm:px-4 relative notranslate">
-                {isAdminPanel ? <AdminTranslationWidget /> : (
-                  <div>
-                    <button
-                      onClick={() => setLangDropdownOpen((prev) => !prev)}
-                      className="flex items-center justify-between px-3 py-2 rounded-lg bg-cyan-800 text-white hover:bg-cyan-700 transition-colors duration-200 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-300 w-full"
-                      aria-expanded={langDropdownOpen}
-                      aria-haspopup="true"
-                      aria-label="Toggle language selection"
-                      disabled={!isLangReady}
-                      style={{ opacity: isLangReady ? 1 : 0.5, cursor: isLangReady ? 'pointer' : 'not-allowed' }}
-                    >
-                      <span>{isLangReady ? selectedLanguage : 'Loading...'}</span>
-                      <ChevronDown
-                        size={14}
-                        className={`ml-2 transition-transform duration-200 ${langDropdownOpen ? 'rotate-180' : ''}`}
-                      />
-                    </button>
-                    {langDropdownOpen && isLangReady && (
-                      <div className="absolute top-full right-0 mt-1 w-32 bg-white rounded-lg shadow-xl border border-gray-100 py-2 animate-in fade-in-0 zoom-in-95 duration-200 z-50">
-                        {languages.map((lang) => (
-                          <button
-                            key={lang.code}
-                            onClick={() => handleLanguageSelect(lang.code, lang.name)}
-                            className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-cyan-50 hover:text-cyan-700 transition-colors duration-200 text-sm focus:outline-none focus:bg-cyan-50 focus:text-cyan-700"
-                          >
-                            {lang.name}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
             </nav>
           </div>
         )}
