@@ -41,7 +41,7 @@ const GoogleReviewsSection = () => {
 
   if (error) {
     return (
-      <div className="text-center py-12" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+      <div className="text-center py-12" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
         <p className="text-lg text-red-500">{error}</p>
       </div>
     );
@@ -49,7 +49,7 @@ const GoogleReviewsSection = () => {
 
   if (!scriptLoaded) {
     return (
-      <div className="text-center py-12" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+      <div className="text-center py-12" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
         <p className="text-lg text-[#074a5b]">Loading reviews...</p>
       </div>
     );
@@ -59,7 +59,7 @@ const GoogleReviewsSection = () => {
     <section
       id="reviews-section"
       className="py-12 sm:py-16 md:py-24 relative bg-white"
-      style={{ fontFamily: 'Comic Sans MS, cursive', minHeight: '400px' }}
+      style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'", minHeight: '400px' }}
     >
       <div className="max-w-4xl sm:max-w-5xl md:max-w-6xl lg:max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
         <div className="text-center mb-8 sm:mb-12 md:mb-20">
