@@ -94,7 +94,8 @@ const Activities = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ fontFamily: "Comic Sans MS, cursive" }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
+>
         <p className="text-xl text-[#074a5b]">Ladeaktivitäten...</p>
       </div>
     );
@@ -102,7 +103,7 @@ const Activities = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ fontFamily: "Comic Sans MS, cursive" }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
         <p className="text-xl text-red-600">{error}</p>
       </div>
     );
@@ -111,7 +112,7 @@ const Activities = () => {
   const heroContent = getSectionContent('hero');
 
   return (
-    <div className="min-h-screen bg-white" style={{ fontFamily: "Comic Sans MS, cursive" }}>
+    <div className="min-h-screen bg-white" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
       {/* Hero Section */}
       {heroContent.imageUrl && heroContent.title && heroContent.description && (
         <section className="relative h-[70vh] overflow-hidden">
@@ -173,14 +174,14 @@ const Activities = () => {
                         value={selectedCategory}
                         onChange={(e) => setSelectedCategory(e.target.value)}
                         className="pl-12 pr-8 py-3 sm:py-4 rounded-xl bg-white/25 backdrop-blur-sm border border-white/40 focus:outline-none focus:ring-2 focus:ring-white/60 focus:border-white/60 appearance-none text-white min-w-0 sm:min-w-[200px] font-medium text-sm sm:text-base"
-                        style={{ fontFamily: "Comic Sans MS, cursive" }}
+                        style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                       >
                         {categories.map((category) => (
                           <option
                             key={category.id}
                             value={category.id}
                             className="bg-[#074a5b] text-white font-medium"
-                            style={{ fontFamily: "Comic Sans MS, cursive" }}
+                           style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                           >
                             {category.name} ({category.count})
                           </option>
@@ -276,7 +277,7 @@ const Activities = () => {
                   <button
                     onClick={() => handleViewNow(activity._id)}
                     className="w-full bg-[#1e809b] hover:bg-[#074a5b] text-white py-3 rounded-full font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
-                    style={{ fontFamily: "Comic Sans MS, cursive" }}
+                    style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                   >
                     Jetzt ansehen
                   </button>
@@ -298,7 +299,7 @@ const Activities = () => {
                   setSelectedCategory("all");
                 }}
                 className="bg-[#1e809b] hover:bg-[#074a5b] text-white px-6 py-3 rounded-full font-semibold transition-colors duration-300"
-                style={{ fontFamily: "Comic Sans MS, cursive" }}
+                style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
               >
                 Alle Aktivitäten anzeigen
               </button>
