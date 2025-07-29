@@ -147,13 +147,13 @@ const Packages = () => {
     }));
   };
 
-  const scrollToPackages = () => {
+  const scrollToPacstyle={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}kages = () => {
     document.getElementById('packages-section').scrollIntoView({ behavior: 'smooth' });
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+      <div className="min-h-screen bg-white flex items-center justify-center" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
         <p className="text-2xl max-sm:text-lg text-[#074a5b]">Inhalt wird geladen...</p>
       </div>
     );
@@ -161,7 +161,7 @@ const Packages = () => {
 
   if (error || !uiContent) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+      <div className="min-h-screen bg-white flex items-center justify-center" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
         <p className="text-2xl max-sm:text-lg text-[#074a5b]">{error || t.noContent}</p>
       </div>
     );
@@ -172,7 +172,7 @@ const Packages = () => {
   const packagesOverviewContent = uiContent.sections?.find((s) => s.sectionId === 'packages-overview')?.content;
 
   return (
-    <div className="min-h-screen bg-white" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+    <div className="min-h-screen bg-white" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
       {/* Hero Section */}
       {heroContent && (
         <section className="relative h-[70vh] max-sm:h-[50vh] overflow-hidden">
