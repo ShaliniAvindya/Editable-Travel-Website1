@@ -178,14 +178,14 @@ const PromotionPopup = ({ promotion: propPromotion, onClose }) => {
                   <Gift className="w-4 h-4 xs:w-5 xs:h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-[#074a5b] leading-tight mb-2" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}}>
+                  <h2 className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-[#074a5b] leading-tight mb-2" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                     {promotion.title}
                   </h2>
                   <div className="w-10 sm:w-12 h-1 sm:h-1 bg-gradient-to-r from-[#074a5b] to-[#1e809b] rounded-full"></div>
                 </div>
               </div>
               
-              <p className="text-sm xs:text-sm sm:text-base text-gray-600 leading-relaxed" style={{ fontFamily: 'Comic Sans MS, Comic Neue' }}>
+              <p className="text-sm xs:text-sm sm:text-base text-gray-600 leading-relaxed"style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                 {promotion.description}
               </p>
             </div>
