@@ -113,13 +113,13 @@ const PromotionPopup = ({ promotion: propPromotion, onClose }) => {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 p-2 sm:p-4">
       <div 
         className="relative bg-white rounded-xl sm:rounded-2xl max-w-xs xs:max-w-sm sm:max-w-md md:max-w-lg lg:max-w-2xl xl:max-w-3xl w-full shadow-2xl overflow-hidden border-0 mx-2" 
-        style={{ fontFamily: 'Comic Sans MS' }}
+        style={{ fontFamily: 'Comic Sans MS, Comic Neue' }}
       >
         {/* Close Button */}
         <button
           onClick={handleClose}
           className="absolute top-2 right-2 sm:top-3 sm:right-3 z-20 bg-gray-800 bg-opacity-80 backdrop-blur-sm rounded-full p-1.5 sm:p-2 shadow-lg hover:bg-opacity-90"
-          style={{ fontFamily: 'Comic Sans MS' }}
+          style={{ fontFamily: 'Comic Sans MS, Comic Neue' }}
           aria-label="Close promotion popup"
         >
           <X className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
@@ -178,14 +178,14 @@ const PromotionPopup = ({ promotion: propPromotion, onClose }) => {
                   <Gift className="w-4 h-4 xs:w-5 xs:h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-[#074a5b] leading-tight mb-2" style={{ fontFamily: 'Comic Sans MS' }}>
+                  <h2 className="text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-[#074a5b] leading-tight mb-2" style={{ fontFamily: 'Comic Sans MS, Comic Neue' }}>
                     {promotion.title}
                   </h2>
                   <div className="w-10 sm:w-12 h-1 sm:h-1 bg-gradient-to-r from-[#074a5b] to-[#1e809b] rounded-full"></div>
                 </div>
               </div>
               
-              <p className="text-sm xs:text-sm sm:text-base text-gray-600 leading-relaxed" style={{ fontFamily: 'Comic Sans MS' }}>
+              <p className="text-sm xs:text-sm sm:text-base text-gray-600 leading-relaxed" style={{ fontFamily: 'Comic Sans MS, Comic Neue' }}>
                 {promotion.description}
               </p>
             </div>
@@ -223,7 +223,7 @@ const PromotionPopup = ({ promotion: propPromotion, onClose }) => {
               <button
                 onClick={handleCTAClick}
                 className="w-full bg-gradient-to-r from-[#074a5b] to-[#1e809b] hover:from-[#074a5b]/90 hover:to-[#1e809b]/90 text-white font-bold py-3 xs:py-3.5 sm:py-4 px-4 xs:px-5 sm:px-6 rounded-xl sm:rounded-2xl flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl text-sm xs:text-base sm:text-base"
-                style={{ fontFamily: 'Comic Sans MS' }}
+                style={{ fontFamily: 'Comic Sans MS, Comic Neue' }}
               >
                 <Gift className="w-4 h-4 xs:w-5 xs:h-5 sm:w-5 sm:h-5" />
                 <span>{promotion.buttonText}</span>
