@@ -162,7 +162,7 @@ const Activities = () => {
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full pl-12 pr-4 py-3 sm:py-4 rounded-xl bg-white/25 backdrop-blur-sm border border-white/40 focus:outline-none focus:ring-2 focus:ring-white/60 focus:border-white/60 text-white placeholder-white/90 font-medium text-sm sm:text-base"
-                        style={{ fontFamily: "Comic Sans MS, cursive" }}
+                        style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                       />
                     </div>
                     <div className="relative min-w-0">
