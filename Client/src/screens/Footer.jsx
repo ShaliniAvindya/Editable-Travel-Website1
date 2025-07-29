@@ -46,7 +46,7 @@ const Footer = () => {
   };
 
   return (
-    <footer className="py-12 relative overflow-hidden" style={{ backgroundColor: '#041e26', fontFamily: 'Comic Sans MS, cursive' }}>
+    <footer className="py-12 relative overflow-hidden" style={{ backgroundColor: '#041e26', style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
       <GTC isOpen={popupState.gtc} onClose={() => closePopup('gtc')} />
       <PrivacyPolicy isOpen={popupState.privacyPolicy} onClose={() => closePopup('privacyPolicy')} />
 
