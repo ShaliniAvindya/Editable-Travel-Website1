@@ -132,25 +132,25 @@ const Activities = () => {
                   isVisible ? "opacity-100 transform translate-y-5" : "opacity-0 transform translate-y-8"
                 }`}
               >
-                <h1 className="text-5xl md:text-6xl font-bold mb-8 leading-tight">
+                <h1 className="text-2xl sm:text-4xl md:text-6xl font-bold mb-4 sm:mb-8 leading-tight break-words">
                   <span className="text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)] filter brightness-110">
                     {heroContent.title}
                   </span>
                 </h1>
                 <p
-                  className={`text-xl md:text-2xl mb-12 text-white leading-relaxed max-w-4xl mx-auto transition-all duration-1000 delay-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.7)] filter brightness-110 ${
+                  className={`text-sm sm:text-lg md:text-2xl mb-6 sm:mb-12 text-white leading-relaxed max-w-4xl mx-auto transition-all duration-1000 delay-300 drop-shadow-[0_2px_4px_rgba(0,0,0,0.7)] filter brightness-110 break-words px-1 sm:px-0 ${
                     isVisible ? "opacity-100 transform translate-y-0" : "opacity-0 transform translate-y-8"
                   }`}
                 >
                   {heroContent.description}
                 </p>
                 <div
-                  className={`bg-white/20 backdrop-blur-xl rounded-2xl p-6 shadow-2xl border border-white/30 max-w-4xl mx-auto transition-all duration-1000 delay-500 ${
+                  className={`bg-white/20 backdrop-blur-xl rounded-2xl p-4 sm:p-6 shadow-2xl border border-white/30 max-w-4xl mx-auto transition-all duration-1000 delay-500 ${
                     isVisible ? "transform translate-y-0 opacity-100" : "transform translate-y-8 opacity-0"
                   }`}
                 >
-                  <div className="flex flex-col md:flex-row gap-4">
-                    <div className="relative flex-1">
+                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                    <div className="relative flex-1 min-w-0">
                       <Search
                         className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white"
                         size={20}
@@ -160,11 +160,11 @@ const Activities = () => {
                         placeholder="Suchaktivitäten..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-12 pr-4 py-4 rounded-xl bg-white/25 backdrop-blur-sm border border-white/40 focus:outline-none focus:ring-2 focus:ring-white/60 focus:border-white/60 text-white placeholder-white/90 font-medium"
+                        className="w-full pl-12 pr-4 py-3 sm:py-4 rounded-xl bg-white/25 backdrop-blur-sm border border-white/40 focus:outline-none focus:ring-2 focus:ring-white/60 focus:border-white/60 text-white placeholder-white/90 font-medium text-sm sm:text-base"
                         style={{ fontFamily: "Comic Sans MS, cursive" }}
                       />
                     </div>
-                    <div className="relative">
+                    <div className="relative min-w-0">
                       <Filter
                         className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white"
                         size={20}
@@ -172,7 +172,7 @@ const Activities = () => {
                       <select
                         value={selectedCategory}
                         onChange={(e) => setSelectedCategory(e.target.value)}
-                        className="pl-12 pr-8 py-4 rounded-xl bg-white/25 backdrop-blur-sm border border-white/40 focus:outline-none focus:ring-2 focus:ring-white/60 focus:border-white/60 appearance-none text-white min-w-[200px] font-medium"
+                        className="pl-12 pr-8 py-3 sm:py-4 rounded-xl bg-white/25 backdrop-blur-sm border border-white/40 focus:outline-none focus:ring-2 focus:ring-white/60 focus:border-white/60 appearance-none text-white min-w-0 sm:min-w-[200px] font-medium text-sm sm:text-base"
                         style={{ fontFamily: "Comic Sans MS, cursive" }}
                       >
                         {categories.map((category) => (
