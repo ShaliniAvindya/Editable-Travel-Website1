@@ -117,7 +117,7 @@ const Contact = () => {
   }
 
   return (
-    <section className="py-20" style={{ backgroundColor: '#074a5b', fontFamily: 'Comic Sans MS, cursive' }}>
+    <section className="py-20" style={{ backgroundColor: '#074a5b', style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
       <div className="max-w-7xl mx-auto px-4">
         {(content.hero.title || content.hero.description) && (
           <div className="text-center mb-16">
