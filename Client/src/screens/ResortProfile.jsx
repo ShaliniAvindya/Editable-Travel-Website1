@@ -208,7 +208,7 @@ const ResortProfile = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+    <div className="min-h-screen bg-white" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
       {/* Hero Section with Image Gallery */}
       <section className="relative h-[700px] overflow-hidden">
         <div className="absolute inset-0">
