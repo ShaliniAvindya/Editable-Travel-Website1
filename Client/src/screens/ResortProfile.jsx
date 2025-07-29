@@ -243,13 +243,17 @@ const ResortProfile = () => {
           ))}
         </div>
         <div className="absolute bottom-10 left-6 right-6 text-white max-w-4xl">
-          <h1 className="text-4xl md:text-7xl font-bold mb-8 drop-shadow-2xl">{resortData.name}</h1>
-          <div className="flex items-center mb-6 text-2xl">
-            <MapPin size={30} className="mr-2" />
-            {resortData.island || 'Insel'} Insel, {resortData.atoll?.name || 'Atoll'}
+          <h1 className="text-2xl sm:text-4xl md:text-7xl font-bold mb-4 sm:mb-8 drop-shadow-2xl leading-tight break-words">{resortData.name}</h1>
+          <div className="flex flex-col sm:flex-row sm:items-center mb-3 sm:mb-6 text-base sm:text-2xl gap-1 sm:gap-0">
+            <span className="flex items-center">
+              <MapPin size={20} className="mr-2 sm:mr-3" />
+              <span className="font-semibold">{resortData.island || 'Insel'} Insel</span>
+            </span>
+            <span className="hidden sm:inline mx-2">,</span>
+            <span className="font-semibold text-[#b2e0ea] sm:text-[#fff]">{resortData.atoll?.name || 'Atoll'}</span>
           </div>
-          <div className="flex items-center gap-4 mb-8">
-            <div className="bg-[#1e809b]/80 backdrop-blur-sm px-8 py-2 rounded-full font-semibold text-xl">
+          <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-8">
+            <div className="bg-[#1e809b]/80 backdrop-blur-sm px-4 sm:px-8 py-1.5 sm:py-2 rounded-full font-semibold text-base sm:text-xl">
               aus {resortData.price}
             </div>
           </div>
@@ -507,21 +511,21 @@ const ResortProfile = () => {
       {/* Room Details Modal */}
       {showRoomModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-sm"
           onClick={handleBackdropClick}
         >
           <div
-            className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+            className="bg-white rounded-2xl max-w-4xl w-full max-h-[95vh] overflow-y-auto room-modal-mobile"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="relative">
               <button
                 onClick={() => setShowRoomModal(null)}
-                className="absolute top-4 right-4 z-10 bg-white/90 hover:bg-white text-gray-700 p-2 rounded-full shadow-lg transition-all duration-300"
+                className="absolute top-2 right-2 sm:top-4 sm:right-4 z-10 bg-white/90 hover:bg-white text-gray-700 p-2 rounded-full shadow-lg transition-all duration-300"
               >
                 <X size={20} />
               </button>
-              <div className="relative h-96 overflow-hidden rounded-t-2xl">
+              <div className="relative h-48 sm:h-96 overflow-hidden rounded-t-2xl">
                 <img
                   src={showRoomModal.images[currentRoomImageIndex]}
                   alt={`${showRoomModal.name} - Image ${currentRoomImageIndex + 1}`}
@@ -531,19 +535,19 @@ const ResortProfile = () => {
                   <>
                     <button
                       onClick={prevRoomImage}
-                      className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-2 rounded-full backdrop-blur-sm transition-all duration-300"
+                      className="absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-1.5 sm:p-2 rounded-full backdrop-blur-sm transition-all duration-300"
                     >
-                      <ChevronLeft size={20} />
+                      <ChevronLeft size={18} />
                     </button>
                     <button
                       onClick={nextRoomImage}
-                      className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-2 rounded-full backdrop-blur-sm transition-all duration-300"
+                      className="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 text-white p-1.5 sm:p-2 rounded-full backdrop-blur-sm transition-all duration-300"
                     >
-                      <ChevronRight size={20} />
+                      <ChevronRight size={18} />
                     </button>
                   </>
                 )}
-                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
+                <div className="absolute bottom-2 sm:bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
                   {showRoomModal.images.map((_, index) => (
                     <button
                       key={index}
@@ -555,44 +559,45 @@ const ResortProfile = () => {
                   ))}
                 </div>
               </div>
-              <div className="p-8">
-                <div className="flex justify-between items-start mb-6">
+              <div className="p-3 sm:p-8">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-3 sm:mb-6 gap-2 sm:gap-0">
                   <div>
-                    <h2 className="text-2xl font-bold text-[#074a5b] mb-2">{showRoomModal.name}</h2>
-                    <div className="flex gap-4 text-gray-600">
+                    <h2 className="text-lg sm:text-2xl font-bold text-[#074a5b] mb-1 sm:mb-2">{showRoomModal.name}</h2>
+                    <div className="flex gap-2 sm:gap-4 text-xs sm:text-base text-gray-600">
                       <span>{showRoomModal.size}</span>
                       <span>•</span>
                       <span>{showRoomModal.capacity}</span>
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-3xl font-bold text-[#1e809b]">{showRoomModal.price}</div>
-                    <div className="text-gray-500">pro Nacht</div>
+                    <div className="text-lg sm:text-3xl font-bold text-[#1e809b]">{showRoomModal.price}</div>
+                    <div className="text-xs sm:text-base text-gray-500">pro Nacht</div>
                   </div>
                 </div>
-                <p className="text-gray-700 text-lg mb-6 leading-relaxed">{showRoomModal.description}</p>
-                <div className="mb-8">
-                  <h3 className="text-lg font-semibold text-[#074a5b] mb-4">Zimmerausstattung</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                <p className="text-gray-700 text-xs sm:text-lg mb-3 sm:mb-6 leading-relaxed">{showRoomModal.description}</p>
+                <div className="mb-4 sm:mb-8">
+                  <h3 className="text-sm sm:text-lg font-semibold text-[#074a5b] mb-2 sm:mb-4">Zimmerausstattung</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
                     {showRoomModal.amenities.map((amenity, index) => (
-                      <div key={index} className="flex items-center p-3 bg-gray-50 rounded-xl">
-                        <div className="w-2 h-2 bg-[#1e809b] rounded-full mr-3"></div>
-                        <span className="text-gray-700 text-sm">{amenity}</span>
+                      <div key={index} className="flex items-center p-2 sm:p-3 bg-gray-50 rounded-xl">
+                        <div className="w-2 h-2 bg-[#1e809b] rounded-full mr-2 sm:mr-3"></div>
+                        <span className="text-gray-700 text-[11px] sm:text-sm">{amenity}</span>
                       </div>
                     ))}
                   </div>
                 </div>
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
                   <button
                     onClick={() => {
                       setSelectedRoom(showRoomModal);
                       setInquiryButtonType('bookNow');
                       setShowInquiryModal(true);
                     }}
-                    className="flex-1 bg-[#1e809b] hover:bg-[#074a5b] text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 flex items-center justify-center"
+                    className="flex-1 bg-[#1e809b] hover:bg-[#074a5b] text-white py-2 px-3 sm:py-3 sm:px-6 rounded-xl text-xs sm:text-base font-semibold transition-all duration-300 transform hover:scale-105 flex items-center justify-center"
                   >
-                    <Mail size={20} className="mr-2" />
-                    Buchen Sie Ihr Zimmer per E-Mail
+                    <Mail size={16} className="mr-2 sm:mr-2.5" />
+                    <span className="hidden sm:inline">Buchen Sie Ihr Zimmer per E-Mail</span>
+                    <span className="sm:hidden">Per E-Mail buchen</span>
                   </button>
                   <button
                     onClick={() => {
@@ -600,15 +605,30 @@ const ResortProfile = () => {
                       setInquiryButtonType('whatsapp');
                       setShowInquiryModal(true);
                     }}
-                    className="flex-1 bg-green-500 hover:bg-green-600 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 flex items-center justify-center"
+                    className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-3 sm:py-3 sm:px-6 rounded-xl text-xs sm:text-base font-semibold transition-all duration-300 transform hover:scale-105 flex items-center justify-center"
                   >
-                    <MessageCircle size={20} className="mr-2" />
-                    Zimmer über WhatsApp buchen
+                    <MessageCircle size={16} className="mr-2 sm:mr-2.5" />
+                    <span className="hidden sm:inline">Zimmer über WhatsApp buchen</span>
+                    <span className="sm:hidden">Per WhatsApp buchen</span>
                   </button>
                 </div>
               </div>
             </div>
           </div>
+          {/* Mobile-specific room modal adjustments */}
+          <style>{`
+            @media (max-width: 640px) {
+              .room-modal-mobile {
+                border-radius: 12px !important;
+                max-width: 98vw !important;
+                margin: 0 auto !important;
+              }
+              .room-modal-mobile .rounded-t-2xl {
+                border-top-left-radius: 12px !important;
+                border-top-right-radius: 12px !important;
+              }
+            }
+          `}</style>
         </div>
       )}
 
