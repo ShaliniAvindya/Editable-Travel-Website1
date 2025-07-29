@@ -295,7 +295,7 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-6">
-      <div ref={modalRef} className="bg-white rounded-3xl shadow-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+      <div ref={modalRef} className="bg-white rounded-3xl shadow-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
         <div className="p-8">
           <div className="flex justify-between items-center mb-2">
             <h3 className="text-2xl font-bold" style={{ color: '#074a5b' }}>{t.inquiryForm}</h3>
