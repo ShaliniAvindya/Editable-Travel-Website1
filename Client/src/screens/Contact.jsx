@@ -109,7 +109,7 @@ const Contact = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#074a5b' }}>
-        <p className="text-xl text-white" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+        <p className="text-xl text-white" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
           Laden...
         </p>
       </div>
