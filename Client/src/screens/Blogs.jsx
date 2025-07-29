@@ -101,7 +101,7 @@ const Blogs = () => {
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+      <div className="min-h-screen bg-white flex items-center justify-center" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
         <p className="text-2xl text-[#074a5b]">Blogs werden geladen...</p>
       </div>
     );
@@ -110,7 +110,7 @@ const Blogs = () => {
   // Error state
   if (error || !uiContent) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+      <div className="min-h-screen bg-white flex items-center justify-center" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
         <p className="text-2xl text-[#074a5b]">{error || 'No content available'}</p>
       </div>
     );
@@ -120,7 +120,7 @@ const Blogs = () => {
   const heroContent = uiContent.sections?.find((s) => s.sectionId === 'hero')?.content;
 
   return (
-    <div className="min-h-screen bg-white" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+    <div className="min-h-screen bg-white" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
       {/* Hero Section */}
       {heroContent && (
         <section className="relative h-[68vh] overflow-hidden">
