@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, Calendar, MapPin, Clock, Phone } from 'lucid
 import axios from 'axios';
 import InquiryFormModal from './InquiryFormModal';
 
-const API_URL = 'https://editable-travel-website1-rpfv.vercel.app';
+const API_URL = 'http://localhost:8000';
 
 const Packages = () => {
   const [selectedPackage, setSelectedPackage] = useState(null);
@@ -147,7 +147,7 @@ const Packages = () => {
     }));
   };
 
-  const scrollToPacstyle={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}kages = () => {
+  const scrollToPackages = () => {
     document.getElementById('packages-section').scrollIntoView({ behavior: 'smooth' });
   };
 
