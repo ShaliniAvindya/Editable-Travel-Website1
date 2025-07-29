@@ -147,8 +147,8 @@ const Accommodations = () => {
                 isVisible ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-8'
               }`}
             >
-              <h1 className="text-5xl md:text-6xl font-bold mb-10 drop-shadow-2xl">{heroContent.title}</h1>
-              <p className="text-xl md:text-2xl leading-relaxed drop-shadow-xl">{heroContent.description}</p>
+              <h1 className="text-2xl sm:text-4xl md:text-6xl font-bold mb-5 sm:mb-10 drop-shadow-2xl leading-tight break-words">{heroContent.title}</h1>
+              <p className="text-sm sm:text-lg md:text-2xl leading-relaxed drop-shadow-xl break-words px-1 sm:px-0">{heroContent.description}</p>
             </div>
           </div>
         </section>
