@@ -49,7 +49,7 @@ const ActivityProfile = () => {
       try {
         setLoading(true);
         // Fetch all atolls
-        const atollsResponse = await axios.get('https://editable-travel-website1-rpfv.vercel.app/api/atolls');
+        const atollsResponse = await axios.get('http://localhost:8000/api/atolls');
         const atollsData = atollsResponse.data;
 
         const atollsWithData = await Promise.all(
@@ -57,12 +57,12 @@ const ActivityProfile = () => {
             try {
               // Fetch accommodations for this atoll
               const resortsResponse = await axios.get(
-                `https://editable-travel-website1-rpfv.vercel.app/api/resorts/byAtoll/${atoll._id}`
+                `http://localhost:8000/api/resorts/byAtoll/${atoll._id}`
               );
 
               // Fetch activities for this atoll
               const activitiesResponse = await axios.get(
-                `https://editable-travel-website1-rpfv.vercel.app/api/activities/byAtoll/${atoll._id}`
+                `http://localhost:8000/api/activities/byAtoll/${atoll._id}`
               );
 
               return {
@@ -96,7 +96,7 @@ const ActivityProfile = () => {
 
         // Fetch activity details with populated atoll data
         if (activityId) {
-          const activityResponse = await axios.get(`https://editable-travel-website1-rpfv.vercel.app/api/activities/${activityId}`);
+          const activityResponse = await axios.get(`http://localhost:8000/api/activities/${activityId}`);
           const activityData = activityResponse.data;
           
           // Make sure atoll IDs properly formatted
@@ -141,7 +141,7 @@ const ActivityProfile = () => {
 
   const handleModalSubmit = async (submissionData) => {
     try {
-      const response = await axios.post('https://editable-travel-website1-rpfv.vercel.app/api/inquiries', submissionData);
+      const response = await axios.post('http://localhost:8000/api/inquiries', submissionData);
       console.log('Anfrage erfolgreich übermittelt:', response.data);
     } catch (err) {
       console.error('Fehler beim Senden der Anfrage:', err);
@@ -257,9 +257,11 @@ const ActivityProfile = () => {
             {activity.name}
           </h1>
           <div className="flex items-center gap-4 mb-4">
-            <div className="bg-[#1e809b]/80 backdrop-blur-sm px-8 py-2 rounded-full font-semibold text-xl">
-              Aus ${activity.price}
-            </div>
+            {activity.price && typeof activity.price === 'string' && activity.price.trim() !== '' && activity.price !== 'N/A' && (
+              <div className="bg-[#1e809b]/80 backdrop-blur-sm px-8 py-2 rounded-full font-semibold text-xl">
+                Aus {activity.price}
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -269,10 +271,11 @@ const ActivityProfile = () => {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2 text-gray-700">
-                <span className="text-4xl font-bold text-[#074a5b]">
-                  ${activity.price}
-                </span>
-                <span className="text-xl text-gray-600">pro Person</span>
+                {activity.price && typeof activity.price === 'string' && activity.price.trim() !== '' && activity.price !== 'N/A' && (
+                  <span className="text-4xl font-bold text-[#074a5b]">
+                    {activity.price}
+                  </span>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -307,13 +310,13 @@ const ActivityProfile = () => {
                 <div className="grid md:grid-cols-2 gap-8 items-center">
                   <div className="space-y-6">
                     <div className="inline-block bg-[#074a5b] text-white px-6 py-2 rounded-full text-sm font-semibold mb-4">
-                      In allen Atollen verfügbar
+                      In allen Inseln verfügbar
                     </div>
                     <h3 className="text-3xl font-bold text-[#074a5b] leading-tight">
-                      Erfahrung {activity.name} in jedem Atoll der Malediven
+                      Erfahrung {activity.name} in jedem Insel der Malediven
                     </h3>
                     <p className="text-lg text-gray-600 leading-relaxed">
-                      {activity.name} ist in jedem Atoll der Malediven verfügbar. Wählen Sie ein beliebiges Resort und tauchen Sie in dieses unglaubliche Erlebnis an Ihrem bevorzugten Standort ein.
+                      {activity.name} ist in jedem Insel der Malediven verfügbar. Wählen Sie ein beliebiges Resort und tauchen Sie in dieses unglaubliche Erlebnis an Ihrem bevorzugten Standort ein.
                     </p>
                     <div className="mt-8 border-t border-gray-100 pt-8">
                       <h4 className="text-xl font-semibold text-[#074a5b] mb-4">Über dieses Erlebnis</h4>
@@ -346,9 +349,12 @@ const ActivityProfile = () => {
                       />
                     </div>
                     <div className="absolute -bottom-6 -right-6 bg-white rounded-2xl shadow-xl p-4 max-w-xs">
-                      <div className="text-[#074a5b] font-semibold mb-1">beginnend mit</div>
-                      <div className="text-2xl font-bold text-[#1e809b]">${activity.price}</div>
-                      <div className="text-gray-500 text-sm">pro Person</div>
+                      {activity.price && typeof activity.price === 'string' && activity.price.trim() !== '' && activity.price !== 'N/A' && (
+                        <>
+                          <div className="text-[#074a5b] font-semibold mb-1">beginnend mit</div>
+                          <div className="text-2xl font-bold text-[#1e809b]">{activity.price}</div>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -358,10 +364,10 @@ const ActivityProfile = () => {
             <>
               <div className="text-center mb-12">
                 <h2 className="text-4xl font-bold mb-4" style={{ color: "#074a5b" }}>
-                  Malediven Atolle erkunden
+                  Malediven Insels erkunden
                 </h2>
                 <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                  Entdecken Sie einzigartige Unterkünfte und Aktivitäten in den wunderschönen Atollen der Malediven.
+                  Entdecken Sie einzigartige Unterkünfte und Aktivitäten in den wunderschönen Inselns der Malediven.
                 </p>
               </div>
               <div className="space-y-6">
