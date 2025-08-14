@@ -33,21 +33,27 @@ const ResortProfile = () => {
     const fetchResort = async () => {
       try {
         setLoading(true);
-        const resortResponse = await axios.get(`https://editable-travel-website1-rpfv.vercel.app/api/resorts/${id}`);
+        const resortResponse = await axios.get(`/api/resorts/${id}`);
         const data = resortResponse.data;
-        console.log('Resort API Response:', data);
+        // Use cover_images for hero, images for about slider
         const mappedResort = {
           ...data,
           price: data.rooms?.length > 0
-            ? `$${Math.min(...data.rooms.map((room) => room.pricePerNight || room.price_per_night || Infinity))}`
+            ? (() => {
+                const roomWithPrice = data.rooms.find((room) => room.price_per_night);
+                return roomWithPrice ? roomWithPrice.price_per_night : '';
+              })()
             : 'N/A',
-          media: data.images?.length > 0
-            ? data.images.map((url, index) => ({ url, type: 'image', caption: `Image ${index + 1}` }))
+          media: data.cover_images?.length > 0
+            ? data.cover_images.map((url, index) => ({ url, type: 'image', caption: `Cover Image ${index + 1}` }))
             : [{ url: data.cover_image || 'https://via.placeholder.com/800', type: 'image', caption: 'Cover Image' }],
+          aboutImages: data.images?.length > 0
+            ? data.images.map((url, index) => ({ url, type: 'image', caption: `Image ${index + 1}` }))
+            : [],
           rooms: data.rooms?.map((room) => ({
             ...room,
             name: room.type,
-            price: `$${room.pricePerNight || room.price_per_night || 'N/A'}`,
+            price: room.price_per_night || 'N/A',
             size: `${room.size_sqm || 'N/A'} sqm`,
             capacity: `${room.capacity?.adults || 0} Adults, ${room.capacity?.children || 0} Children`,
           })) || [],
@@ -55,7 +61,7 @@ const ResortProfile = () => {
         setResortData(mappedResort);
 
         // Fetch resorts in the same atoll
-        const allResortsResponse = await axios.get('https://editable-travel-website1-rpfv.vercel.app/api/resorts');
+        const allResortsResponse = await axios.get('/api/resorts');
         const allResorts = allResortsResponse.data;
         console.log('All Resorts API Response:', allResorts);
         const filteredResorts = allResorts
@@ -85,15 +91,21 @@ const ResortProfile = () => {
       const mappedResort = {
         ...state.item,
         price: state.item.rooms?.length > 0
-          ? `$${Math.min(...state.item.rooms.map((room) => room.pricePerNight || room.price_per_night || Infinity))}`
+          ? (() => {
+              const roomWithPrice = state.item.rooms.find((room) => room.price_per_night);
+              return roomWithPrice ? roomWithPrice.price_per_night : 'N/A';
+            })()
           : 'N/A',
-        media: state.item.images?.length > 0
-          ? state.item.images.map((url, index) => ({ url, type: 'image', caption: `Image ${index + 1}` }))
+        media: state.item.cover_images?.length > 0
+          ? state.item.cover_images.map((url, index) => ({ url, type: 'image', caption: `Cover Image ${index + 1}` }))
           : [{ url: state.item.cover_image || 'https://via.placeholder.com/800', type: 'image', caption: 'Cover Image' }],
+        aboutImages: state.item.images?.length > 0
+          ? state.item.images.map((url, index) => ({ url, type: 'image', caption: `Image ${index + 1}` }))
+          : [],
         rooms: state.item.rooms?.map((room) => ({
           ...room,
           name: room.type,
-          price: `$${room.pricePerNight || room.price_per_night || 'N/A'}`,
+          price: room.price_per_night || 'N/A',
           size: `${room.size_sqm || 'N/A'} sqm`,
           capacity: `${room.capacity?.adults || 0} Adults, ${room.capacity?.children || 0} Children`,
         })) || [],
@@ -102,7 +114,7 @@ const ResortProfile = () => {
 
       const fetchSameLocationResorts = async () => {
         try {
-          const response = await axios.get('https://editable-travel-website1-rpfv.vercel.app/api/resorts');
+          const response = await axios.get('/api/resorts');
           const allResorts = response.data;
           const filteredResorts = allResorts
             .filter((item) => item.atoll?._id === state.item.atoll?._id && item._id !== id && item.type === type)
@@ -188,7 +200,7 @@ const ResortProfile = () => {
 
   const handleInquirySubmit = async (submissionData) => {
     try {
-      const response = await axios.post('https://editable-travel-website1-rpfv.vercel.app/api/inquiries', submissionData);
+      const response = await axios.post('/api/inquiries', submissionData);
       console.log('Anfrage erfolgreich abgeschickt:', response.data);
       setShowInquiryModal(false);
       setSelectedRoom(null);
@@ -212,11 +224,15 @@ const ResortProfile = () => {
       {/* Hero Section with Image Gallery */}
       <section className="relative h-[700px] overflow-hidden">
         <div className="absolute inset-0">
-          <img
-            src={resortData.media[currentImageIndex].url}
-            alt={resortData.media[currentImageIndex].caption}
-            className="w-full h-full object-cover"
-          />
+          {resortData.media && resortData.media.length > 0 && resortData.media[currentImageIndex] ? (
+            <img
+              src={resortData.media[currentImageIndex].url}
+              alt={resortData.media[currentImageIndex].caption}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-2xl">No Image</div>
+          )}
         </div>
         <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/50 to-[#074a5b]/90"></div>
         <button
@@ -247,15 +263,18 @@ const ResortProfile = () => {
           <div className="flex flex-col sm:flex-row sm:items-center mb-3 sm:mb-6 text-base sm:text-2xl gap-1 sm:gap-0">
             <span className="flex items-center">
               <MapPin size={20} className="mr-2 sm:mr-3" />
-              <span className="font-semibold">{resortData.island || 'Insel'} Insel</span>
+            <span className="font-semibold text-[#b2e0ea] sm:text-[#fff]">{resortData.atoll?.name || 'Insel'} Insel</span>
             </span>
             <span className="hidden sm:inline mx-2">,</span>
-            <span className="font-semibold text-[#b2e0ea] sm:text-[#fff]">{resortData.atoll?.name || 'Atoll'}</span>
+           <span className="font-semibold">{resortData.island || 'Atolle'}</span>
+
           </div>
           <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-8">
-            <div className="bg-[#1e809b]/80 backdrop-blur-sm px-4 sm:px-8 py-1.5 sm:py-2 rounded-full font-semibold text-base sm:text-xl">
-              aus {resortData.price}
-            </div>
+            {resortData.price && typeof resortData.price === 'string' && resortData.price.trim() !== '' && resortData.price !== 'N/A' && (
+              <div className="bg-[#1e809b]/80 backdrop-blur-sm px-4 sm:px-8 py-1.5 sm:py-2 rounded-full font-semibold text-base sm:text-xl">
+                aus {resortData.price}
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -267,6 +286,88 @@ const ResortProfile = () => {
             <div className="lg:col-span-2">
               <div className="mb-12">
                 <h2 className="text-3xl font-bold mb-6 text-[#074a5b]">Über dieses {type.charAt(0).toUpperCase() + type.slice(1)}</h2>
+                {/* About Images Slider */}
+            {resortData.aboutImages && resortData.aboutImages.length >= 0 && (
+              <div className="mb-8">
+                {resortData.aboutImages.length === 0 ? (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 h-80">
+                    <div className="relative rounded-2xl overflow-hidden shadow-lg group cursor-pointer col-span-2 md:col-span-1"
+                        onClick={() => setCurrentImageIndex(0)}>
+                      <img
+                        src={resortData.aboutImages[0].url}
+                        alt={resortData.aboutImages[0].caption}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                    </div>
+                    <div className="grid grid-rows-2 gap-4">
+                      {resortData.aboutImages.slice(1, 3).map((image, idx) => (
+                        <div key={idx + 1} className="relative rounded-2xl overflow-hidden shadow-lg group cursor-pointer"
+                            onClick={() => setCurrentImageIndex(idx + 1)}>
+                          <img
+                            src={image.url}
+                            alt={image.caption}
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* Main Image Display */}
+                    <div className="relative w-full h-96 rounded-2xl overflow-hidden shadow-xl">
+                      <img
+                        src={resortData.aboutImages[currentImageIndex % resortData.aboutImages.length].url}
+                        alt={resortData.aboutImages[currentImageIndex % resortData.aboutImages.length].caption}
+                        className="w-full h-full object-cover transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent"></div>
+                      {/* Navigation Arrows */}
+                      <button
+                        onClick={() => setCurrentImageIndex((prev) => (prev - 1 + resortData.aboutImages.length) % resortData.aboutImages.length)}
+                        className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110"
+                      >
+                        <ChevronLeft size={24} />
+                      </button>
+                      <button
+                        onClick={() => setCurrentImageIndex((prev) => (prev + 1) % resortData.aboutImages.length)}
+                        className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110"
+                      >
+                        <ChevronRight size={24} />
+                      </button>
+                      {/* Image Counter */}
+                      <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm font-medium">
+                        {(currentImageIndex % resortData.aboutImages.length) + 1} / {resortData.aboutImages.length}
+                      </div>
+                    </div>
+                    <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                      {resortData.aboutImages.map((image, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setCurrentImageIndex(idx)}
+                          className={`relative flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden shadow-md transition-all duration-300 ${
+                            idx === (currentImageIndex % resortData.aboutImages.length)
+                              ? 'ring-2 ring-[#1e809b] ring-offset-2 scale-105'
+                              : 'hover:scale-105 opacity-70 hover:opacity-100'
+                          }`}
+                        >
+                          <img
+                            src={image.url}
+                            alt={`Thumbnail ${idx + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                          {idx === (currentImageIndex % resortData.aboutImages.length) && (
+                            <div className="absolute inset-0 bg-[#1e809b]/20"></div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
                 <p className="text-gray-700 text-lg leading-relaxed mb-4">{resortData.description || 'Keine Beschreibung verfügbar'}</p>
                 <p className="text-gray-600 leading-relaxed">{resortData.description || 'Entdecken Sie den Charme dieser Unterkunft.'}</p>
               </div>
@@ -282,7 +383,7 @@ const ResortProfile = () => {
                 </div>
               </div>
               <div className="mb-12">
-                <h3 className="text-2xl font-bold mb-6 text-[#074a5b]">Verfügbare Unterkünfte</h3>
+                <h3 className="text-2xl font-bold mb-6 text-[#074a5b]">Verfügbare Zimmerkategorien</h3>
                 <div className="overflow-x-auto">
                   <div className="flex gap-6 px-2 py-4 md:px-4 flex-nowrap">
                     {resortData.rooms.map((room) => (
@@ -301,8 +402,9 @@ const ResortProfile = () => {
                           <div className="flex justify-between items-start mb-2">
                             <h4 className="text-lg font-bold text-[#074a5b]">{room.name}</h4>
                             <div className="text-right">
-                              <div className="text-xl font-bold text-[#1e809b]">{room.price}</div>
-                              <div className="text-sm text-gray-500">Pro Nacht</div>
+                              {room.price && typeof room.price === 'string' && room.price.trim() !== '' && room.price !== 'N/A' && (
+                                <div className="text-xl font-bold text-[#1e809b]">{room.price}</div>
+                              )}
                             </div>
                           </div>
                           <div className="flex gap-2 text-sm text-gray-600">
@@ -353,16 +455,13 @@ const ResortProfile = () => {
       </div>
       
       {/* Pricing */}
-      <div className="mb-6">
-        <div className="flex items-baseline gap-2 mb-2">
-          <span className="text-3xl font-bold text-[#1e809b]">{resortData.price}</span>
-          <span className="text-sm text-gray-500">Pro Nacht</span>
+      {resortData.price && typeof resortData.price === 'string' && resortData.price.trim() !== '' && resortData.price !== 'N/A' && (
+        <div className="mb-6">
+          <div className="flex items-baseline gap-2 mb-2">
+            <span className="text-3xl font-bold text-[#1e809b]">{resortData.price}</span>
+          </div>
         </div>
-        <div className="inline-flex items-center bg-gradient-to-r from-blue-100/60 to-cyan-100/50 text-[#1e809b] px-3 py-1 rounded-full text-sm font-medium border border-blue-200/30">
-          <span className="w-2 h-2 bg-gradient-to-r from-[#1e809b] to-cyan-500 rounded-full mr-2"></span>
-          Bester verfügbarer Preis
-        </div>
-      </div>
+      )}
       
       {/* Location */}
       <div className="mb-6 p-4 bg-gradient-to-br from-white/90 via-blue-50/80 to-cyan-50/60 rounded-xl border border-blue-200/40 shadow-sm">
@@ -370,15 +469,15 @@ const ResortProfile = () => {
           <MapPin size={18} className="mr-2 text-[#1e809b]" />
           <span className="text-sm font-medium text-gray-600">Standort</span>
         </div>
-        <div className="text-lg font-semibold text-[#074a5b]">
-          {resortData.island || 'Insel'} Insel
-        </div>
         <div className="text-gray-600">
-          {resortData.atoll?.name || 'Atoll'}
+          {resortData.atoll?.name || 'Insel'}
+        </div>
+        <div className="text-lg font-semibold text-[#074a5b]">
+          {resortData.island|| 'Atoll'} Atoll
         </div>
       </div>
       
-      {/* Available Rooms - Full Width */}
+      {/* Available Rooms */}
       <div className="w-full mb-4">
         <div className="text-center p-6 bg-gradient-to-br from-blue-50/70 via-cyan-50/60 to-sky-50/80 rounded-xl border border-blue-200/40 shadow-sm">
           <div className="text-3xl font-bold bg-gradient-to-r from-[#1e809b] via-blue-600 to-cyan-500 bg-clip-text text-transparent mb-2">
@@ -515,7 +614,7 @@ const ResortProfile = () => {
           onClick={handleBackdropClick}
         >
           <div
-            className="bg-white rounded-2xl max-w-4xl w-full max-h-[95vh] overflow-y-auto room-modal-mobile"
+            className="bg-white rounded-2xl max-w-4xl w-full max-h-[92vh] overflow-y-auto room-modal-mobile"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="relative">
@@ -570,8 +669,9 @@ const ResortProfile = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-lg sm:text-3xl font-bold text-[#1e809b]">{showRoomModal.price}</div>
-                    <div className="text-xs sm:text-base text-gray-500">pro Nacht</div>
+                    {showRoomModal.price && typeof showRoomModal.price === 'string' && showRoomModal.price.trim() !== '' && showRoomModal.price !== 'N/A' && (
+                      <div className="text-lg sm:text-3xl font-bold text-[#1e809b]">{showRoomModal.price}</div>
+                    )}
                   </div>
                 </div>
                 <p className="text-gray-700 text-xs sm:text-lg mb-3 sm:mb-6 leading-relaxed">{showRoomModal.description}</p>
