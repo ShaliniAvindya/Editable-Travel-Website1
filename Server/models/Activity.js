@@ -16,6 +16,10 @@ const ActivitySiteSchema = new mongoose.Schema({
 });
 
 const ActivitySchema = new mongoose.Schema({
+  status: {
+    type: Boolean,
+    default: true
+  },
   name: {
     type: String,
     required: true
@@ -42,9 +46,10 @@ const ActivitySchema = new mongoose.Schema({
     }
   ],
   price: {
-    type: Number,
-    required: true
+    type: String,
+    default: null
   },
+
   activity_sites: [ActivitySiteSchema]
 }, { timestamps: true });
 
