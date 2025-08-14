@@ -21,8 +21,8 @@ const Activities = () => {
       try {
         setLoading(true);
         const [activitiesResponse, contentResponse] = await Promise.all([
-          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/activities'),
-          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/activities'),
+          axios.get('/api/activities'),
+          axios.get('/api/ui-content/activities'),
         ]);
         console.log('API Response (Activities):', activitiesResponse.data);
         console.log('API Response (Content):', contentResponse.data);
@@ -94,8 +94,7 @@ const Activities = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
->
+      <div className="min-h-screen flex items-center justify-center" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
         <p className="text-xl text-[#074a5b]">Ladeaktivitäten...</p>
       </div>
     );
@@ -181,7 +180,7 @@ const Activities = () => {
                             key={category.id}
                             value={category.id}
                             className="bg-[#074a5b] text-white font-medium"
-                           style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
+                            style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                           >
                             {category.name} ({category.count})
                           </option>
@@ -237,9 +236,11 @@ const Activities = () => {
                         <Share2 className="w-4 h-4 text-gray-600" />
                       </button>
                     </div>
-                    <div className="absolute bottom-4 right-4 bg-[#1e809b] text-white px-4 py-2 rounded-full shadow-lg">
-                      <span className="font-bold text-lg">${activity.price}</span>
-                    </div>
+                    {activity.price && typeof activity.price === 'string' && activity.price.trim() !== '' && activity.price !== 'N/A' && (
+                      <div className="absolute bottom-4 right-4 bg-[#1e809b] text-white px-4 py-2 rounded-full shadow-lg">
+                        <span className="font-bold text-lg">{activity.price}</span>
+                      </div>
+                    )}
                   </div>
                 )}
                 <div className="p-6">
