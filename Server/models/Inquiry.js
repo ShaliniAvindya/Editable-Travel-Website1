@@ -29,7 +29,21 @@ const InquirySchema = new mongoose.Schema({
   },
   from_date: Date,
   to_date: Date,
-  children: [Number],
+  adults: {
+    type: Number,
+    default: 1,
+    min: 1,
+  },
+  children: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
+  infants: {
+    type: Number,
+    default: 0,
+    min: 0,
+  },
   travellers: Number,
   country: String,
   buttonType: {
