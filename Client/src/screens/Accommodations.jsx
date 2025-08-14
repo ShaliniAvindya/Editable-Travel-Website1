@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Coffee, Waves, Camera, Filter, Search, ChevronDown } from 'lucide-react';
+import { MapPin, Coffee, Waves, Camera, Filter, Search, ChevronDown, TreePalm, Sailboat } from 'lucide-react';
 import axios from 'axios';
 
 const Accommodations = () => {
@@ -22,8 +22,8 @@ const Accommodations = () => {
       try {
         setLoading(true);
         const [resortsResponse, contentResponse] = await Promise.all([
-          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/resorts'),
-          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/accommodations'),
+          axios.get('/api/resorts'),
+          axios.get('/api/ui-content/accommodations'),
         ]);
         console.log('API Response (Resorts):', resortsResponse.data);
         console.log('API Response (Content):', contentResponse.data);
@@ -74,8 +74,8 @@ const Accommodations = () => {
 
       const lowestPrice =
         item.rooms && item.rooms.length > 0
-          ? Math.min(...item.rooms.map((room) => room.price_per_night || Infinity))
-          : Infinity;
+          ? Math.min(...item.rooms.map((room) => room.price_per_night || 'N/A'))
+          : 'N/A';
       const matchesPrice =
         priceFilter === 'all' ||
         (priceFilter === 'budget' && lowestPrice < 200) ||
@@ -160,9 +160,9 @@ const Accommodations = () => {
           <div className="max-w-7xl mx-auto px-4 py-4">
             <div className="flex flex-wrap justify-center gap-4">
               {[
-                { key: 'hotel', label: hotelContent.title, icon: Coffee },
+                { key: 'hotel', label: hotelContent.title, icon: TreePalm },
                 { key: 'resort', label: resortContent.title, icon: Waves },
-                { key: 'adventure', label: adventureContent.title, icon: Camera },
+                { key: 'adventure', label: adventureContent.title, icon: Sailboat },
               ]
                 .filter(({ label }) => label) // Only show tabs with titles
                 .map(({ key, label, icon: Icon }) => (
@@ -176,7 +176,7 @@ const Accommodations = () => {
                     }`}
                   >
                     <Icon size={20} className="mr-2" />
-                    {label}
+                    <span translate="no">{label}</span>
                   </button>
                 ))}
             </div>
@@ -267,25 +267,32 @@ const Accommodations = () => {
                 }`}
                 style={{ transitionDelay: `${index * 100}ms` }}
               >
-                {(item.mainImage || item.images?.[0]) && (
+                {(item.cover_images?.[0] || item.mainImage || item.images?.[0]) && (
                   <div className="relative h-64 overflow-hidden">
                     <img
-                      src={item.mainImage || item.images[0]}
+                      src={item.cover_images?.[0] || item.mainImage || item.images[0]}
                       alt={item.name || 'Accommodation'}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                       onError={(e) => {
-                        console.warn(`Failed to load image for ${item.name}: ${item.mainImage || item.images[0]}`);
-                        e.target.style.display = 'none'; // Hide broken image
+                        console.warn(`Failed to load image for ${item.name}: ${item.cover_images?.[0] || item.mainImage || item.images[0]}`);
+                        e.target.style.display = 'none';
                       }}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    <div className="absolute top-4 left-4 bg-[#1e809b]/90 backdrop-blur-sm px-3 py-1 rounded-full shadow-lg">
-                      <span className="text-white text-sm font-semibold">
-                        {item.rooms?.length > 0
-                          ? `$${Math.min(...item.rooms.map((room) => room.price_per_night || Infinity))}/nacht`
-                          : 'Price N/A'}
-                      </span>
-                    </div>
+                    {(() => {
+                      let price = '';
+                      if (item.rooms?.length > 0) {
+                        const validPrices = item.rooms
+                          .map((room) => room.price_per_night)
+                          .filter((p) => p && typeof p === 'string' && p.trim() !== '' && p !== null && p !== undefined && p !== 'N/A');
+                        price = validPrices.length > 0 ? validPrices[0] : '';
+                      }
+                      return price ? (
+                        <div className="absolute top-4 left-4 bg-[#1e809b]/90 backdrop-blur-sm px-3 py-1 rounded-full shadow-lg">
+                          <span className="text-white text-sm font-semibold">{price}</span>
+                        </div>
+                      ) : null;
+                    })()}
                   </div>
                 )}
                 <div className="p-6">
@@ -295,7 +302,7 @@ const Accommodations = () => {
                   {(item.island || item.atoll?.name) && (
                     <p className="text-gray-600 mb-3 flex items-center">
                       <MapPin size={16} className="mr-2 text-[#1e809b]" />
-                      {item.island || ''} Insel, {item.atoll?.name || ''}
+                       {item.atoll?.name || ''} , {item.island || ''} 
                     </p>
                   )}
                   {item.description && (
