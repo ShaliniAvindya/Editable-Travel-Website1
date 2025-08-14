@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
+import { FaRegClone, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import { MapPin, X } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -11,7 +12,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md">
-        <h3 className="text-lg font-semibold text-[#074a5b] mb-4" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+        <h3 className="text-lg font-semibold text-[#074a5b] mb-4" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
           {title}
         </h3>
         <p className="text-gray-600 mb-6">{message}</p>
@@ -19,14 +20,14 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
           <button
             onClick={onClose}
             className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-xl font-semibold transition-all"
-            style={{ fontFamily: 'Comic Sans MS, cursive' }}
+            style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
             className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl font-semibold transition-all"
-            style={{ fontFamily: 'Comic Sans MS, cursive' }}
+            style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
           >
             Delete
           </button>
@@ -58,6 +59,7 @@ const AtollManagement = () => {
   const [uploading, setUploading] = useState(false);
   const [modal, setModal] = useState({ isOpen: false, type: '', id: null, name: '' });
   const [visibleItems, setVisibleItems] = useState({});
+  const [notification, setNotification] = useState('');
 
   // Check if user is authenticated and admin
   useEffect(() => {
@@ -89,10 +91,10 @@ const AtollManagement = () => {
         setLoading(true);
         const cacheBuster = new Date().getTime();
         const [atollsResponse, resortsResponse] = await Promise.all([
-          api.get(`https://editable-travel-website1-rpfv.vercel.app/api/atolls?_cb=${cacheBuster}`),
-          api.get(`https://editable-travel-website1-rpfv.vercel.app/api/resorts?_cb=${cacheBuster}`),
+          api.get(`/api/atolls?_cb=${cacheBuster}`),
+          api.get(`/api/resorts?_cb=${cacheBuster}`),
         ]);
-        console.log('Fetched atolls:', atollsResponse.data.map(a => ({
+        console.log('Fetched Islands:', atollsResponse.data.map(a => ({
           _id: a._id,
           name: a.name,
           accommodations: a.accommodations?.length || 0,
@@ -104,8 +106,8 @@ const AtollManagement = () => {
         })));
         setAtolls(atollsResponse.data || []);
         setResorts(resortsResponse.data || []);
-        if (!atollsResponse.data.length) setError('No atolls found');
-        if (!resortsResponse.data.length) setError('No resorts found');
+        if (!atollsResponse.data.length) setError('No Islands found');
+        if (!resortsResponse.data.length) setError('No Resorts found');
       } catch (err) {
         console.error('Fetch error:', err);
         setError(`Failed to load data: ${err.response?.data?.msg || err.message}`);
@@ -202,12 +204,12 @@ const AtollManagement = () => {
     e.preventDefault();
     try {
       if (!formData.name) {
-        setError('Atoll name is required');
+        setError('Island name is required');
         return;
       }
       if (selectedAtoll && !isValidId(selectedAtoll._id)) {
-        console.error('Invalid atoll ID:', selectedAtoll._id);
-        setError('Invalid atoll ID');
+        console.error('Invalid island ID:', selectedAtoll._id);
+        setError('Invalid island ID');
         return;
       }
       const data = {
@@ -221,45 +223,45 @@ const AtollManagement = () => {
       };
       let response;
       if (selectedAtoll) {
-        response = await api.put(`https://editable-travel-website1-rpfv.vercel.app/api/atolls/${selectedAtoll._id}`, data);
+        response = await api.put(`/api/atolls/${selectedAtoll._id}`, data);
         setAtolls(atolls.map((a) => (a._id === selectedAtoll._id ? response.data : a)));
         setSelectedAtoll({ ...response.data, accommodations: selectedAtoll.accommodations }); // Preserve accommodations
-        setSuccess('Atoll updated successfully');
+        setSuccess('Island updated successfully');
       } else {
-        response = await api.post('https://editable-travel-website1-rpfv.vercel.app/api/atolls', data);
+        response = await api.post('/api/atolls', data);
         setAtolls([...atolls, response.data]);
-        setSuccess('Atoll created successfully');
+        setSuccess('Island created successfully');
       }
       resetForm();
     } catch (err) {
-      console.error('Atoll submit error:', err);
-      setError(`Failed to save atoll: ${err.response?.data?.data?.msg || err.message}`);
+      console.error('Island submit error:', err);
+      setError(`Failed to save island: ${err.response?.data?.data?.msg || err.message}`);
     }
   };
 
   const handleAccommodationSubmit = async (e) => {
     e.preventDefault();
     if (!selectedAtoll) {
-      setError('Please select an atoll first');
+      setError('Please select an Island first');
       return;
     }
     try {
       const { accommodationId } = accommodationForm;
       if (!isValidId(selectedAtoll._id) || !isValidId(accommodationId)) {
         console.error('Invalid IDs:', { atollId: selectedAtoll._id, accommodationId });
-        setError('Invalid atoll or resort ID');
+        setError('Invalid Island or resort ID');
         return;
       }
-      const resortResponse = await api.get(`https://editable-travel-website1-rpfv.vercel.app/api/resorts/${accommodationId}`);
+      const resortResponse = await api.get(`/api/resorts/${accommodationId}`);
       if (!resortResponse.data) {
         setError('Selected resort does not exist');
         return;
       }
-      await api.post(`https://editable-travel-website1-rpfv.vercel.app/api/atolls/${selectedAtoll._id}/accommodations`, {
+      await api.post(`/api/atolls/${selectedAtoll._id}/accommodations`, {
         accommodationId,
       });
       // Fetch updated accommodations
-      const updatedAtollResponse = await api.get(`https://editable-travel-website1-rpfv.vercel.app/api/resorts/byAtoll/${selectedAtoll._id}`);
+      const updatedAtollResponse = await api.get(`/api/resorts/byAtoll/${selectedAtoll._id}`);
       const updatedAccommodations = updatedAtollResponse.data || [];
       console.log('Updated accommodations after adding:', updatedAccommodations.map(acc => ({
         _id: acc._id,
@@ -279,8 +281,8 @@ const AtollManagement = () => {
 
   const handleDeleteAtoll = (id, name) => {
     if (!isValidId(id)) {
-      console.error('Invalid atoll ID:', id);
-      setError('Invalid atoll ID');
+      console.error('Invalid Island ID:', id);
+      setError('Invalid Island ID');
       return;
     }
     setModal({
@@ -294,7 +296,7 @@ const AtollManagement = () => {
   const handleDeleteAccommodation = (accommodationId, accommodationName) => {
     if (!selectedAtoll?._id || !isValidId(accommodationId)) {
       console.error('Invalid IDs:', { atollId: selectedAtoll?._id, accommodationId });
-      setError('Invalid atoll or accommodation ID');
+      setError('Invalid Island or accommodation ID');
       return;
     }
     setModal({
@@ -309,31 +311,28 @@ const AtollManagement = () => {
     try {
       if (modal.type === 'atoll') {
         if (!isValidId(modal.id)) {
-          console.error('Invalid atoll ID:', modal.id);
-          setError('Invalid atoll ID');
+          console.error('Invalid Island ID:', modal.id);
+          setError('Invalid Island ID');
           return;
         }
-        await api.delete(`https://editable-travel-website1-rpfv.vercel.app/api/atolls/${modal.id}`);
-        setAtolls(atolls.filter((a) => a._id !== modal.id));
+        await api.delete(`/api/atolls/${modal.id}`);
+        const atollsResponse = await api.get('/api/atolls');
+        setAtolls(atollsResponse.data || []);
         setSelectedAtoll(null);
-        setSuccess('Atoll deleted successfully');
+        setSuccess('Island deleted successfully');
       } else if (modal.type === 'accommodation') {
         if (!isValidId(selectedAtoll._id) || !isValidId(modal.id)) {
           console.error('Invalid IDs:', { atollId: selectedAtoll._id, accommodationId: modal.id });
-          setError('Invalid atoll or accommodation ID');
+          setError('Invalid Island or accommodation ID');
           return;
         }
-        await api.delete(`https://editable-travel-website1-rpfv.vercel.app/api/atolls/${selectedAtoll._id}/accommodations/${modal.id}`);
-        const updatedAtollResponse = await api.get(`https://editable-travel-website1-rpfv.vercel.app/api/resorts/byAtoll/${selectedAtoll._id}`);
+        await api.delete(`/api/atolls/${selectedAtoll._id}/accommodations/${modal.id}`);
+        const updatedAtollResponse = await api.get(`/api/resorts/byAtoll/${selectedAtoll._id}`);
         const updatedAccommodations = updatedAtollResponse.data || [];
-        console.log('Updated accommodations after deletion:', updatedAccommodations.map(acc => ({
-          _id: acc._id,
-          name: acc.name,
-          island: acc.island,
-        })));
         const updatedAtoll = { ...selectedAtoll, accommodations: updatedAccommodations };
         setSelectedAtoll(updatedAtoll);
-        setAtolls(atolls.map((a) => (a._id === selectedAtoll._id ? updatedAtoll : a)));
+        const atollsResponse = await api.get('/api/atolls');
+        setAtolls(atollsResponse.data || []);
         setSuccess('Accommodation removed successfully');
       }
     } catch (err) {
@@ -350,21 +349,21 @@ const AtollManagement = () => {
 
   const handleEditAtoll = async (atoll) => {
     if (!isValidId(atoll._id)) {
-      console.error('Invalid atoll ID:', atoll._id);
-      setError('Invalid atoll ID');
+      console.error('Invalid Island ID:', atoll._id);
+      setError('Invalid Island ID');
       return;
     }
     try {
-      console.log('Fetching atoll and accommodations for edit:', atoll._id);
-      const atollResponse = await api.get(`https://editable-travel-website1-rpfv.vercel.app/api/atolls/${atoll._id}`);
+      console.log('Fetching island and accommodations for edit:', atoll._id);
+      const atollResponse = await api.get(`/api/atolls/${atoll._id}`);
       const fetchedAtoll = atollResponse.data;
       if (!fetchedAtoll) {
-        throw new Error('Atoll not found');
+        throw new Error('Island not found');
       }
       // Fetch accommodations using the working endpoint
-      const accommodationsResponse = await api.get(`https://editable-travel-website1-rpfv.vercel.app/api/resorts/byAtoll/${atoll._id}`);
+      const accommodationsResponse = await api.get(`/api/resorts/byAtoll/${atoll._id}`);
       const accommodations = accommodationsResponse.data || [];
-      console.log('Fetched atoll data:', {
+      console.log('Fetched island data:', {
         _id: fetchedAtoll._id,
         name: fetchedAtoll.name,
         accommodations: accommodations.map(acc => ({
@@ -388,8 +387,8 @@ const AtollManagement = () => {
         amenities: fetchedAtoll.amenities?.join(', ') || '',
       });
     } catch (err) {
-      console.error('Error fetching atoll for edit:', err);
-      setError(`Failed to load atoll data: ${err.response?.data?.data?.msg || err.message}`);
+      console.error('Error fetching Island for edit:', err);
+      setError(`Failed to load Island data: ${err.response?.data?.data?.msg || err.message}`);
     }
   };
 
@@ -412,18 +411,42 @@ const AtollManagement = () => {
     setError('');
   };
 
+  // Duplicate Atoll
+  const handleDuplicateAtoll = async (id) => {
+    try {
+      await api.post(`/api/atolls/duplicate/${id}`);
+      setNotification('Island duplicated successfully!');
+      const atollsResponse = await api.get('/api/atolls');
+      setAtolls(atollsResponse.data || []);
+      setTimeout(() => setNotification(''), 2000);
+    } catch (err) {
+      setError('Failed to duplicate island');
+    }
+  };
+
+  // Toggle Atoll Status
+  const handleToggleStatus = async (id, currentStatus) => {
+    try {
+      await api.patch(`/api/atolls/status/${id}`, { status: !currentStatus });
+      const atollsResponse = await api.get('/api/atolls');
+      setAtolls(atollsResponse.data || []);
+    } catch (err) {
+      setError('Failed to update status');
+    }
+  };
+
   if (loading || !user?.isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <p className="text-xl text-[#074a5b]" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
-          Loading atolls and resorts...
+        <p className="text-xl text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
+          Loading Islands and resorts...
         </p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+    <div className="min-h-screen bg-white" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
       <ConfirmationModal
         isOpen={modal.isOpen}
         onClose={closeModal}
@@ -432,29 +455,34 @@ const AtollManagement = () => {
         message={`Are you sure you want to delete ${modal.name}? This action cannot be undone.`}
       />
       <div className="container mx-auto p-6">
-        <h1 className="text-4xl font-bold mb-8 text-[#074a5b]" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
-          Atoll Management
+        <h1 className="text-4xl font-bold mb-8 text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
+          Island Management
         </h1>
 
         {error && (
-          <div className="bg-red-100 text-red-700 p-4 mb-6 rounded-xl" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+          <div className="bg-red-100 text-red-700 p-4 mb-6 rounded-xl" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
             {error}
           </div>
         )}
         {success && (
-          <div className="bg-green-100 text-green-700 p-4 mb-6 rounded-xl" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+          <div className="bg-green-100 text-green-700 p-4 mb-6 rounded-xl" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
             {success}
+          </div>
+        )}
+        {notification && (
+          <div className="fixed top-6 right-6 z-50 bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg animate-fade-in-out" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
+            {notification}
           </div>
         )}
 
         <div className="mb-12 p-6 bg-white rounded-2xl shadow-lg">
-          <h2 className="text-2xl font-semibold mb-6 text-[#074a5b]" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
-            {selectedAtoll ? 'Edit Atoll' : 'Add New Atoll'}
+          <h2 className="text-2xl font-semibold mb-6 text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
+            {selectedAtoll ? 'Edit Island' : 'Add New Island'}
           </h2>
           <form onSubmit={handleAtollSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
-                Atoll Name
+              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
+                Island Name
               </label>
               <input
                 type="text"
@@ -462,11 +490,11 @@ const AtollManagement = () => {
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
                 required
-                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
               />
             </div>
             <div>
-              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                 Amenities (comma-separated)
               </label>
               <input
@@ -474,11 +502,11 @@ const AtollManagement = () => {
                 value={formData.amenities}
                 onChange={(e) => setFormData({ ...formData, amenities: e.target.value })}
                 className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
-                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
               />
             </div>
             <div className="col-span-1">
-              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                 Main Image
               </label>
               <div className="flex items-center">
@@ -488,10 +516,10 @@ const AtollManagement = () => {
                   onChange={(e) => handleImageUpload(e, true)}
                   className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12"
                   disabled={uploading}
-                  style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                  style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                 />
                 {uploading && (
-                  <span className="ml-2 text-gray-600" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                  <span className="ml-2 text-gray-600" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                     Uploading...
                   </span>
                 )}
@@ -515,7 +543,7 @@ const AtollManagement = () => {
               )}
             </div>
             <div className="col-span-1">
-              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                 Additional Media
               </label>
               <div className="flex items-center">
@@ -526,10 +554,10 @@ const AtollManagement = () => {
                   onChange={(e) => handleImageUpload(e)}
                   className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12"
                   disabled={uploading}
-                  style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                  style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                 />
                 {uploading && (
-                  <span className="ml-2 text-gray-600" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                  <span className="ml-2 text-gray-600" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                     Uploading...
                   </span>
                 )}
@@ -555,14 +583,14 @@ const AtollManagement = () => {
               </div>
             </div>
             <div className="col-span-2">
-              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                 Description
               </label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none w-full h-24"
-                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
               />
             </div>
             <div className="col-span-2 flex gap-4">
@@ -570,9 +598,9 @@ const AtollManagement = () => {
                 type="submit"
                 className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300"
                 disabled={uploading}
-                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
               >
-                {selectedAtoll ? 'Update Atoll' : 'Add Atoll'}
+                {selectedAtoll ? 'Update Island' : 'Add Island'}
               </button>
               {selectedAtoll && (
                 <button
@@ -580,7 +608,7 @@ const AtollManagement = () => {
                   onClick={resetForm}
                   className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-xl font-semibold transition-all duration-300"
                   disabled={uploading}
-                  style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                  style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                 >
                   Cancel
                 </button>
@@ -590,8 +618,8 @@ const AtollManagement = () => {
         </div>
 
         <div className="mb-12">
-          <h2 className="text-2xl font-semibold mb-6 text-[#074a5b]" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
-            Atolls
+          <h2 className="text-2xl font-semibold mb-6 text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
+            Islands
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {atolls.map((atoll) => (
@@ -613,10 +641,10 @@ const AtollManagement = () => {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                 </div>
                 <div className="p-6">
-                  <h3 className="text-xl font-bold mb-2 text-[#074a5b] hover:text-blue-600 transition-colors" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                  <h3 className="text-xl font-bold mb-2 text-[#074a5b] hover:text-blue-600 transition-colors" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                     {atoll.name}
                   </h3>
-                  <p className="text-gray-600 mb-3 flex items-center" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                  <p className="text-gray-600 mb-3 flex items-center" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                     <MapPin size={16} className="mr-2 text-[#074a5b]" />
                     {atoll.accommodations?.length || 0} Accommodations
                   </p>
@@ -624,23 +652,32 @@ const AtollManagement = () => {
                     <button
                       onClick={() => handleEditAtoll(atoll)}
                       className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-xl font-semibold transition-all"
-                      style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                      style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => handleDeleteAtoll(atoll._id, atoll.name)}
                       className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl font-semibold transition-all"
-                      style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                      style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                     >
                       Delete
                     </button>
                     <button
-                      onClick={() => handleEditAtoll(atoll)}
-                      className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl font-semibold transition-all"
-                      style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                      title="Duplicate Island"
+                      onClick={() => handleDuplicateAtoll(atoll._id)}
+                      className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-xl font-semibold transition-all"
+                      style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                     >
-                      Manage Accommodations
+                      <FaRegClone size={18} />
+                    </button>
+                    <button
+                      title={atoll.status ? 'Set Inactive' : 'Set Active'}
+                      onClick={() => handleToggleStatus(atoll._id, atoll.status)}
+                      className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-xl font-semibold transition-all"
+                      style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
+                    >
+                      {atoll.status ? <FaToggleOn color="green" size={22} /> : <FaToggleOff color="gray" size={22} />}
                     </button>
                   </div>
                 </div>
@@ -651,12 +688,12 @@ const AtollManagement = () => {
 
         {selectedAtoll && (
           <div className="p-6 bg-white rounded-2xl shadow-lg">
-            <h2 className="text-2xl font-semibold mb-6 text-[#074a5b]" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+            <h2 className="text-2xl font-semibold mb-6 text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
               Manage Accommodations for {selectedAtoll.name}
             </h2>
             <form onSubmit={handleAccommodationSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
-                <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                   Resort
                 </label>
                 <select
@@ -664,7 +701,7 @@ const AtollManagement = () => {
                   onChange={(e) => setAccommodationForm({ ...accommodationForm, accommodationId: e.target.value })}
                   className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
                   required
-                  style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                  style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                 >
                   <option value="">Select Resort</option>
                   {resorts
@@ -683,14 +720,14 @@ const AtollManagement = () => {
                 <button
                   type="submit"
                   className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300"
-                  style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                  style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                 >
                   Add Accommodation
                 </button>
               </div>
             </form>
 
-            <h3 className="text-xl font-semibold mb-6 text-[#074a5b]" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+            <h3 className="text-xl font-semibold mb-6 text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
               Accommodations
             </h3>
             {selectedAtoll.accommodations?.length > 0 ? (
@@ -704,17 +741,17 @@ const AtollManagement = () => {
                       visibleItems[accommodation._id] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
                     }`}
                   >
-                    <h4 className="text-lg font-bold mb-2 text-[#074a5b]" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                    <h4 className="text-lg font-bold mb-2 text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                       {accommodation.name || 'Unnamed Resort'}
                     </h4>
-                    <p className="text-gray-600" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                    <p className="text-gray-600" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                       Island: {accommodation.island || 'N/A'}
                     </p>
                     <div className="flex gap-3 mt-4">
                       <button
                         onClick={() => handleDeleteAccommodation(accommodation._id, accommodation.name)}
                         className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl font-semibold transition-all"
-                        style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                        style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                       >
                         Remove
                       </button>
@@ -723,8 +760,8 @@ const AtollManagement = () => {
                 ))}
               </div>
             ) : (
-              <p className="text-gray-600 text-sm" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
-                No accommodations available for this atoll.
+              <p className="text-gray-600 text-sm" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
+                No accommodations available for this island.
               </p>
             )}
           </div>
