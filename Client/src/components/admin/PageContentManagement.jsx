@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
-import { X, Save, Trash2, Download } from 'lucide-react';
+import { X, Save, Trash2, Download, Youtube, Music2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import ReactQuill from 'react-quill';
@@ -14,22 +14,22 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md">
-        <h3 className="text-lg font-semibold text-[#074a5b] mb-4" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+        <h3 className="text-lg font-semibold text-[#074a5b] mb-4" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
           {title}
         </h3>
-        <p className="text-gray-600 mb-6" style={{ fontFamily: 'Comic Sans MS, cursive' }}>{message}</p>
+        <p className="text-gray-600 mb-6" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>{message}</p>
         <div className="flex justify-end gap-4">
           <button
             onClick={onClose}
             className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-xl font-semibold transition-all"
-            style={{ fontFamily: 'Comic Sans MS, cursive' }}
+            style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
             className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl font-semibold transition-all"
-            style={{ fontFamily: 'Comic Sans MS, cursive' }}
+            style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
           >
             Delete
           </button>
@@ -58,6 +58,8 @@ const PageContentManagement = () => {
     addressLabel: '',
     facebook: '',
     instagram: '',
+    youtube: '',
+    tiktok: '',
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -165,7 +167,7 @@ ${htmlToLatex(content.description || 'No content available.')}
       try {
         setLoading(true);
         console.log(`Fetching content for ${selectedPage}`);
-        const response = await api.get(`https://editable-travel-website1-rpfv.vercel.app/api/ui-content/${selectedPage}`);
+        const response = await api.get(`/api/ui-content/${selectedPage}`);
         console.log('API Response:', response.data);
         setPageContent(response.data);
         const firstSectionId =
@@ -278,6 +280,8 @@ ${htmlToLatex(content.description || 'No content available.')}
         addressLabel: section.content.addressLabel || '',
         facebook: section.content.facebook || '',
         instagram: section.content.instagram || '',
+        youtube: section.content.youtube || '',
+        tiktok: section.content.tiktok || '',
       });
     } else {
       console.log('Section not found, resetting formData');
@@ -294,6 +298,8 @@ ${htmlToLatex(content.description || 'No content available.')}
         addressLabel: '',
         facebook: '',
         instagram: '',
+        youtube: '',
+        tiktok: '',
       });
     }
   };
@@ -339,6 +345,8 @@ ${htmlToLatex(content.description || 'No content available.')}
               title: formData.title,
               facebook: formData.facebook,
               instagram: formData.instagram,
+              youtube: formData.youtube || '',
+              tiktok: formData.tiktok || '',
             },
           };
         }
@@ -385,7 +393,7 @@ ${htmlToLatex(content.description || 'No content available.')}
         newSections.push(newSection);
       }
 
-      const response = await api.put(`https://editable-travel-website1-rpfv.vercel.app/api/ui-content/${selectedPage}`, { sections: newSections });
+      const response = await api.put(`/api/ui-content/${selectedPage}`, { sections: newSections });
       console.log('Section saved:', response.data);
       setPageContent(response.data);
       setSuccess('Section updated successfully');
@@ -537,7 +545,7 @@ ${htmlToLatex(content.description || 'No content available.')}
                 sectionId: 'adventure',
                 type: 'text',
                 content: {
-                  title: 'Safari Adventures',
+                  title: 'Liveaboard',
                   description: '',
                   slides: [],
                   reviews: [],
@@ -565,7 +573,7 @@ ${htmlToLatex(content.description || 'No content available.')}
                   ]
                 : []),
             ];
-      const response = await api.put(`https://editable-travel-website1-rpfv.vercel.app/api/ui-content/${selectedPage}`, { sections: defaultSections });
+      const response = await api.put(`/api/ui-content/${selectedPage}`, { sections: defaultSections });
       console.log(`Default sections initialized for ${selectedPage}:`, response.data);
       setPageContent(response.data);
       setSelectedSection(selectedPage === 'legal' ? 'gtc' : 'hero');
@@ -646,7 +654,7 @@ ${htmlToLatex(content.description || 'No content available.')}
     const { content } = section;
     if (section.sectionId === 'contact-info') {
       return (
-        <div className="text-gray-600 space-y-2" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+        <div className="text-gray-600 space-y-2" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
           <p><strong>Phone:</strong> {content.phone || 'N/A'}</p>
           <p><strong>Phone Label:</strong> {content.phoneLabel || 'N/A'}</p>
           <p><strong>Email:</strong> {content.email || 'N/A'}</p>
@@ -657,14 +665,14 @@ ${htmlToLatex(content.description || 'No content available.')}
       );
     } else if (section.sectionId === 'social-media') {
       return (
-        <div className="text-gray-600 space-y-2" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+        <div className="text-gray-600 space-y-2" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
           <p><strong>Facebook:</strong> {content.facebook || 'N/A'}</p>
           <p><strong>Instagram:</strong> {content.instagram || 'N/A'}</p>
         </div>
       );
     } else if (selectedPage === 'legal') {
       return (
-        <div className="text-gray-600 space-y-4 prose max-w-none" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+        <div className="text-gray-600 space-y-4 prose max-w-none" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
           <strong>Description:</strong>
           <div
             dangerouslySetInnerHTML={{ __html: content.description || 'No content available.' }}
@@ -674,7 +682,7 @@ ${htmlToLatex(content.description || 'No content available.')}
       );
     } else {
       return (
-        <div className="text-gray-600 space-y-2" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+        <div className="text-gray-600 space-y-2" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
           <p><strong>Description:</strong> {content.description || 'N/A'}</p>
           {content.imageUrl && <p><strong>Image URL:</strong> {content.imageUrl}</p>}
           {content.buttonText && <p><strong>Button Text:</strong> {content.buttonText}</p>}
@@ -686,7 +694,7 @@ ${htmlToLatex(content.description || 'No content available.')}
   if (loading || !user?.isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <p className="text-xl text-[#074a5b]" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+        <p className="text-xl text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
           Loading content...
         </p>
       </div>
@@ -694,7 +702,7 @@ ${htmlToLatex(content.description || 'No content available.')}
   }
 
   return (
-    <div className="min-h-screen bg-white" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+    <div className="min-h-screen bg-white" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
       <ConfirmationModal
         isOpen={modal.isOpen}
         onClose={() => setModal({ isOpen: false, type: '', id: null, name: '' })}
@@ -704,14 +712,14 @@ ${htmlToLatex(content.description || 'No content available.')}
       />
       <div className="container mx-auto p-6">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold text-[#074a5b]" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+          <h1 className="text-4xl font-bold text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
             Page Content Management - {pages.find((p) => p.id === selectedPage)?.name}
           </h1>
           <select
             value={selectedPage}
             onChange={(e) => setSelectedPage(e.target.value)}
             className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[#1e809b] outline-none h-12 w-48"
-            style={{ fontFamily: 'Comic Sans MS, cursive' }}
+            style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
           >
             {pages.map((page) => (
               <option key={page.id} value={page.id}>
@@ -722,29 +730,29 @@ ${htmlToLatex(content.description || 'No content available.')}
         </div>
 
         {error && (
-          <div className="bg-red-100 text-red-700 p-4 mb-6 rounded-xl" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+          <div className="bg-red-100 text-red-700 p-4 mb-6 rounded-xl" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
             {error}
           </div>
         )}
         {success && (
-          <div className="bg-green-100 text-green-700 p-4 mb-6 rounded-xl" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+          <div className="bg-green-100 text-green-700 p-4 mb-6 rounded-xl" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
             {success}
           </div>
         )}
 
         <div className="mb-12 p-6 bg-white rounded-2xl shadow-lg">
-          <h2 className="text-2xl font-semibold mb-6 text-[#074a5b]" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+          <h2 className="text-2xl font-semibold mb-6 text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
             Manage Content
           </h2>
           {pageContent?.sections?.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-lg text-[#074a5b] mb-4" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+              <p className="text-lg text-[#074a5b] mb-4" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                 No sections found for {pages.find((p) => p.id === selectedPage)?.name}. Initialize default sections.
               </p>
               <button
                 onClick={handleInitializeDefault}
                 className="bg-[#1e809b] hover:bg-[#074a5b] text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300"
-                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
               >
                 Initialize Default Sections
               </button>
@@ -752,14 +760,14 @@ ${htmlToLatex(content.description || 'No content available.')}
           ) : (
             <>
               <div className="mb-6">
-                <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                   Select Section
                 </label>
                 <select
                   value={selectedSection || ''}
                   onChange={(e) => handleSectionChange(e.target.value)}
                   className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[#1e809b] outline-none h-12 w-full md:w-1/3"
-                  style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                  style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                 >
                   {getAvailableSections().map((section) => (
                     <option key={section.sectionId} value={section.sectionId}>
@@ -773,7 +781,7 @@ ${htmlToLatex(content.description || 'No content available.')}
                 <form onSubmit={handleSaveSection} className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {selectedPage === 'legal' ? (
                     <div className="col-span-2">
-                      <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                         Description
                       </label>
                       <ReactQuill
@@ -787,7 +795,7 @@ ${htmlToLatex(content.description || 'No content available.')}
                   ) : (
                     <>
                       <div>
-                        <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                        <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                           Title
                         </label>
                         <input
@@ -795,7 +803,7 @@ ${htmlToLatex(content.description || 'No content available.')}
                           value={formData.title}
                           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                           className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[#1e809b] outline-none h-12 w-full"
-                          style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                  style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                           placeholder="Enter section title"
                         />
                       </div>
@@ -803,7 +811,7 @@ ${htmlToLatex(content.description || 'No content available.')}
                         (selectedPage === 'contact' && selectedSection === 'hero') ||
                         (selectedPage === 'accommodations' && ['hotel', 'resort', 'adventure'].includes(selectedSection))) && (
                         <div className="col-span-2">
-                          <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                          <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                             Description
                           </label>
                           <textarea
@@ -813,7 +821,7 @@ ${htmlToLatex(content.description || 'No content available.')}
                               setFormData({ ...formData, description: e.target.value });
                             }}
                             className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[#1e809b] outline-none w-full h-24 resize-none bg-white text-gray-800"
-                            style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                            style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                             placeholder="Enter section description"
                           />
                         </div>
@@ -821,7 +829,7 @@ ${htmlToLatex(content.description || 'No content available.')}
                       {selectedSection === 'hero' && selectedPage !== 'contact' && (
                         <>
                           <div>
-                            <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                            <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                               Image
                             </label>
                             <div className="flex items-center">
@@ -831,10 +839,10 @@ ${htmlToLatex(content.description || 'No content available.')}
                                 onChange={handleImageUpload}
                                 className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[#1e809b] outline-none h-12"
                                 disabled={uploading}
-                                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                                style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                               />
                               {uploading && (
-                                <span className="ml-2 text-gray-600" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                                <span className="ml-2 text-gray-600" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                                   Uploading...
                                 </span>
                               )}
@@ -860,7 +868,7 @@ ${htmlToLatex(content.description || 'No content available.')}
                           </div>
                           {selectedPage !== 'accommodations' && selectedPage !== 'activities' && (
                             <div>
-                              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                                 Button Text
                               </label>
                               <input
@@ -868,7 +876,7 @@ ${htmlToLatex(content.description || 'No content available.')}
                                 value={formData.buttonText}
                                 onChange={(e) => setFormData({ ...formData, buttonText: e.target.value })}
                                 className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[#1e809b] outline-none h-12 w-full"
-                                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                                style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                               />
                             </div>
                           )}
@@ -877,7 +885,7 @@ ${htmlToLatex(content.description || 'No content available.')}
                       {selectedPage === 'contact' && selectedSection === 'contact-info' && (
                         <>
                           <div>
-                            <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                                  <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                               Phone Number
                             </label>
                             <input
@@ -885,11 +893,11 @@ ${htmlToLatex(content.description || 'No content available.')}
                               value={formData.phone}
                               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                               className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[#1e809b] outline-none h-12 w-full"
-                              style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                                    style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                             />
                           </div>
                           <div>
-                            <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                                      <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                               Phone Label
                             </label>
                             <input
@@ -897,11 +905,11 @@ ${htmlToLatex(content.description || 'No content available.')}
                               value={formData.phoneLabel}
                               onChange={(e) => setFormData({ ...formData, phoneLabel: e.target.value })}
                               className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[#1e809b] outline-none h-12 w-full"
-                              style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                                        style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                             />
                           </div>
                           <div>
-                            <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                                          <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                               Email Address
                             </label>
                             <input
@@ -909,11 +917,11 @@ ${htmlToLatex(content.description || 'No content available.')}
                               value={formData.email}
                               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                               className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[#1e809b] outline-none h-12 w-full"
-                              style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                                            style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                             />
                           </div>
                           <div>
-                            <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                                              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                               Email Label
                             </label>
                             <input
@@ -921,11 +929,11 @@ ${htmlToLatex(content.description || 'No content available.')}
                               value={formData.emailLabel}
                               onChange={(e) => setFormData({ ...formData, emailLabel: e.target.value })}
                               className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[#1e809b] outline-none h-12 w-full"
-                              style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                                                style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                             />
                           </div>
                           <div>
-                            <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                                                  <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                               Address
                             </label>
                             <input
@@ -933,11 +941,11 @@ ${htmlToLatex(content.description || 'No content available.')}
                               value={formData.address}
                               onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                               className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[#1e809b] outline-none h-12 w-full"
-                              style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                                                    style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                             />
                           </div>
                           <div>
-                            <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                                                      <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                               Address Label
                             </label>
                             <input
@@ -945,7 +953,7 @@ ${htmlToLatex(content.description || 'No content available.')}
                               value={formData.addressLabel}
                               onChange={(e) => setFormData({ ...formData, addressLabel: e.target.value })}
                               className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[#1e809b] outline-none h-12 w-full"
-                              style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                                                        style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                             />
                           </div>
                         </>
@@ -953,7 +961,7 @@ ${htmlToLatex(content.description || 'No content available.')}
                       {selectedPage === 'contact' && selectedSection === 'social-media' && (
                         <>
                           <div>
-                            <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                            <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                               Facebook Link
                             </label>
                             <input
@@ -961,11 +969,11 @@ ${htmlToLatex(content.description || 'No content available.')}
                               value={formData.facebook}
                               onChange={(e) => setFormData({ ...formData, facebook: e.target.value })}
                               className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[#1e809b] outline-none h-12 w-full"
-                              style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                              style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                             />
                           </div>
                           <div>
-                            <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                            <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                               Instagram Link
                             </label>
                             <input
@@ -973,8 +981,44 @@ ${htmlToLatex(content.description || 'No content available.')}
                               value={formData.instagram}
                               onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
                               className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[#1e809b] outline-none h-12 w-full"
-                              style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                              style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                             />
+                          </div>
+                          <div>
+                            <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
+                              YouTube Link (optional)
+                            </label>
+                            <input
+                              type="url"
+                              value={formData.youtube}
+                              onChange={(e) => setFormData({ ...formData, youtube: e.target.value })}
+                              className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[#1e809b] outline-none h-12 w-full"
+                              style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
+                            />
+                          </div>
+                          <div>
+                            <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
+                              TikTok Link (optional)
+                            </label>
+                            <input
+                              type="url"
+                              value={formData.tiktok}
+                              onChange={(e) => setFormData({ ...formData, tiktok: e.target.value })}
+                              className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[#1e809b] outline-none h-12 w-full"
+                              style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
+                            />
+                          </div>
+                          <div className="flex gap-4 mt-4">
+                            {formData.youtube && formData.youtube.trim() !== '' && (
+                              <a href={formData.youtube} target="_blank" rel="noopener noreferrer" title="YouTube">
+                                <Youtube size={32} className="text-red-600" />
+                              </a>
+                            )}
+                            {formData.tiktok && formData.tiktok.trim() !== '' && (
+                              <a href={formData.tiktok} target="_blank" rel="noopener noreferrer" title="TikTok">
+                                <Music2 size={32} className="text-black" />
+                              </a>
+                            )}
                           </div>
                         </>
                       )}
@@ -985,7 +1029,7 @@ ${htmlToLatex(content.description || 'No content available.')}
                       type="submit"
                       className="bg-[#1e809b] hover:bg-[#074a5b] text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300"
                       disabled={uploading}
-                      style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                      style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                     >
                       <Save size={16} className="inline mr-2" /> Save Section
                     </button>
@@ -994,7 +1038,7 @@ ${htmlToLatex(content.description || 'No content available.')}
                       onClick={resetForm}
                       className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-xl font-semibold transition-all duration-300"
                       disabled={uploading}
-                      style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                      style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                     >
                       Cancel
                     </button>
@@ -1003,7 +1047,7 @@ ${htmlToLatex(content.description || 'No content available.')}
                         type="button"
                         onClick={() => handleDeleteSection(selectedSection, getDisplayName(selectedSection))}
                         className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300"
-                        style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                        style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                       >
                         <Trash2 size={16} className="inline mr-2" /> Delete Section
                       </button>
@@ -1013,7 +1057,7 @@ ${htmlToLatex(content.description || 'No content available.')}
                         type="button"
                         onClick={() => handleDownload(selectedSection, formData)}
                         className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300"
-                        style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                        style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                       >
                         <Download size={16} className="inline mr-2" /> Download PDF
                       </button>
@@ -1027,12 +1071,12 @@ ${htmlToLatex(content.description || 'No content available.')}
 
         {selectedPage !== 'legal' && (
           <div className="mb-12">
-            <h2 className="text-2xl font-semibold mb-6 text-[#074a5b]" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+          <h2 className="text-2xl font-semibold mb-6 text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
               Sections Overview
             </h2>
             {pageContent?.sections?.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-lg text-[#074a5b]" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                <p className="text-lg text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                   No sections available. Initialize default sections above.
                 </p>
               </div>
@@ -1058,10 +1102,10 @@ ${htmlToLatex(content.description || 'No content available.')}
                       </div>
                     )}
                     <div className="p-6">
-                      <h3 className="text-xl font-bold mb-2 text-[#074a5b] hover:text-[#1e809b] transition-colors" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                      <h3 className="text-xl font-bold mb-2 text-[#074a5b] hover:text-[#1e809b] transition-colors" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                         {section.content.title || getDisplayName(section.sectionId)}
                       </h3>
-                      <p className="text-gray-600 mb-3" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                      <p className="text-gray-600 mb-3" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                         {section.sectionId === 'hero' && selectedPage === 'contact'
                           ? 'Heading Section'
                           : section.sectionId === 'contact-info'
@@ -1084,7 +1128,7 @@ ${htmlToLatex(content.description || 'No content available.')}
                           type="button"
                           onClick={() => handleSectionChange(section.sectionId)}
                           className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-xl font-semibold transition-all"
-                          style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                          style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                         >
                           Edit
                         </button>
@@ -1092,7 +1136,7 @@ ${htmlToLatex(content.description || 'No content available.')}
                           type="button"
                           onClick={() => handleDeleteSection(section.sectionId, section.content.title || getDisplayName(section.sectionId))}
                           className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl font-semibold transition-all"
-                          style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                          style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                         >
                           Delete
                         </button>
