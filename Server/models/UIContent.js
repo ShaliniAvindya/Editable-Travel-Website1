@@ -30,9 +30,13 @@ const sectionSchema = new mongoose.Schema({
     emailLabel: { type: String },
     address: { type: String },
     addressLabel: { type: String },
-    facebook: { type: String },
-    instagram: { type: String },
-    twitter: { type: String },
+  facebook: { type: String },
+  instagram: { type: String },
+  twitter: { type: String },
+  youtube: { type: String }, 
+  tiktok: { type: String }, 
+  youtube: { type: String },
+  tiktok: { type: String },
   },
 });
 
