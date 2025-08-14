@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Phone, Mail, MapPin, Facebook, Instagram } from 'lucide-react';
+import { Phone, Mail, MapPin, Facebook, Instagram, Youtube, Music2 } from 'lucide-react';
 import axios from 'axios';
 
 const Contact = () => {
@@ -26,6 +26,8 @@ const Contact = () => {
       title: '',
       facebook: '',
       instagram: '',
+      youtube: '',
+      tiktok: '',
     },
   });
   const [loading, setLoading] = useState(true);
@@ -34,7 +36,7 @@ const Contact = () => {
   useEffect(() => {
     const fetchContent = async () => {
       try {
-        const response = await axios.get('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/contact');
+        const response = await axios.get('/api/ui-content/contact');
         const sections = response.data.sections || [];
         const heroSection = sections.find((s) => s.sectionId === 'hero')?.content || {};
         const contactInfoSection = sections.find((s) => s.sectionId === 'contact-info')?.content || {};
@@ -57,6 +59,8 @@ const Contact = () => {
             title: socialMediaSection.title || '',
             facebook: socialMediaSection.facebook || '',
             instagram: socialMediaSection.instagram || '',
+            youtube: socialMediaSection.youtube || '',
+            tiktok: socialMediaSection.tiktok || '',
           },
         });
       } catch (err) {
@@ -88,7 +92,7 @@ const Contact = () => {
         throw new Error('Please fill in all fields.');
       }
 
-      const response = await axios.post('https://editable-travel-website1-rpfv.vercel.app/api/inquiries/contact', {
+      const response = await axios.post('/api/inquiries/contact', {
         name: formData.name,
         email: formData.email,
         message: formData.message,
@@ -170,7 +174,7 @@ const Contact = () => {
                 {content.socialMedia.title && (
                   <h4 className="text-xl font-bold mb-6">{content.socialMedia.title}</h4>
                 )}
-                {(content.socialMedia.facebook || content.socialMedia.instagram) && (
+                {(content.socialMedia.facebook || content.socialMedia.instagram || content.socialMedia.youtube || content.socialMedia.tiktok) && (
                   <div className="flex space-x-4">
                     {content.socialMedia.facebook && (
                       <a
@@ -194,7 +198,28 @@ const Contact = () => {
                         <Instagram className="text-white" size={20} />
                       </a>
                     )}
-                  
+                    {content.socialMedia.youtube && (
+                      <a
+                        href={content.socialMedia.youtube}
+                        className="p-4 rounded-full transition-all duration-300 hover:scale-110 hover:shadow-lg"
+                        style={{ backgroundColor: '#1e809b' }}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Youtube className="text-white" size={20} />
+                      </a>
+                    )}
+                    {content.socialMedia.tiktok && (
+                      <a
+                        href={content.socialMedia.tiktok}
+                        className="p-4 rounded-full transition-all duration-300 hover:scale-110 hover:shadow-lg"
+                        style={{ backgroundColor: '#1e809b' }}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Music2 className="text-white" size={20} />
+                      </a>
+                    )}
                   </div>
                 )}
               </div>
