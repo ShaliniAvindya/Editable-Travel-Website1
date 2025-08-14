@@ -89,7 +89,7 @@ const AdminPanel = () => {
   const getTabName = (key) => {
     const tabNames = {
       '1': 'Resorts',
-      '2': 'Atolls',
+      '2': 'Islands',
       '3': 'Activities',
       '4': 'Packages',
       '5': 'Blogs',
@@ -105,7 +105,7 @@ const AdminPanel = () => {
 
   const menuItems = [
     { key: '1', label: 'Resorts', component: <ResortManagement searchTerm={searchTerm} /> },
-    { key: '2', label: 'Atolls', component: <AtollManagement searchTerm={searchTerm} /> },
+    { key: '2', label: 'Islands', component: <AtollManagement searchTerm={searchTerm} /> },
     { key: '3', label: 'Activities', component: <ActivityManagement searchTerm={searchTerm} /> },
     { key: '4', label: 'Packages', component: <PackageManagement searchTerm={searchTerm} /> },
     { key: '5', label: 'Blogs', component: <BlogManagement searchTerm={searchTerm} /> },
@@ -138,7 +138,7 @@ const AdminPanel = () => {
             Admin Control Center
           </h1>
           <p className="text-lg md:text-xl max-w-3xl mx-auto opacity-90 mb-8">
-            Efficiently manage resorts, atolls, activities, packages, blogs, inquiries, and users. Your centralized hub for seamless operations.
+            Efficiently manage resorts, Islands, activities, packages, blogs, inquiries, and users. Your centralized hub for seamless operations.
           </p>
           <button
             onClick={handleLogout}
