@@ -20,10 +20,46 @@ router.post('/', auth, async (req, res) => {
 // Get all atolls with populated accommodations
 router.get('/', async (req, res) => {
   try {
-    const atolls = await Atoll.find({}).populate('accommodations', 'name island');
+    const { status } = req.query;
+    const query = {};
+    if (typeof status !== 'undefined') {
+      query.status = status === 'true' || status === true;
+    }
+    const atolls = await Atoll.find(query).populate('accommodations', 'name island');
     res.json(atolls);
   } catch (err) {
     console.error(err);
+    res.status(500).json({ msg: 'Server error' });
+  }
+});
+
+// Duplicate an atoll
+router.post('/duplicate/:id', auth, async (req, res) => {
+  try {
+    const atoll = await Atoll.findById(req.params.id);
+    if (!atoll) return res.status(404).json({ msg: 'Atoll not found' });
+    const atollObj = atoll.toObject();
+    delete atollObj._id;
+    atollObj.name = atollObj.name + ' (Copy)';
+    const duplicate = new Atoll(atollObj);
+    await duplicate.save();
+    res.status(201).json(duplicate);
+  } catch (err) {
+    console.error('Error duplicating atoll:', err);
+    res.status(500).json({ msg: 'Server error' });
+  }
+});
+
+// Toggle atoll
+router.patch('/status/:id', auth, async (req, res) => {
+  try {
+    const atoll = await Atoll.findById(req.params.id);
+    if (!atoll) return res.status(404).json({ msg: 'Atoll not found' });
+    atoll.status = req.body.status;
+    await atoll.save();
+    res.json({ msg: 'Status updated', status: atoll.status });
+  } catch (err) {
+    console.error('Error updating status:', err);
     res.status(500).json({ msg: 'Server error' });
   }
 });
