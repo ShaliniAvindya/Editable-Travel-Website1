@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
+import { FaRegClone, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, X } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
@@ -13,20 +14,20 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md">
-        <h3 className="text-lg font-semibold text-[#074a5b] mb-4" style={{ fontFamily: 'Comic Sans MS, cursive' }}>{title}</h3>
-        <p className="text-gray-600 mb-6" style={{ fontFamily: 'Comic Sans MS, cursive' }}>{message}</p>
+        <h3 className="text-lg font-semibold text-[#074a5b] mb-4" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>{title}</h3>
+        <p className="text-gray-600 mb-6" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>{message}</p>
         <div className="flex justify-end gap-4">
           <button
             onClick={onClose}
             className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-xl font-semibold transition-all"
-            style={{ fontFamily: 'Comic Sans MS, cursive' }}
+            style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
             className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl font-semibold transition-all"
-            style={{ fontFamily: 'Comic Sans MS, cursive' }}
+            style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
           >
             Delete
           </button>
@@ -37,6 +38,32 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
 };
 
 const ResortManagement = () => {
+  const [notification, setNotification] = useState('');
+  // Duplicate a resort
+  const handleDuplicateResort = async (id) => {
+    try {
+      await api.post(`/api/resorts/duplicate/${id}`);
+      setNotification('Duplicate created successfully');
+      setSuccess('Resort duplicated successfully');
+      const resortsResponse = await api.get('/api/resorts');
+      setResorts(resortsResponse.data);
+      setTimeout(() => setNotification(''), 2500);
+    } catch (err) {
+      setError('Failed to duplicate resort');
+    }
+  };
+
+  // Toggle resort status
+  const handleToggleStatus = async (id, currentStatus) => {
+    try {
+      await api.patch(`/api/resorts/status/${id}`, { status: !currentStatus });
+      setSuccess('Resort status updated');
+      const resortsResponse = await api.get('/api/resorts');
+      setResorts(resortsResponse.data);
+    } catch (err) {
+      setError('Failed to update status');
+    }
+  };
   const { user, api, logout } = useContext(AuthContext);
   const navigate = useNavigate();
   const [resorts, setResorts] = useState([]);
@@ -49,7 +76,7 @@ const ResortManagement = () => {
     description: '',
     amenities: '',
     images: [],
-    cover_image: '',
+    cover_images: [],
     type: 'resort',
   });
   const [roomForm, setRoomForm] = useState({
@@ -99,8 +126,8 @@ const ResortManagement = () => {
       try {
         setLoading(true);
         const [resortsResponse, atollsResponse] = await Promise.all([
-          api.get('https://editable-travel-website1-rpfv.vercel.app/api/resorts'),
-          api.get('https://editable-travel-website1-rpfv.vercel.app/api/atolls'),
+          api.get('/api/resorts'),
+          api.get('/api/atolls'),
         ]);
         console.log('Fetched resorts:', resortsResponse.data);
         console.log('Fetched atolls:', atollsResponse.data);
@@ -187,7 +214,7 @@ const ResortManagement = () => {
     const uploadPromises = files.map((file) => uploadImage(file));
     const urls = (await Promise.all(uploadPromises)).filter((url) => url);
     if (isCover) {
-      setFormData((prev) => ({ ...prev, cover_image: urls[0] || prev.cover_image }));
+      setFormData((prev) => ({ ...prev, cover_images: [...(prev.cover_images || []), ...urls] }));
     } else {
       setFormData((prev) => ({ ...prev, images: [...prev.images, ...urls] }));
     }
@@ -206,8 +233,11 @@ const ResortManagement = () => {
     setRoomForm((prev) => ({ ...prev, images: [...prev.images, ...urls] }));
   };
 
-  const handleRemoveCoverImage = () => {
-    setFormData((prev) => ({ ...prev, cover_image: '' }));
+  const handleRemoveCoverImage = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      cover_images: prev.cover_images.filter((_, i) => i !== index),
+    }));
   };
 
   const handleRemoveImage = (index) => {
@@ -245,17 +275,17 @@ const ResortManagement = () => {
           ? formData.amenities.split(',').map((item) => item.trim()).filter((item) => item)
           : [],
         images: formData.images || [],
-        cover_image: formData.cover_image || '',
+        cover_images: formData.cover_images || [],
         type: formData.type,
       };
       let response;
       if (selectedResort) {
-        response = await api.put(`https://editable-travel-website1-rpfv.vercel.app/api/resorts/${selectedResort._id}`, data);
+        response = await api.put(`/api/resorts/${selectedResort._id}`, data);
         setResorts(resorts.map((r) => (r._id === selectedResort._id ? response.data : r)));
         setSelectedResort(response.data);
         setSuccess('Resort updated successfully');
       } else {
-        response = await api.post('https://editable-travel-website1-rpfv.vercel.app/api/resorts', data);
+        response = await api.post('/api/resorts', data);
         setResorts([...resorts, response.data]);
         setSuccess('Resort added successfully');
       }
@@ -289,9 +319,12 @@ const ResortManagement = () => {
         setError('Invalid resort or room ID');
         return;
       }
+      // Allow price_per_night to be null
+      let priceValue = roomForm.price_per_night === '' ? null : Number(roomForm.price_per_night);
+      if (priceValue !== null && isNaN(priceValue)) priceValue = null;
       const data = {
         type: roomForm.type.trim(),
-        price_per_night: Number(roomForm.price_per_night),
+        price_per_night: priceValue,
         capacity: {
           adults: Number(roomForm.capacity.adults),
           children: Number(roomForm.capacity.children),
@@ -305,11 +338,11 @@ const ResortManagement = () => {
       };
       let response;
       if (editingRoomId) {
-        response = await api.put(`https://editable-travel-website1-rpfv.vercel.app/api/resorts/${selectedResort._id}/rooms/${editingRoomId}`, data);
+        response = await api.put(`/api/resorts/${selectedResort._id}/rooms/${editingRoomId}`, data);
       } else {
-        response = await api.post(`https://editable-travel-website1-rpfv.vercel.app/api/resorts/${selectedResort._id}/rooms`, data);
+        response = await api.post(`/api/resorts/${selectedResort._id}/rooms`, data);
       }
-      const resortResponse = await api.get(`https://editable-travel-website1-rpfv.vercel.app/api/resorts/${selectedResort._id}`);
+      const resortResponse = await api.get(`/api/resorts/${selectedResort._id}`);
       setSelectedResort(resortResponse.data);
       setResorts(resorts.map((r) => (r._id === selectedResort._id ? resortResponse.data : r)));
       setSuccess(editingRoomId ? 'Room updated successfully' : 'Room added successfully');
@@ -362,7 +395,7 @@ const ResortManagement = () => {
           setError('Invalid resort ID');
           return;
         }
-        await api.delete(`https://editable-travel-website1-rpfv.vercel.app/api/resorts/${modal.id}`);
+        await api.delete(`/api/resorts/${modal.id}`);
         setResorts(resorts.filter((r) => r._id !== modal.id));
         setSelectedResort(null);
         setSuccess('Resort deleted successfully');
@@ -373,7 +406,7 @@ const ResortManagement = () => {
           setError('Invalid resort or room ID');
           return;
         }
-        await api.delete(`https://editable-travel-website1-rpfv.vercel.app/api/resorts/${selectedResort._id}/rooms/${modal.id}`);
+        await api.delete(`/api/resorts/${selectedResort._id}/rooms/${modal.id}`);
         const updatedResort = await api.get(`/api/resorts/${selectedResort._id}`);
         setSelectedResort(updatedResort.data);
         setResorts(resorts.map((r) => (r._id === selectedResort._id ? updatedResort.data : r)));
@@ -399,6 +432,7 @@ const ResortManagement = () => {
   };
 
   const handleEditRoom = (room) => {
+  console.log('Editing room, price_per_night:', room.price_per_night);
     if (!isValidId(room._id)) {
       console.error('Invalid room ID:', room._id);
       setError('Invalid room ID');
@@ -406,9 +440,18 @@ const ResortManagement = () => {
     }
     console.log('Editing room:', room);
     setEditingRoomId(room._id);
+    let priceValue = '';
+    if (typeof room.price_per_night === 'string') {
+      const match = room.price_per_night.match(/\d+(\.\d+)?/);
+      priceValue = match ? match[0] : '';
+    } else if (typeof room.price_per_night === 'number') {
+      priceValue = room.price_per_night.toString();
+    } else {
+      priceValue = '';
+    }
     setRoomForm({
       type: room.type,
-      price_per_night: room.price_per_night,
+      price_per_night: priceValue,
       capacity: { adults: room.capacity.adults, children: room.capacity.children },
       amenities: room.amenities.join(', '),
       images: room.images || [],
@@ -432,7 +475,7 @@ const ResortManagement = () => {
       description: resort.description || '',
       amenities: resort.amenities.join(', '),
       images: resort.images || [],
-      cover_image: resort.cover_image || '',
+      cover_images: resort.cover_images || (resort.cover_image ? [resort.cover_image] : []),
       type: resort.type,
     });
   };
@@ -445,7 +488,7 @@ const ResortManagement = () => {
       description: '',
       amenities: '',
       images: [],
-      cover_image: '',
+      cover_images: [],
       type: 'resort',
     });
     setSelectedResort(null);
@@ -479,7 +522,7 @@ const ResortManagement = () => {
   if (loading || !user?.isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <p className="text-xl text-[#074a5b]" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+        <p className="text-xl text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
           Loading resorts...
         </p>
       </div>
@@ -487,7 +530,12 @@ const ResortManagement = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+    <div className="min-h-screen bg-white" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
+      {notification && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg z-50 transition-all duration-300">
+          {notification}
+        </div>
+      )}
       <ConfirmationModal
         isOpen={modal.isOpen}
         onClose={closeModal}
@@ -496,17 +544,17 @@ const ResortManagement = () => {
         message={`Are you sure you want to delete ${modal.name}? This action cannot be undone.`}
       />
       <div className="container mx-auto p-6">
-        <h1 className="text-4xl font-bold mb-8 text-[#074a5b]" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+        <h1 className="text-4xl font-bold mb-8 text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
           Resort Management
         </h1>
 
         {error && (
-          <div className="bg-red-100 text-red-700 p-4 mb-6 rounded-xl" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+          <div className="bg-red-100 text-red-700 p-4 mb-6 rounded-xl" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
             {error}
           </div>
         )}
         {success && (
-          <div className="bg-green-100 text-green-700 p-4 mb-6 rounded-xl" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+          <div className="bg-green-100 text-green-700 p-4 mb-6 rounded-xl" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
             {success}
           </div>
         )}
@@ -514,13 +562,13 @@ const ResortManagement = () => {
         <div className="mb-12 p-6 bg-white rounded-2xl shadow-lg">
           <h2
             className="text-2xl font-semibold mb-6 text-[#074a5b]"
-            style={{ fontFamily: 'Comic Sans MS, cursive' }}
+            style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
           >
             {selectedResort ? 'Edit Resort' : 'Add New Resort'}
           </h2>
           <form onSubmit={handleResortSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                 Resort Name
               </label>
               <input
@@ -529,12 +577,12 @@ const ResortManagement = () => {
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
                 required
-                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
               />
             </div>
             <div>
-              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
-                Island
+              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
+                Atoll
               </label>
               <input
                 type="text"
@@ -542,21 +590,21 @@ const ResortManagement = () => {
                 onChange={(e) => setFormData({ ...formData, island: e.target.value })}
                 className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
                 required
-                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
               />
             </div>
             <div>
-              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
-                Atoll
+              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
+                Island
               </label>
               <select
                 value={formData.atoll}
                 onChange={(e) => setFormData({ ...formData, atoll: e.target.value })}
                 className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
                 required
-                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
               >
-                <option value="">Select Atoll</option>
+                <option value="">Select Island</option>
                 {atolls.map((atoll) => (
                   <option key={atoll._id} value={atoll._id}>
                     {atoll.name}
@@ -565,7 +613,7 @@ const ResortManagement = () => {
               </select>
             </div>
             <div>
-              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                 Type
               </label>
               <select
@@ -573,15 +621,15 @@ const ResortManagement = () => {
                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                 className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
                 required
-                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
               >
-                <option value="resort">Resort</option>
-                <option value="hotel">Hotel</option>
-                <option value="adventure">Adventure</option>
+                <option value="resort">Luxury Resort</option>
+                <option value="hotel">Local Hotel</option>
+                <option value="adventure">Liveaboard</option>
               </select>
             </div>
             <div>
-              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                 Amenities (comma-separated)
               </label>
               <input
@@ -589,50 +637,53 @@ const ResortManagement = () => {
                 value={formData.amenities}
                 onChange={(e) => setFormData({ ...formData, amenities: e.target.value })}
                 className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
-                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
               />
             </div>
             <div className="col-span-1">
-              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
-                Cover Image
+              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
+                Cover Images
               </label>
               <div className="flex items-center">
                 <input
                   type="file"
                   accept="image/*"
+                  multiple
                   onChange={(e) => handleImageUpload(e, true)}
                   className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12"
                   disabled={uploading}
-                  style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                  style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                 />
                 {uploading && (
-                  <span className="ml-2 text-gray-600" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                  <span className="ml-2 text-gray-600" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                     Uploading...
                   </span>
                 )}
               </div>
-              {formData.cover_image && (
-                <div className="mt-2 relative inline-block">
-                  <img
-                    src={getSafeImageUrl(formData.cover_image)}
-                    alt="Cover Image Preview"
-                    className="w-32 h-32 object-cover rounded-xl"
-                    onError={() => console.error(`Failed to load cover image: ${formData.cover_image}`)}
-                  />
-                  <button
-                    onClick={handleRemoveCoverImage}
-                    className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 transition-all"
-                    aria-label="Remove cover image"
-                    style={{ fontFamily: 'Comic Sans MS, cursive' }}
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-              )}
+              <div className="mt-2 flex flex-wrap gap-2">
+                {formData.cover_images && formData.cover_images.length > 0 && formData.cover_images.map((img, index) => (
+                  <div key={index} className="relative inline-block">
+                    <img
+                      src={getSafeImageUrl(img)}
+                      alt={`Cover Image Preview ${index}`}
+                      className="w-32 h-32 object-cover rounded-xl"
+                      onError={() => console.error(`Failed to load cover image: ${img}`)}
+                    />
+                    <button
+                      onClick={() => handleRemoveCoverImage(index)}
+                      className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 transition-all"
+                      aria-label={`Remove cover image ${index + 1}`}
+                      style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
             <div className="col-span-1">
-              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
-                Images
+              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
+                Hotel Images
               </label>
               <div className="flex items-center">
                 <input
@@ -642,10 +693,10 @@ const ResortManagement = () => {
                   onChange={handleImageUpload}
                   className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12"
                   disabled={uploading}
-                  style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                  style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                 />
                 {uploading && (
-                  <span className="ml-2 text-gray-600" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                  <span className="ml-2 text-gray-600" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                     Uploading...
                   </span>
                 )}
@@ -663,7 +714,7 @@ const ResortManagement = () => {
                       onClick={() => handleRemoveImage(index)}
                       className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 transition-all"
                       aria-label={`Remove image ${index + 1}`}
-                      style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                      style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                     >
                       <X size={16} />
                     </button>
@@ -672,14 +723,14 @@ const ResortManagement = () => {
               </div>
             </div>
             <div className="col-span-2">
-              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                 Description
               </label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none w-full h-24"
-                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
               />
             </div>
             <div className="col-span-2 flex gap-4">
@@ -687,7 +738,7 @@ const ResortManagement = () => {
                 type="submit"
                 className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300"
                 disabled={uploading}
-                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
               >
                 {selectedResort ? 'Update Resort' : 'Add Resort'}
               </button>
@@ -697,7 +748,7 @@ const ResortManagement = () => {
                   onClick={resetForm}
                   className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-xl font-semibold transition-all duration-300"
                   disabled={uploading}
-                  style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                  style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                 >
                   Cancel
                 </button>
@@ -709,7 +760,7 @@ const ResortManagement = () => {
         <div className="mb-12">
           <h2
             className="text-2xl font-semibold mb-6 text-[#074a5b]"
-            style={{ fontFamily: 'Comic Sans MS, cursive' }}
+            style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
           >
             Resorts
           </h2>
@@ -725,17 +776,17 @@ const ResortManagement = () => {
               >
                 <div className="relative h-48 overflow-hidden">
                   <img
-                    src={getSafeImageUrl(resort.cover_image || resort.images[0])}
+                    src={getSafeImageUrl((resort.cover_images && resort.cover_images.length > 0 ? resort.cover_images[0] : (resort.cover_image || resort.images[0])))}
                     alt={resort.name}
                     className="w-full h-full object-cover"
                     onError={() =>
-                      console.error(`Failed to load image for resort ${resort.name}: ${resort.cover_image || resort.images[0]}`)
+                      console.error(`Failed to load image for resort ${resort.name}: ${(resort.cover_images && resort.cover_images.length > 0 ? resort.cover_images[0] : (resort.cover_image || resort.images[0]))}`)
                     }
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                   <div
                     className="absolute top-4 left-4 bg-blue-600/90 px-3 py-1 rounded-full text-white text-sm font-semibold"
-                    style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                    style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                   >
                     {resort.type.charAt(0).toUpperCase() + resort.type.slice(1)}
                   </div>
@@ -743,13 +794,13 @@ const ResortManagement = () => {
                 <div className="p-6">
                   <h3
                     className="text-xl font-bold mb-2 text-[#074a5b] hover:text-blue-600 transition-colors"
-                    style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                    style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                   >
                     {resort.name}
                   </h3>
                   <p
                     className="text-gray-600 mb-3 flex items-center"
-                    style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                    style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                   >
                     <MapPin size={16} className="mr-2 text-[#074a5b]" />
                     {resort.island}, {resort.atoll?.name}
@@ -758,23 +809,34 @@ const ResortManagement = () => {
                     <button
                       onClick={() => handleEditResort(resort)}
                       className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-xl font-semibold transition-all"
-                      style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                      style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => handleDeleteResort(resort._id, resort.name)}
                       className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl font-semibold transition-all"
-                      style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                      style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                     >
                       Delete
                     </button>
+                    {/* Duplicate icon */}
                     <button
-                      onClick={() => setSelectedResort(resort)}
-                      className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl font-semibold transition-all"
-                      style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                      title="Duplicate Resort"
+                      onClick={() => handleDuplicateResort(resort._id)}
+                      className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-xl font-semibold transition-all"
+                      style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                     >
-                      Manage Rooms
+                      <FaRegClone size={18} />
+                    </button>
+                    {/* Status toggle */}
+                    <button
+                      title={resort.status ? 'Set Inactive' : 'Set Active'}
+                      onClick={() => handleToggleStatus(resort._id, resort.status)}
+                      className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-xl font-semibold transition-all"
+                      style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
+                    >
+                      {resort.status ? <FaToggleOn color="green" size={22} /> : <FaToggleOff color="gray" size={22} />}
                     </button>
                   </div>
                 </div>
@@ -787,13 +849,13 @@ const ResortManagement = () => {
           <div className="p-6 bg-white rounded-2xl shadow-lg">
             <h2
               className="text-2xl font-semibold mb-6 text-[#074a5b]"
-              style={{ fontFamily: 'Comic Sans MS, cursive' }}
+              style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
             >
               Manage Rooms for {selectedResort.name}
             </h2>
             <form onSubmit={handleRoomSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
-                <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                   Room Type
                 </label>
                 <input
@@ -802,24 +864,23 @@ const ResortManagement = () => {
                   onChange={(e) => setRoomForm({ ...roomForm, type: e.target.value })}
                   className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
                   required
-                  style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                  style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                 />
               </div>
               <div>
-                <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                   Price per Night
                 </label>
                 <input
-                  type="number"
+                  type="text"
                   value={roomForm.price_per_night}
                   onChange={(e) => setRoomForm({ ...roomForm, price_per_night: e.target.value })}
                   className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
-                  required
-                  style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                  style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                 />
               </div>
               <div>
-                <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                   Adults Capacity
                 </label>
                 <input
@@ -830,11 +891,11 @@ const ResortManagement = () => {
                   }
                   className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
                   required
-                  style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                  style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                 />
               </div>
               <div>
-                <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                   Children Capacity
                 </label>
                 <input
@@ -845,11 +906,11 @@ const ResortManagement = () => {
                   }
                   className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
                   required
-                  style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                  style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                 />
               </div>
               <div>
-                <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                   Amenities (comma-separated)
                 </label>
                 <input
@@ -857,11 +918,11 @@ const ResortManagement = () => {
                   value={roomForm.amenities}
                   onChange={(e) => setRoomForm({ ...roomForm, amenities: e.target.value })}
                   className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
-                  style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                  style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                 />
               </div>
               <div>
-                <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                   Size (sqm)
                 </label>
                 <input
@@ -870,11 +931,11 @@ const ResortManagement = () => {
                   onChange={(e) => setRoomForm({ ...roomForm, size_sqm: e.target.value })}
                   className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
                   required
-                  style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                  style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                 />
               </div>
               <div className="col-span-1">
-                <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                   Room Images
                 </label>
                 <div className="flex items-center">
@@ -885,10 +946,10 @@ const ResortManagement = () => {
                     onChange={handleRoomImageUpload}
                     className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12"
                     disabled={uploading}
-                    style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                    style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                   />
                   {uploading && (
-                    <span className="ml-2 text-gray-600" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                    <span className="ml-2 text-gray-600" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                       Uploading...
                     </span>
                   )}
@@ -906,7 +967,7 @@ const ResortManagement = () => {
                         onClick={() => handleRemoveRoomImage(index)}
                         className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 transition-all"
                         aria-label={`Remove room image ${index + 1}`}
-                        style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                        style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                       >
                         <X size={16} />
                       </button>
@@ -915,14 +976,14 @@ const ResortManagement = () => {
                 </div>
               </div>
               <div className="col-span-2">
-                <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                   Description
                 </label>
                 <textarea
                   value={roomForm.description}
                   onChange={(e) => setRoomForm({ ...roomForm, description: e.target.value })}
                   className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none w-full h-24"
-                  style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                  style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                 />
               </div>
               <div className="col-span-2 flex gap-4">
@@ -930,7 +991,7 @@ const ResortManagement = () => {
                   type="submit"
                   className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300"
                   disabled={uploading}
-                  style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                  style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                 >
                   {editingRoomId ? 'Update Room' : 'Add Room'}
                 </button>
@@ -940,7 +1001,7 @@ const ResortManagement = () => {
                     onClick={resetRoomForm}
                     className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-xl font-semibold transition-all duration-300"
                     disabled={uploading}
-                    style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                    style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                   >
                     Cancel
                   </button>
@@ -950,7 +1011,7 @@ const ResortManagement = () => {
 
             <h3
               className="text-xl font-semibold mb-6 text-[#074a5b]"
-              style={{ fontFamily: 'Comic Sans MS, cursive' }}
+              style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
             >
               Rooms
             </h3>
@@ -967,25 +1028,25 @@ const ResortManagement = () => {
                   >
                     <h4
                       className="text-lg font-semibold mb-2 text-[#074a5b]"
-                      style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                      style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                     >
                       {room.type}
                     </h4>
                     <p
                       className="text-gray-600"
-                      style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                      style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                     >
-                      Price: ${room.price_per_night}/night
+                      Price: {room.price_per_night === null || room.price_per_night === undefined || room.price_per_night === '' ? 'N/A' : `${room.price_per_night}`}
                     </p>
                     <p
                       className="text-gray-600"
-                      style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                      style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                     >
                       Capacity: {room.capacity.adults} adults, {room.capacity.children} children
                     </p>
                     <p
                       className="text-gray-600"
-                      style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                      style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                     >
                       Size: {room.size_sqm || 'N/A'} sqm
                     </p>
@@ -994,7 +1055,7 @@ const ResortManagement = () => {
                         onClick={() => handleEditRoom(room)}
                         className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-xl font-semibold transition-all duration-300"
                         disabled={!room._id}
-                        style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                        style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                       >
                         Edit
                       </button>
@@ -1002,7 +1063,7 @@ const ResortManagement = () => {
                         onClick={() => handleDeleteRoom(room._id, room.type)}
                         className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl font-semibold transition-all duration-300"
                         disabled={!room._id}
-                        style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                        style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                       >
                         Delete
                       </button>
@@ -1013,7 +1074,7 @@ const ResortManagement = () => {
             ) : (
               <p
                 className="text-gray-600 text-sm"
-                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
               >
                 No rooms available for this resort.
               </p>
