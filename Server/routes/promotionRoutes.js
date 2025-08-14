@@ -14,6 +14,12 @@ const isAdmin = (req, res, next) => {
 router.post('/', [auth, isAdmin], async (req, res) => {
   try {
     const { title, description, imageUrl, validFrom, validUntil, isPopup, buttonText, buttonLink, countdownLabel, trustIndicator1, trustIndicator2 } = req.body;
+    if (isPopup) {
+      const existingActive = await Promotion.findOne({ isPopup: true, status: true });
+      if (existingActive) {
+        return res.status(400).json({ msg: 'Only one active promotion can be set as a popup at a time' });
+      }
+    }
     const promotion = new Promotion({
       title,
       description,
@@ -26,6 +32,7 @@ router.post('/', [auth, isAdmin], async (req, res) => {
       countdownLabel,
       trustIndicator1,
       trustIndicator2,
+      status: true,
     });
     await promotion.save();
     res.status(201).json(promotion);
@@ -36,7 +43,7 @@ router.post('/', [auth, isAdmin], async (req, res) => {
 });
 
 // Get all promotions
-router.get('/', async (req, res) => {
+router.get('/', [auth, isAdmin], async (req, res) => {
   try {
     const promotions = await Promotion.find().sort({ createdAt: -1 });
     res.json(promotions);
@@ -50,20 +57,21 @@ router.get('/', async (req, res) => {
 router.get('/active', async (req, res) => {
   try {
     const now = new Date();
-    const promotions = await Promotion.find({
+    const activePromotions = await Promotion.find({
       isPopup: true,
+      status: true, 
       validFrom: { $lte: now },
       validUntil: { $gte: now },
     }).sort({ createdAt: -1 });
-    res.json(promotions);
+    res.json(activePromotions);
   } catch (err) {
     console.error('Error fetching active promotions:', err);
     res.status(500).json({ msg: 'Server error', details: err.message });
   }
 });
 
-
-router.get('/:id', async (req, res) => {
+// Get promotion by ID
+router.get('/:id', [auth, isAdmin], async (req, res) => {
   try {
     const promotion = await Promotion.findById(req.params.id);
     if (!promotion) return res.status(404).json({ msg: 'Promotion not found' });
@@ -74,9 +82,15 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-
 router.put('/:id', [auth, isAdmin], async (req, res) => {
   try {
+    const { isPopup } = req.body;
+    if (isPopup) {
+      const existingActive = await Promotion.findOne({ isPopup: true, status: true, _id: { $ne: req.params.id } });
+      if (existingActive) {
+        return res.status(400).json({ msg: 'Only one active promotion can be set as a popup at a time' });
+      }
+    }
     const promotion = await Promotion.findByIdAndUpdate(
       req.params.id,
       { $set: req.body },
@@ -98,6 +112,37 @@ router.delete('/:id', [auth, isAdmin], async (req, res) => {
     res.json({ msg: 'Promotion deleted' });
   } catch (err) {
     console.error('Error deleting promotion:', err);
+    res.status(500).json({ msg: 'Server error', details: err.message });
+  }
+});
+
+router.post('/duplicate/:id', [auth, isAdmin], async (req, res) => {
+  try {
+    const promotion = await Promotion.findById(req.params.id);
+    if (!promotion) return res.status(404).json({ msg: 'Promotion not found' });
+    const duplicate = promotion.toObject();
+    delete duplicate._id;
+    duplicate.title = `${duplicate.title} (Copy)`;
+    duplicate.isPopup = false; 
+  duplicate.status = false; // Duplicated promotion is inactive by default
+    const newPromotion = new Promotion(duplicate);
+    await newPromotion.save();
+    res.json(newPromotion);
+  } catch (err) {
+    console.error('Error duplicating promotion:', err);
+    res.status(500).json({ msg: 'Server error', details: err.message });
+  }
+});
+
+router.patch('/status/:id', [auth, isAdmin], async (req, res) => {
+  try {
+    const promotion = await Promotion.findById(req.params.id);
+    if (!promotion) return res.status(404).json({ msg: 'Promotion not found' });
+    promotion.status = req.body.status;
+    await promotion.save();
+    res.json(promotion);
+  } catch (err) {
+    console.error('Error toggling promotion status:', err);
     res.status(500).json({ msg: 'Server error', details: err.message });
   }
 });
