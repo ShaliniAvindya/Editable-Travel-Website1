@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Calendar, Users, MapPin, Phone, Mail, MessageSquare, Minus, Plus, ChevronLeft, ChevronRight, MessageCircle } from 'lucide-react';
+import 'react-phone-number-input/style.css';
 
 const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonType, resortName, roomName }) => {
   const [formData, setFormData] = useState({
@@ -9,12 +10,13 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
     message: '',
     from_date: '',
     to_date: '',
-    travellers: 1,
-    children: [],
+    adults: 1,
+    children: 0,
+    infants: 0,
     country: '',
   });
-  const [childAges, setChildAges] = useState([]);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -89,21 +91,12 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
     }));
   };
 
-  const handleChildAgeChange = (index, value) => {
-    const newChildAges = [...childAges];
-    newChildAges[index] = value;
-    setChildAges(newChildAges);
-    setFormData((prev) => ({ ...prev, children: newChildAges.filter((age) => age !== '') }));
-  };
 
-  const addChild = () => {
-    setChildAges([...childAges, '']);
-  };
-
-  const removeChild = (index) => {
-    const newChildAges = childAges.filter((_, i) => i !== index);
-    setChildAges(newChildAges);
-    setFormData((prev) => ({ ...prev, children: newChildAges.filter((age) => age !== '') }));
+  const handleCountChange = (field, increment) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: Math.max(field === 'adults' ? 1 : 0, prev[field] + increment),
+    }));
   };
 
   const getDaysInMonth = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -223,27 +216,41 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
     return days;
   };
 
+  const isValidInternationalPhone = (phone) => {
+    return /^\+\d{8,15}$/.test(phone);
+  };
+
   const validateForm = () => {
-    if (!item) return t.itemMissing;
-    if (!formData.name) return t.required;
-    if (!formData.email || !/\S+@\S+\.\S+/.test(formData.email)) return t.invalidEmail;
-    if (!formData.phone_number || !/^\+?\d{10,15}$/.test(formData.phone_number)) return t.invalidPhone;
-    if (formData.from_date && formData.to_date && new Date(formData.to_date) <= new Date(formData.from_date)) return t.invalidDates;
+    const errors = {};
+    if (!item) return { common: t.itemMissing };
+    if (!formData.name) errors.name = t.required;
+    if (!formData.email) {
+      errors.email = t.required;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      errors.email = t.invalidEmail;
+    }
+    if (!formData.phone_number) errors.phone_number = t.required;
+    if (!formData.country) errors.country = t.required;
+    if (!formData.from_date) errors.from_date = t.required;
+    if (!formData.to_date) errors.to_date = t.required;
+    if (formData.phone_number && !isValidInternationalPhone(formData.phone_number)) errors.phone_number = t.invalidPhone;
+    if (formData.from_date && formData.to_date && new Date(formData.to_date) <= new Date(formData.from_date)) errors.common = t.invalidDates;
     if (item?.expiryDate) {
       const expiry = new Date(item.expiryDate);
-      if (formData.from_date && new Date(formData.from_date) > expiry) return t.expiredDates;
-      if (formData.to_date && new Date(formData.to_date) > expiry) return t.expiredDates;
+      if (formData.from_date && new Date(formData.from_date) > expiry) errors.common = t.expiredDates;
+      if (formData.to_date && new Date(formData.to_date) > expiry) errors.common = t.expiredDates;
     }
-    return '';
+    return errors;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log('Form submission started with buttonType:', buttonType);
-    const validationError = validateForm();
-    if (validationError) {
-      setError(validationError);
-      if (validationError === t.expiredDates) {
+    const errors = validateForm();
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      setError(errors.common || '');
+      if (errors.common === t.expiredDates) {
         alert(`Error: ${t.expiredDates} (${item?.expiryDate ? new Date(item.expiryDate).toLocaleDateString() : 'N/A'})`);
       }
       return;
@@ -251,7 +258,10 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
     setError('');
     setLoading(true);
     try {
-      const entityType = item._id === 'CUSTOM' ? 'Custom' : item.title ? (resortName && roomName ? 'Accommodation' : 'Package') : 'Activity';
+      let entityType = item.entityType;
+      if (!entityType) {
+        entityType = item._id === 'CUSTOM' ? 'Custom' : item.title ? (resortName && roomName ? 'Accommodation' : 'Package') : 'Activity';
+      }
       const title = item.title || item.name || 'Custom Inquiry';
       const submissionData = {
         ...formData,
@@ -270,13 +280,14 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
         message: '',
         from_date: '',
         to_date: '',
-        travellers: 1,
-        children: [],
+        adults: 1,
+        children: 0,
+        infants: 0,
         country: '',
       });
-      setChildAges([]);
       setDragStart(null);
       setDragEnd(null);
+      setFieldErrors({});
       onClose();
     } catch (err) {
       console.error('Submission error:', err);
@@ -307,7 +318,12 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
             <p className="text-base font-bold mb-2" style={{ color: '#074a5b' }}>{item.title || item.name || 'Custom Inquiry'}</p>
             <p className="text-base text-gray-600 font-medium">{item.shortDescription || item.description || 'No description available'}</p>
           </div>
-          {error && <div className="mb-6 p-3 bg-red-100 text-red-700 rounded-lg text-sm">{error}</div>}
+          {/* Common error popup */}
+          {error && (
+            <div className="mb-6 p-3 bg-red-100 text-red-700 rounded-lg text-sm border border-red-300 shadow">
+              {error}
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -320,10 +336,11 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all"
-                  style={{ borderColor: '#074a5b' }}
+                  className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all ${fieldErrors.name ? 'border-red-500' : ''}`}
+                  style={{ borderColor: fieldErrors.name ? '#ef4444' : '#074a5b' }}
                   placeholder="Enter your name"
                 />
+                {fieldErrors.name && <div className="mt-1 text-xs text-red-600">{fieldErrors.name}</div>}
               </div>
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center">
@@ -335,10 +352,11 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all"
-                  style={{ borderColor: '#074a5b' }}
+                  className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all ${fieldErrors.email ? 'border-red-500' : ''}`}
+                  style={{ borderColor: fieldErrors.email ? '#ef4444' : '#074a5b' }}
                   placeholder="Enter your email"
                 />
+                {fieldErrors.email && <div className="mt-1 text-xs text-red-600">{fieldErrors.email}</div>}
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -352,10 +370,11 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
                   name="phone_number"
                   value={formData.phone_number}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all"
-                  style={{ borderColor: '#074a5b' }}
-                  placeholder="+1234567890"
+                  className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all ${fieldErrors.phone_number ? 'border-red-500' : ''}`}
+                  style={{ borderColor: fieldErrors.phone_number ? '#ef4444' : '#074a5b' }}
+                  placeholder="Enter your phone number"
                 />
+                {fieldErrors.phone_number && <div className="mt-1 text-xs text-red-600">{fieldErrors.phone_number}</div>}
               </div>
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center">
@@ -367,10 +386,11 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
                   name="country"
                   value={formData.country}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all"
-                  style={{ borderColor: '#074a5b' }}
+                  className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all ${fieldErrors.country ? 'border-red-500' : ''}`}
+                  style={{ borderColor: fieldErrors.country ? '#ef4444' : '#074a5b' }}
                   placeholder="Enter your country"
                 />
+                {fieldErrors.country && <div className="mt-1 text-xs text-red-600">{fieldErrors.country}</div>}
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -379,12 +399,14 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
                   <Calendar size={18} className="mr-2" style={{ color: '#1e809b' }} />
                   {t.fromDate}
                 </label>
-                <div className="w-full px-4 py-3 border-2 rounded-xl flex items-center">
+                <div className={`w-full px-4 py-3 border-2 rounded-xl flex items-center ${fieldErrors.from_date ? 'border-red-500' : ''}`}
+                  style={{ borderColor: fieldErrors.from_date ? '#ef4444' : '#074a5b' }}>
                   <Calendar size={18} className="mr-2 text-gray-400" />
                   <span className={formData.from_date ? 'text-gray-700' : 'text-gray-400'}>
                     {formData.from_date ? formatDateForDisplay(new Date(formData.from_date)) : t.datePlaceholder}
                   </span>
                 </div>
+                {fieldErrors.from_date && <div className="mt-1 text-xs text-red-600">{fieldErrors.from_date}</div>}
               </div>
               <div
                 onClick={() => formData.from_date && setShowCalendar(true)}
@@ -394,12 +416,14 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
                   <Calendar size={18} className="mr-2" style={{ color: '#1e809b' }} />
                   {t.toDate}
                 </label>
-                <div className="w-full px-4 py-3 border-2 rounded-xl flex items-center">
+                <div className={`w-full px-4 py-3 border-2 rounded-xl flex items-center ${fieldErrors.to_date ? 'border-red-500' : ''}`}
+                  style={{ borderColor: fieldErrors.to_date ? '#ef4444' : '#074a5b' }}>
                   <Calendar size={18} className="mr-2 text-gray-400" />
                   <span className={formData.to_date ? 'text-gray-700' : 'text-gray-400'}>
                     {formData.to_date ? formatDateForDisplay(new Date(formData.to_date)) : t.datePlaceholder}
                   </span>
                 </div>
+                {fieldErrors.to_date && <div className="mt-1 text-xs text-red-600">{fieldErrors.to_date}</div>}
               </div>
             </div>
             {showCalendar && (
@@ -446,62 +470,71 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center">
                 <Users size={18} className="mr-2" style={{ color: '#1e809b' }} />
-                {t.travellers}
+                Number of adults (12+)
               </label>
-              <div className="flex items-center border-2 rounded-xl" style={{ borderColor: '#074a5b' }}>
+              <div className="flex items-center border-2 rounded-xl mb-2" style={{ borderColor: '#074a5b' }}>
                 <button
                   type="button"
-                  onClick={() => handleTravellersChange(-1)}
+                  onClick={() => handleCountChange('adults', -1)}
                   className="p-4 hover:bg-[#1e809b]/10 transition-colors"
                 >
                   <Minus size={18} style={{ color: '#074a5b' }} />
                 </button>
                 <span className="flex-1 text-center py-3 text-base font-bold" style={{ color: '#074a5b' }}>
-                  {formData.travellers}
+                  {formData.adults}
                 </span>
                 <button
                   type="button"
-                  onClick={() => handleTravellersChange(1)}
+                  onClick={() => handleCountChange('adults', 1)}
                   className="p-4 hover:bg-[#1e809b]/10 transition-colors"
                 >
                   <Plus size={18} style={{ color: '#074a5b' }} />
                 </button>
               </div>
-            </div>
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center">
+              <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center mt-4">
                 <Users size={18} className="mr-2" style={{ color: '#1e809b' }} />
-                {t.children}
+                Number of children (2-11)
               </label>
-              <div className="space-y-3">
-                {childAges.map((age, index) => (
-                  <div key={index} className="flex items-center space-x-3">
-                    <input
-                      type="number"
-                      value={age}
-                      onChange={(e) => handleChildAgeChange(index, e.target.value)}
-                      min="0"
-                      max="17"
-                      placeholder="0"
-                      className="flex-1 px-4 py-3 border-2 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all"
-                      style={{ borderColor: '#074a5b' }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeChild(index)}
-                      className="text-red-500 hover:text-red-700 transition-colors"
-                    >
-                      <X size={18} />
-                    </button>
-                  </div>
-                ))}
+              <div className="flex items-center border-2 rounded-xl mb-2" style={{ borderColor: '#074a5b' }}>
                 <button
                   type="button"
-                  onClick={addChild}
-                  className="text-sm text-blue-600 hover:text-blue-800 flex items-center transition-colors"
+                  onClick={() => handleCountChange('children', -1)}
+                  className="p-4 hover:bg-[#1e809b]/10 transition-colors"
                 >
-                  <Plus size={18} className="mr-2" />
-                  {t.addChild}
+                  <Minus size={18} style={{ color: '#074a5b' }} />
+                </button>
+                <span className="flex-1 text-center py-3 text-base font-bold" style={{ color: '#074a5b' }}>
+                  {formData.children}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleCountChange('children', 1)}
+                  className="p-4 hover:bg-[#1e809b]/10 transition-colors"
+                >
+                  <Plus size={18} style={{ color: '#074a5b' }} />
+                </button>
+              </div>
+              <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center mt-4">
+                <Users size={18} className="mr-2" style={{ color: '#1e809b' }} />
+                Number of infants (below 2)
+              </label>
+              <div className="flex items-center border-2 rounded-xl" style={{ borderColor: '#074a5b' }}>
+                <button
+                  type="button"
+                  onClick={() => handleCountChange('infants', -1)}
+                  className="p-4 hover:bg-[#1e809b]/10 transition-colors"
+                >
+                  <Minus size={18} style={{ color: '#074a5b' }} />
+                </button>
+                <span className="flex-1 text-center py-3 text-base font-bold" style={{ color: '#074a5b' }}>
+                  {formData.infants}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleCountChange('infants', 1)}
+                  className="p-4 hover:bg-[#1e809b]/10 transition-colors"
+                >
+                  <Plus size={18} style={{ color: '#074a5b' }} />
                 </button>
               </div>
             </div>
