@@ -17,6 +17,7 @@ import LogoFaviconManagement from './components/admin/LogoFaviconManagement';
 import Login from './screens/Login';
 import Register from './screens/Register';
 import PromotionPopup from './components/PromotionPopup'; 
+import WhatsappFloatingButton from './components/WhatsappFloatingButton';
 import { AuthProvider } from './components/context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -72,9 +73,11 @@ const App = () => {
             } />
           </Route>
         </Routes>
+       <WhatsappFloatingButton />
       </div>
     </AuthProvider>
   );
 };
+
 
 export default App;
