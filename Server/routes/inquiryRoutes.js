@@ -22,7 +22,7 @@ const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_A
 
 // Function to generate admin email template
 const generateAdminEmailTemplate = (data) => {
-  const { entityType, entityTitle, resortName, roomName, name, email, phone_number, message, entity, from_date, to_date, travellers, children, country, buttonType, submitted_at } = data;
+  const { entityType, entityTitle, resortName, roomName, name, email, phone_number, message, entity, from_date, to_date, adults, children, infants, country, buttonType, submitted_at } = data;
   
   const plainText = `
 New Inquiry for ${entityType}: ${entityTitle}
@@ -34,8 +34,9 @@ Message: ${message || 'N/A'}
 ${entityType} ID: ${entity.$oid}
 From Date: ${from_date ? new Date(from_date).toLocaleDateString() : 'N/A'}
 To Date: ${to_date ? new Date(to_date).toLocaleDateString() : 'N/A'}
-Travellers: ${travellers || 'N/A'}
-Children Ages: ${children?.length > 0 ? children.join(', ') : 'None'}
+Adults (12+): ${adults ?? 'N/A'}
+Children (2-11): ${children ?? 'N/A'}
+Infants (below 2): ${infants ?? 'N/A'}
 Country: ${country || 'N/A'}
 Inquiry Type: ${buttonType === 'bookNow' ? 'Email' : 'WhatsApp'}
 Submitted At: ${submitted_at.toISOString()}
@@ -95,8 +96,9 @@ Submitted At: ${submitted_at.toISOString()}
                   <table width="100%" cellpadding="5" style="font-size: 14px; color: #333333;">
                     <tr><td><strong>From Date:</strong></td><td>${from_date ? new Date(from_date).toLocaleDateString() : 'N/A'}</td></tr>
                     <tr><td><strong>To Date:</strong></td><td>${to_date ? new Date(to_date).toLocaleDateString() : 'N/A'}</td></tr>
-                    <tr><td><strong>Travellers:</strong></td><td>${travellers || 'N/A'}</td></tr>
-                    <tr><td><strong>Children Ages:</strong></td><td>${children?.length > 0 ? children.join(', ') : 'None'}</td></tr>
+                    <tr><td><strong>Adults (12+):</strong></td><td>${adults ?? 'N/A'}</td></tr>
+                    <tr><td><strong>Children (2-11):</strong></td><td>${children ?? 'N/A'}</td></tr>
+                    <tr><td><strong>Infants (below 2):</strong></td><td>${infants ?? 'N/A'}</td></tr>
                   </table>
                 </td>
               </tr>
@@ -144,7 +146,7 @@ Submitted At: ${submitted_at.toISOString()}
 
 // Function to generate user confirmation email template
 const generateUserConfirmationTemplate = (data) => {
-  const { entityType, entityTitle, resortName, roomName, name, email, phone_number, message, entity, from_date, to_date, travellers, children, country, submitted_at } = data;
+  const { entityType, entityTitle, resortName, roomName, name, email, phone_number, message, entity, from_date, to_date, adults, children, infants, country, submitted_at } = data;
   
   const plainText = `
 Dear ${name},
@@ -159,8 +161,9 @@ Message: ${message || 'N/A'}
 ${entityType} ID: ${entity.$oid}
 From Date: ${from_date ? new Date(from_date).toLocaleDateString() : 'N/A'}
 To Date: ${to_date ? new Date(to_date).toLocaleDateString() : 'N/A'}
-Travellers: ${travellers || 'N/A'}
-Children Ages: ${children?.length > 0 ? children.join(', ') : 'None'}
+Adults (12+): ${adults ?? 'N/A'}
+Children (2-11): ${children ?? 'N/A'}
+Infants (below 2): ${infants ?? 'N/A'}
 Country: ${country || 'N/A'}
 Submitted At: ${submitted_at.toISOString()}
 
@@ -245,8 +248,9 @@ Traveliccted Team
                   <table width="100%" cellpadding="5" style="font-size: 14px; color: #333333;">
                     <tr><td><strong>From Date:</strong></td><td>${from_date ? new Date(from_date).toLocaleDateString() : 'N/A'}</td></tr>
                     <tr><td><strong>To Date:</strong></td><td>${to_date ? new Date(to_date).toLocaleDateString() : 'N/A'}</td></tr>
-                    <tr><td><strong>Travellers:</strong></td><td>${travellers || 'N/A'}</td></tr>
-                    <tr><td><strong>Children Ages:</strong></td><td>${children?.length > 0 ? children.join(', ') : 'None'}</td></tr>
+                    <tr><td><strong>Adults (12+):</strong></td><td>${adults ?? 'N/A'}</td></tr>
+                    <tr><td><strong>Children (2-11):</strong></td><td>${children ?? 'N/A'}</td></tr>
+                    <tr><td><strong>Infants (below 2):</strong></td><td>${infants ?? 'N/A'}</td></tr>
                   </table>
                 </td>
               </tr>
@@ -650,8 +654,9 @@ router.post('/', async (req, res) => {
       entityType,
       from_date,
       to_date,
-      travellers,
+      adults,
       children,
+      infants,
       country,
       buttonType,
       title,
@@ -680,8 +685,9 @@ router.post('/', async (req, res) => {
       entityType,
       from_date: from_date ? new Date(from_date) : undefined,
       to_date: to_date ? new Date(to_date) : undefined,
-      travellers,
-      children: children || [],
+      adults: adults ?? 1,
+      children: children ?? 0,
+      infants: infants ?? 0,
       country,
       buttonType,
       title,
@@ -717,8 +723,9 @@ router.post('/', async (req, res) => {
       entity,
       from_date,
       to_date,
-      travellers,
-      children,
+      adults: inquiry.adults,
+      children: inquiry.children,
+      infants: inquiry.infants,
       country,
       buttonType,
       submitted_at: inquiry.submitted_at
@@ -735,8 +742,9 @@ router.post('/', async (req, res) => {
       ${entityType} ID: ${entity.$oid}
       From Date: ${from_date ? new Date(from_date).toLocaleDateString() : 'N/A'}
       To Date: ${to_date ? new Date(to_date).toLocaleDateString() : 'N/A'}
-      Travellers: ${travellers || 'N/A'}
-      Children Ages: ${children?.length > 0 ? children.join(', ') : 'None'}
+      Adults (12+): ${inquiry.adults ?? 'N/A'}
+      Children (2-11): ${inquiry.children ?? 'N/A'}
+      Infants (below 2): ${inquiry.infants ?? 'N/A'}
       Country: ${country || 'N/A'}
       Inquiry Type: ${buttonType === 'bookNow' ? 'Email' : 'WhatsApp'}
       Submitted At: ${inquiry.submitted_at.toISOString()}
@@ -785,7 +793,14 @@ router.post('/', async (req, res) => {
 // GET / route 
 router.get('/', async (req, res) => {
   try {
-    const inquiries = await Inquiry.find().sort({ submitted_at: -1 });
+    let inquiries = await Inquiry.find().sort({ submitted_at: -1 });
+    inquiries = inquiries.map((inq) => {
+      const obj = inq.toObject ? inq.toObject() : inq;
+      obj.adults = typeof obj.adults === 'number' ? obj.adults : (obj.adults ? Number(obj.adults) : 1);
+      obj.children = typeof obj.children === 'number' ? obj.children : (obj.children ? Number(obj.children) : 0);
+      obj.infants = typeof obj.infants === 'number' ? obj.infants : (obj.infants ? Number(obj.infants) : 0);
+      return obj;
+    });
     res.json(inquiries);
   } catch (err) {
     console.error('Error fetching inquiries:', err);
@@ -807,8 +822,13 @@ router.get('/:id', async (req, res) => {
 
 // DELETE /:id route
 router.delete('/:id', async (req, res) => {
+  const { id } = req.params;
+  if (!id || typeof id !== 'string' || !/^[a-fA-F0-9]{24}$/.test(id)) {
+    console.error('Delete inquiry error: Invalid inquiry id', id);
+    return res.status(400).json({ msg: 'Invalid inquiry id' });
+  }
   try {
-    const inquiry = await Inquiry.findByIdAndDelete(req.params.id);
+    const inquiry = await Inquiry.findByIdAndDelete(id);
     if (!inquiry) return res.status(404).json({ msg: 'Inquiry not found' });
     res.json({ msg: 'Inquiry deleted' });
   } catch (err) {
