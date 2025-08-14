@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { X } from 'lucide-react';
+import { FaRegClone, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import { AuthContext } from '../context/AuthContext';
 
 const imgbbAxios = axios.create();
@@ -13,18 +14,20 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md">
-        <h3 className="text-lg font-semibold text-[#074a5b] mb-4">{title}</h3>
-        <p className="text-gray-600 mb-6">{message}</p>
+        <h3 className="text-lg font-semibold text-[#074a5b] mb-4" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>{title}</h3>
+        <p className="text-gray-600 mb-6" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>{message}</p>
         <div className="flex justify-end gap-4">
           <button
             onClick={onClose}
-            className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg font-semibold transition-all"
+            className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-xl font-semibold transition-all"
+            style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
-            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-semibold transition-all"
+            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl font-semibold transition-all"
+            style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
           >
             Delete
           </button>
@@ -35,7 +38,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
 };
 
 const PackageManagement = () => {
-  const { user, api } = useContext(AuthContext);
+  const { user, api, logout } = useContext(AuthContext);
   const navigate = useNavigate();
   const [packages, setPackages] = useState([]);
   const [selectedPackage, setSelectedPackage] = useState(null);
@@ -56,11 +59,13 @@ const PackageManagement = () => {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [modal, setModal] = useState({ isOpen: false, id: null, name: '' });
+  const [notification, setNotification] = useState('');
+  const [visibleItems, setVisibleItems] = useState({});
 
   useEffect(() => {
-    if (!user) {
-      setError('Please log in to access this page.');
-      navigate('/login', { state: { message: 'Access required' } });
+    if (!user || !user.isAdmin) {
+      setError('Please log in as an admin to access this page.');
+      navigate('/login', { state: { message: 'Admin access required' } });
     }
   }, [user, navigate]);
 
@@ -82,26 +87,50 @@ const PackageManagement = () => {
     const fetchPackages = async () => {
       try {
         setLoading(true);
-        const response = await api.get('https://editable-travel-website1-rpfv.vercel.app/api/packages');
+        const cacheBuster = new Date().getTime();
+        const response = await api.get(`/api/packages?all=true&_cb=${cacheBuster}`);
         console.log('Fetched packages:', response.data);
         setPackages(response.data);
       } catch (err) {
         console.error('Fetch error:', err);
-        setError(`Failed to load packages: ${err.response?.data?.msg || err.message}`);
+        if (err.response?.status === 401 || err.response?.status === 403) {
+          setError('Unauthorized: Please log in as an admin.');
+          logout();
+          navigate('/login', { state: { message: 'Admin access required' } });
+        } else {
+          setError(`Failed to load packages: ${err.response?.data?.msg || err.message}`);
+        }
       } finally {
         setLoading(false);
       }
     };
-    if (user) {
+    if (user?.isAdmin) {
       fetchPackages();
     }
-  }, [user, api]);
+  }, [user, api, logout, navigate]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const id = entry.target.getAttribute('data-id');
+            setVisibleItems((prev) => ({ ...prev, [id]: true }));
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+    const elements = document.querySelectorAll('[data-animate]');
+    elements.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [packages]);
 
   const isValidId = (id) => {
     return typeof id === 'string' && id.match(/^[0-9a-fA-F]{24}$/);
   };
 
-  const getSafeImageUrl = (url) => url || '';
+  const getSafeImageUrl = (url, fallback = 'https://via.placeholder.com/400') => url || fallback;
 
   const uploadImage = async (file, maxRetries = 2) => {
     const formDataImg = new FormData();
@@ -144,6 +173,13 @@ const PackageManagement = () => {
     setFormData((prev) => ({ ...prev, images: [...prev.images, ...urls] }));
   };
 
+  const handleRemoveImage = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index),
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -176,18 +212,24 @@ const PackageManagement = () => {
       };
       let response;
       if (selectedPackage) {
-        response = await api.put(`https://editable-travel-website1-rpfv.vercel.app/api/packages/${selectedPackage._id}`, data);
+        response = await api.put(`/api/packages/${selectedPackage._id}`, data);
         setPackages(packages.map(p => p._id === selectedPackage._id ? response.data : p));
         setSuccess('Package updated successfully');
       } else {
-        response = await api.post('https://editable-travel-website1-rpfv.vercel.app/api/packages', data);
+        response = await api.post('/api/packages', data);
         setPackages([...packages, response.data]);
         setSuccess('Package created successfully');
       }
       resetForm();
     } catch (err) {
       console.error('Submit error:', err);
-      setError(`Failed to save package: ${err.response?.data?.msg || err.message}`);
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        setError('Unauthorized: Please log in as an admin.');
+        logout();
+        navigate('/login', { state: { message: 'Admin access required' } });
+      } else {
+        setError(`Failed to save package: ${err.response?.data?.msg || err.message}`);
+      }
     }
   };
 
@@ -200,20 +242,50 @@ const PackageManagement = () => {
     setModal({ isOpen: true, id, name });
   };
 
+  const handleDuplicatePackage = async (id) => {
+    try {
+      await api.post(`/api/packages/duplicate/${id}`);
+      setNotification('Duplicate created successfully');
+      setSuccess('Package duplicated successfully');
+      const packagesResponse = await api.get('/api/packages?all=true');
+      setPackages(packagesResponse.data);
+      setTimeout(() => setNotification(''), 2500);
+    } catch (err) {
+      setError('Failed to duplicate package');
+    }
+  };
+
+  const handleToggleStatus = async (id, currentStatus) => {
+    try {
+      await api.put(`/api/packages/status/${id}`, { status: !currentStatus });
+      setSuccess('Package status updated');
+      const packagesResponse = await api.get('/api/packages?all=true');
+      setPackages(packagesResponse.data);
+    } catch (err) {
+      setError('Failed to update status');
+    }
+  };
+
   const confirmDelete = async () => {
     try {
       if (!isValidId(modal.id)) {
         console.error('Invalid package ID:', modal.id);
-        setError('Invalid package ID:', modal.id);
+        setError('Invalid package ID');
         return;
       }
-      await api.delete(`https://editable-travel-website1-rpfv.vercel.app/api/packages/${modal.id}`);
+      await api.delete(`/api/packages/${modal.id}`);
       setPackages(packages.filter(p => p._id !== modal.id));
       setSuccess('Package deleted successfully');
       resetForm();
     } catch (err) {
       console.error('Delete error:', err);
-      setError(`Failed to delete package: ${err.response?.data?.msg || err.message}`);
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        setError('Unauthorized: Please log in as an admin.');
+        logout();
+        navigate('/login', { state: { message: 'Admin access required' } });
+      } else {
+        setError(`Failed to delete package: ${err.response?.data?.msg || err.message}`);
+      }
     } finally {
       setModal({ isOpen: false, id: null, name: '' });
     }
@@ -225,7 +297,7 @@ const PackageManagement = () => {
 
   const handleEditPackage = (pkg) => {
     if (!isValidId(pkg._id)) {
-      console.error('Invalid package ID: pkg._id');
+      console.error('Invalid package ID:', pkg._id);
       setError('Invalid package ID');
       return;
     }
@@ -264,16 +336,21 @@ const PackageManagement = () => {
     setSuccess('');
   };
 
-  if (loading || !user) {
+  if (loading || !user?.isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <p className="text-xl text-[#074a5b]" style={{ fontFamily: 'Comic Sans MS, cursive' }}>Loading packages...</p>
+        <p className="text-xl text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>Loading packages...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+    <div className="min-h-screen bg-white" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
+      {notification && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg z-50 transition-all duration-300">
+          {notification}
+        </div>
+      )}
       <ConfirmationModal
         isOpen={modal.isOpen}
         onClose={closeModal}
@@ -284,8 +361,8 @@ const PackageManagement = () => {
       <div className="container mx-auto p-6">
         <h1 className="text-4xl font-bold mb-8 text-[#074a5b]">Package Management</h1>
 
-        {error && <div className="bg-red-100 text-red-700 p-4 mb-6 rounded-lg">{error}</div>}
-        {success && <div className="bg-green-100 text-green-700 p-4 mb-6 rounded-lg">{success}</div>}
+        {error && <div className="bg-red-100 text-red-700 p-4 mb-6 rounded-xl">{error}</div>}
+        {success && <div className="bg-green-100 text-green-700 p-4 mb-6 rounded-xl">{success}</div>}
 
         <div className="mb-12 p-6 bg-white rounded-2xl shadow-lg">
           <h2 className="text-2xl font-semibold mb-6 text-[#074a5b]">
@@ -294,7 +371,8 @@ const PackageManagement = () => {
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block mb-2 text-[#074a5b] font-semibold">Package Title</label>
-              <input                type="text"
+              <input
+                type="text"
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
@@ -303,7 +381,8 @@ const PackageManagement = () => {
             </div>
             <div>
               <label className="block mb-2 text-[#074a5b] font-semibold">Price</label>
-              <input                type="number"
+              <input
+                type="number"
                 value={formData.price}
                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                 className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
@@ -312,7 +391,8 @@ const PackageManagement = () => {
             </div>
             <div>
               <label className="block mb-2 text-[#074a5b] font-semibold">Number of Nights</label>
-              <input                type="number"
+              <input
+                type="number"
                 value={formData.nights}
                 onChange={(e) => setFormData({ ...formData, nights: e.target.value })}
                 className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
@@ -320,7 +400,8 @@ const PackageManagement = () => {
             </div>
             <div>
               <label className="block mb-2 text-[#074a5b] font-semibold">Expiry Date</label>
-              <input                type="date"
+              <input
+                type="date"
                 value={formData.expiry_date}
                 onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })}
                 className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
@@ -328,7 +409,8 @@ const PackageManagement = () => {
             </div>
             <div>
               <label className="block mb-2 text-[#074a5b] font-semibold">Resort</label>
-              <input                type="text"
+              <input
+                type="text"
                 value={formData.resort}
                 onChange={(e) => setFormData({ ...formData, resort: e.target.value })}
                 className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
@@ -336,7 +418,8 @@ const PackageManagement = () => {
             </div>
             <div>
               <label className="block mb-2 text-[#074a5b] font-semibold">Activities (comma-separated)</label>
-              <input                type="text"
+              <input
+                type="text"
                 value={formData.activities}
                 onChange={(e) => setFormData({ ...formData, activities: e.target.value })}
                 className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
@@ -361,18 +444,13 @@ const PackageManagement = () => {
                     <img
                       src={getSafeImageUrl(img)}
                       alt={`Preview ${index}`}
-                      className="w-32 h-32 object-cover rounded-lg"
-                      onError={() => console.error(`Failed to load image: ${img}`)}
+                      className="w-32 h-32 object-cover rounded-xl"
+                      onError={(e) => (e.target.src = 'https://via.placeholder.com/400')}
                     />
                     <button
                       type="button"
-                      onClick={() =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          images: prev.images.filter((_, i) => i !== index),
-                        }))
-                      }
-                      className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
+                      onClick={() => handleRemoveImage(index)}
+                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
                     >
                       <X size={14} />
                     </button>
@@ -382,7 +460,8 @@ const PackageManagement = () => {
             </div>
             <div>
               <label className="block mb-2 text-[#074a5b] font-semibold">Included Items (comma-separated)</label>
-              <input                type="text"
+              <input
+                type="text"
                 value={formData.included_items}
                 onChange={(e) => setFormData({ ...formData, included_items: e.target.value })}
                 className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
@@ -390,7 +469,8 @@ const PackageManagement = () => {
             </div>
             <div>
               <label className="block mb-2 text-[#074a5b] font-semibold">Excluded Items (comma-separated)</label>
-              <input                type="text"
+              <input
+                type="text"
                 value={formData.excluded_items}
                 onChange={(e) => setFormData({ ...formData, excluded_items: e.target.value })}
                 className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
@@ -433,14 +513,18 @@ const PackageManagement = () => {
             {packages.map((pkg) => (
               <div
                 key={pkg._id}
-                className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-500"
+                data-animate
+                data-id={pkg._id}
+                className={`bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-500 transform ${
+                  visibleItems[pkg._id] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                }`}
               >
                 <div className="relative h-48 overflow-hidden">
                   <img
                     src={getSafeImageUrl(pkg.images[0])}
                     alt={pkg.title}
                     className="w-full h-full object-cover"
-                    onError={() => console.error(`Failed to load image for package ${pkg.title}: ${pkg.images[0]}`)}
+                    onError={(e) => (e.target.src = 'https://via.placeholder.com/400')}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
                 </div>
@@ -463,6 +547,20 @@ const PackageManagement = () => {
                       className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl font-semibold transition-all"
                     >
                       Delete
+                    </button>
+                    <button
+                      title="Duplicate Package"
+                      onClick={() => handleDuplicatePackage(pkg._id)}
+                      className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-xl font-semibold transition-all"
+                    >
+                      <FaRegClone size={18} />
+                    </button>
+                    <button
+                      title={pkg.status ? 'Set Inactive' : 'Set Active'}
+                      onClick={() => handleToggleStatus(pkg._id, pkg.status)}
+                      className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-xl font-semibold transition-all"
+                    >
+                      {pkg.status ? <FaToggleOn color="green" size={22} /> : <FaToggleOff color="gray" size={22} />}
                     </button>
                   </div>
                 </div>
