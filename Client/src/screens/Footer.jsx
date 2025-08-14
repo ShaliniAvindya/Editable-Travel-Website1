@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Facebook, Instagram, Twitter } from 'lucide-react';
+import { Facebook, Instagram, Twitter, Youtube, Music2 } from 'lucide-react';
 import axios from 'axios';
 import GTC from './GTC';
 import PrivacyPolicy from './PrivacyPolicy';
@@ -13,6 +13,8 @@ const Footer = () => {
     facebook: '',
     instagram: '',
     twitter: '',
+    youtube: '',
+    tiktok: '',
   });
   const [error, setError] = useState(null);
 
@@ -20,7 +22,7 @@ const Footer = () => {
   useEffect(() => {
     const fetchSocialMedia = async () => {
       try {
-        const response = await axios.get('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/contact');
+        const response = await axios.get('/api/ui-content/contact');
         const socialMediaSection = response.data.sections?.find(
           (s) => s.sectionId === 'social-media'
         )?.content || {};
@@ -28,6 +30,8 @@ const Footer = () => {
           facebook: socialMediaSection.facebook || '',
           instagram: socialMediaSection.instagram || '',
           twitter: socialMediaSection.twitter || '',
+          youtube: socialMediaSection.youtube || '',
+          tiktok: socialMediaSection.tiktok || '',
         });
       } catch (err) {
         console.error('Error fetching social media links:', err);
@@ -96,7 +100,7 @@ const Footer = () => {
                   onClick={() => openPopup('gtc')}
                   className="hover:text-cyan-300 transition-all duration-300 hover:translate-x-1 inline-block group"
                 >
-                  <span className="border-b border-transparent group-hover:border-cyan-300 pb-1 transition-all duration-300">
+                  <span className="border-b border-transparent group-hover:border-cyan-300 pb-1 transition-all duration-300 text-left block">
                     Allgemeine Geschäftsbedingungen
                   </span>
                 </button>
@@ -142,6 +146,32 @@ const Footer = () => {
                   <div className="text-white bg-gradient-to-br from-[#E4405F] via-[#C13584] to-[#833AB4] hover:from-[#ff4d6d] hover:via-[#d63893] hover:to-[#9c44c4] transition-all duration-300 hover:scale-110 p-3 rounded-full shadow-lg hover:shadow-pink-500/40 transform hover:-translate-y-1">
                     <Instagram size={20} className="relative z-10" />
                     <div className="absolute inset-0 bg-gradient-to-br from-pink-400/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  </div>
+                </a>
+              )}
+              {socialMedia.youtube && (
+                <a
+                  href={socialMedia.youtube}
+                  className="group relative overflow-hidden"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <div className="text-white bg-gradient-to-br from-[#FF0000] to-[#c4302b] hover:from-[#ff4d4d] hover:to-[#c4302b] transition-all duration-300 hover:scale-110 p-3 rounded-full shadow-lg hover:shadow-red-500/40 transform hover:-translate-y-1">
+                    <Youtube size={20} className="relative z-10" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-red-400/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  </div>
+                </a>
+              )}
+              {socialMedia.tiktok && (
+                <a
+                  href={socialMedia.tiktok}
+                  className="group relative overflow-hidden"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <div className="text-white bg-gradient-to-br from-[#000000] to-[#25F4EE] hover:from-[#333333] hover:to-[#25F4EE] transition-all duration-300 hover:scale-110 p-3 rounded-full shadow-lg hover:shadow-black/40 transform hover:-translate-y-1">
+                    <Music2 size={20} className="relative z-10" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   </div>
                 </a>
               )}
