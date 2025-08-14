@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Calendar, Users, MapPin, Phone, Mail, MessageSquare, Minus, Plus, ChevronLeft, ChevronRight, MessageCircle } from 'lucide-react';
-import 'react-phone-number-input/style.css';
+// import 'react-phone-number-input/style.css';
 
 const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonType, resortName, roomName }) => {
   const [formData, setFormData] = useState({
@@ -575,3 +575,4 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
 };
 
 export default React.memo(InquiryFormModal);
+
