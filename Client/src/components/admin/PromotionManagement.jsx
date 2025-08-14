@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { X, Edit, Trash2, Save } from 'lucide-react';
+import { FaRegClone, FaToggleOn, FaToggleOff } from 'react-icons/fa'; 
 import { useNavigate } from 'react-router-dom';
 import PromotionPopup from '../PromotionPopup';
 import { AuthContext } from '../context/AuthContext';
@@ -12,22 +13,22 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md">
-        <h3 className="text-lg font-semibold text-[#074a5b] mb-4" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+        <h3 className="text-lg font-semibold text-[#074a5b] mb-4" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
           {title}
         </h3>
-        <p className="text-gray-600 mb-6" style={{ fontFamily: 'Comic Sans MS, cursive' }}>{message}</p>
+        <p className="text-gray-600 mb-6" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>{message}</p>
         <div className="flex justify-end gap-4">
           <button
             onClick={onClose}
             className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-xl font-semibold transition-all"
-            style={{ fontFamily: 'Comic Sans MS, cursive' }}
+            style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
             className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl font-semibold transition-all"
-            style={{ fontFamily: 'Comic Sans MS, cursive' }}
+            style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
           >
             Delete
           </button>
@@ -57,11 +58,13 @@ const PromotionManagement = ({ searchTerm }) => {
   const [editingId, setEditingId] = useState(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [notification, setNotification] = useState(''); 
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [modal, setModal] = useState({ isOpen: false, id: null, name: '' });
   const [visibleItems, setVisibleItems] = useState({});
   const [activePopupPromotion, setActivePopupPromotion] = useState(null);
+  const [promoError, setPromoError] = useState('');
 
   // Check admin access
   useEffect(() => {
@@ -77,7 +80,8 @@ const PromotionManagement = ({ searchTerm }) => {
   useEffect(() => {
     if (error) setTimeout(() => setError(''), 5000);
     if (success) setTimeout(() => setSuccess(''), 3000);
-  }, [error, success]);
+    if (notification) setTimeout(() => setNotification(''), 2500);
+  }, [error, success, notification]);
 
   // Fetch promotions and determine active popup
   useEffect(() => {
@@ -87,7 +91,7 @@ const PromotionManagement = ({ searchTerm }) => {
         setLoading(true);
         const token = localStorage.getItem('token');
         console.log('Fetching promotions with token:', token);
-        const res = await axios.get('https://editable-travel-website1-rpfv.vercel.app/api/promotions', {
+        const res = await axios.get('/api/promotions', {
           headers: { 'x-auth-token': token },
         });
         setPromotions(res.data);
@@ -207,7 +211,7 @@ const PromotionManagement = ({ searchTerm }) => {
     try {
       const token = localStorage.getItem('token');
       console.log('Deleting promotion with token:', token);
-      await axios.delete(`https://editable-travel-website1-rpfv.vercel.app/api/promotions/${modal.id}`, {
+      await axios.delete(`/api/promotions/${modal.id}`, {
         headers: { 'x-auth-token': token },
       });
       setPromotions(promotions.filter((p) => p._id !== modal.id));
@@ -225,6 +229,57 @@ const PromotionManagement = ({ searchTerm }) => {
       );
     } finally {
       setModal({ isOpen: false, id: null, name: '' });
+    }
+  };
+
+  // Duplicate a promotion
+  const handleDuplicatePromotion = async (id) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await axios.post(`/api/promotions/duplicate/${id}`, {}, {
+        headers: { 'x-auth-token': token },
+      });
+      setPromotions([...promotions, res.data]);
+      setNotification('Duplicate created successfully');
+      setSuccess('Promotion duplicated successfully');
+      setTimeout(() => setNotification(''), 2500);
+    } catch (err) {
+      console.error('Duplicate promotion error:', err);
+      setError(
+        err.response
+          ? `Failed to duplicate: ${err.response.data?.msg || err.message}`
+          : 'Failed to duplicate: Network Error.'
+      );
+    }
+  };
+
+  // Toggle promotion status
+  const handleToggleStatus = async (id, currentStatus) => {
+    try {
+      if (!currentStatus) { 
+        const alreadyActive = promotions.some(p => p.status === true && p._id !== id);
+        if (alreadyActive) {
+          setPromoError('Cannot activate two promotions at once.');
+          setTimeout(() => setPromoError(''), 3000);
+          return;
+        }
+      }
+      const token = localStorage.getItem('token');
+      await axios.patch(`/api/promotions/status/${id}`, { status: !currentStatus }, {
+        headers: { 'x-auth-token': token },
+      });
+      setSuccess('Promotion status updated');
+      const res = await axios.get('/api/promotions', {
+        headers: { 'x-auth-token': token },
+      });
+      setPromotions(res.data);
+    } catch (err) {
+      console.error('Toggle status error:', err);
+      setError(
+        err.response
+          ? `Failed to update status: ${err.response.data?.msg || err.message}`
+          : 'Failed to update status: Network Error.'
+      );
     }
   };
 
@@ -249,11 +304,11 @@ const PromotionManagement = ({ searchTerm }) => {
       const headers = { 'x-auth-token': token };
       let res;
       if (editingId) {
-        res = await axios.put(`https://editable-travel-website1-rpfv.vercel.app/api/promotions/${editingId}`, promotionData, { headers });
+        res = await axios.put(`/api/promotions/${editingId}`, promotionData, { headers });
         setPromotions(promotions.map((p) => (p._id === editingId ? res.data : p)));
         setSuccess('Promotion updated');
       } else {
-        res = await axios.post('https://editable-travel-website1-rpfv.vercel.app/api/promotions', promotionData, { headers });
+        res = await axios.post('/api/promotions', promotionData, { headers });
         setPromotions([...promotions, res.data]);
         setSuccess('Promotion added');
       }
@@ -301,7 +356,7 @@ const PromotionManagement = ({ searchTerm }) => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <p className="text-xl text-[#074a5b]" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+        <p className="text-xl text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
           Loading...
         </p>
       </div>
@@ -309,7 +364,12 @@ const PromotionManagement = ({ searchTerm }) => {
   }
 
   return (
-    <div className="min-h-screen bg-white" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+    <div className="min-h-screen bg-white" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
+      {notification && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg z-50 transition-all duration-300">
+          {notification}
+        </div>
+      )}
       {activePopupPromotion && (
         <PromotionPopup promotion={activePopupPromotion} onClose={handleClosePopup} />
       )}
@@ -320,29 +380,34 @@ const PromotionManagement = ({ searchTerm }) => {
         title="Delete Promotion"
         message={`Are you sure you want to delete ${modal.name}? This cannot be undone.`}
       />
+      {promoError && (
+        <div className="fixed top-8 left-1/2 transform -translate-x-1/2 bg-red-100 border border-red-400 text-red-700 px-6 py-3 rounded-xl shadow-lg z-50 animate-bounce">
+          {promoError}
+        </div>
+      )}
       <div className="container mx-auto p-6">
-        <h1 className="text-4xl font-bold mb-8 text-[#074a5b]" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+        <h1 className="text-4xl font-bold mb-8 text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
           Promotion Management
         </h1>
 
         {error && (
-          <div className="bg-red-100 text-red-700 p-4 mb-6 rounded-xl" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+          <div className="bg-red-100 text-red-700 p-4 mb-6 rounded-xl" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
             {error}
           </div>
         )}
         {success && (
-          <div className="bg-green-100 text-green-700 p-4 mb-6 rounded-xl" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+          <div className="bg-green-100 text-green-700 p-4 mb-6 rounded-xl" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
             {success}
           </div>
         )}
 
         <div className="mb-12 p-6 bg-white rounded-2xl shadow-lg">
-          <h2 className="text-2xl font-semibold mb-6 text-[#074a5b]" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+          <h2 className="text-2xl font-semibold mb-6 text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
             {editingId ? 'Edit Promotion' : 'Add Promotion'}
           </h2>
           <form onSubmit={handleSavePromotion} className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                 Title
               </label>
               <input
@@ -350,24 +415,24 @@ const PromotionManagement = ({ searchTerm }) => {
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
-                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                 required
               />
             </div>
             <div className="col-span-2">
-              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                 Description
               </label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none w-full h-24"
-                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                 required
               />
             </div>
             <div>
-              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                 Image
               </label>
               <div className="flex items-center">
@@ -377,10 +442,10 @@ const PromotionManagement = ({ searchTerm }) => {
                   onChange={handleImageUpload}
                   className="border-none outline-none h-12"
                   disabled={uploading}
-                  style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                  style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                 />
                 {uploading && (
-                  <span className="ml-2 text-gray-600" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                  <span className="ml-2 text-gray-600" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                     Uploading...
                   </span>
                 )}
@@ -404,7 +469,7 @@ const PromotionManagement = ({ searchTerm }) => {
               )}
             </div>
             <div>
-              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                 Valid From
               </label>
               <input
@@ -412,12 +477,12 @@ const PromotionManagement = ({ searchTerm }) => {
                 value={formData.validFrom}
                 onChange={(e) => setFormData({ ...formData, validFrom: e.target.value })}
                 className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
-                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                 required
               />
             </div>
             <div>
-              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                 Valid Until
               </label>
               <input
@@ -425,12 +490,12 @@ const PromotionManagement = ({ searchTerm }) => {
                 value={formData.validUntil}
                 onChange={(e) => setFormData({ ...formData, validUntil: e.target.value })}
                 className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
-                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                 required
               />
             </div>
             <div>
-              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                 Show as Popup
               </label>
               <input
@@ -441,7 +506,7 @@ const PromotionManagement = ({ searchTerm }) => {
               />
             </div>
             <div>
-              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                 Button Text
               </label>
               <input
@@ -449,11 +514,11 @@ const PromotionManagement = ({ searchTerm }) => {
                 value={formData.buttonText}
                 onChange={(e) => setFormData({ ...formData, buttonText: e.target.value })}
                 className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
-                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
               />
             </div>
             <div>
-              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                 Button Link
               </label>
               <input
@@ -461,11 +526,11 @@ const PromotionManagement = ({ searchTerm }) => {
                 value={formData.buttonLink}
                 onChange={(e) => setFormData({ ...formData, buttonLink: e.target.value })}
                 className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
-                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
               />
             </div>
             <div>
-              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                 Countdown Label
               </label>
               <input
@@ -473,11 +538,11 @@ const PromotionManagement = ({ searchTerm }) => {
                 value={formData.countdownLabel}
                 onChange={(e) => setFormData({ ...formData, countdownLabel: e.target.value })}
                 className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
-                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
               />
             </div>
             <div>
-              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                 Tag 1
               </label>
               <input
@@ -485,11 +550,11 @@ const PromotionManagement = ({ searchTerm }) => {
                 value={formData.trustIndicator1}
                 onChange={(e) => setFormData({ ...formData, trustIndicator1: e.target.value })}
                 className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
-                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
               />
             </div>
             <div>
-              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+              <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                 Tag 2
               </label>
               <input
@@ -497,7 +562,7 @@ const PromotionManagement = ({ searchTerm }) => {
                 value={formData.trustIndicator2}
                 onChange={(e) => setFormData({ ...formData, trustIndicator2: e.target.value })}
                 className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
-                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
               />
             </div>
             <div className="col-span-2 flex gap-4">
@@ -505,7 +570,7 @@ const PromotionManagement = ({ searchTerm }) => {
                 type="submit"
                 className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300"
                 disabled={uploading}
-                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
               >
                 <Save size={16} className="inline mr-2" /> Save
               </button>
@@ -514,7 +579,7 @@ const PromotionManagement = ({ searchTerm }) => {
                 onClick={handleAddPromotion}
                 className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-xl font-semibold transition-all duration-300"
                 disabled={uploading}
-                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
               >
                 Cancel
               </button>
@@ -523,11 +588,11 @@ const PromotionManagement = ({ searchTerm }) => {
         </div>
 
         <div className="mb-12">
-          <h2 className="text-2xl font-semibold mb-6 text-[#074a5b]" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+          <h2 className="text-2xl font-semibold mb-6 text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
             Promotions
           </h2>
           {!promotions.length && (
-            <p className="text-gray-600" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+            <p className="text-gray-600" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
               No promotions added.
             </p>
           )}
@@ -552,40 +617,43 @@ const PromotionManagement = ({ searchTerm }) => {
                   </div>
                 )}
                 <div className="p-6">
-                  <h3 className="text-lg font-semibold text-[#074a5b]" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                  <h3 className="text-lg font-semibold text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                     {promotion.title}
                   </h3>
-                  <p className="text-gray-600 mb-3" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                  <p className="text-gray-600 mb-3" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                     {promotion.description}
                   </p>
-                  <p className="text-gray-600 mb-3" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                  <p className="text-gray-600 mb-3" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                     <strong>Valid:</strong> {new Date(promotion.validFrom).toLocaleDateString()} -{' '}
                     {new Date(promotion.validUntil).toLocaleDateString()}
                   </p>
-                  <p className="text-gray-600 mb-3" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                  <p className="text-gray-600 mb-3" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                     <strong>Popup:</strong> {promotion.isPopup ? 'Yes' : 'No'}
                   </p>
-                  <p className="text-gray-600 mb-3" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                  <p className="text-gray-600 mb-3" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                     <strong>Button Text:</strong> {promotion.buttonText}
                   </p>
-                  <p className="text-gray-600 mb-3" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                  <p className="text-gray-600 mb-3" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                     <strong>Button Link:</strong> {promotion.buttonLink}
                   </p>
-                  <p className="text-gray-600 mb-3" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                  <p className="text-gray-600 mb-3" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                     <strong>Countdown Label:</strong> {promotion.countdownLabel}
                   </p>
-                  <p className="text-gray-600 mb-3" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                  <p className="text-gray-600 mb-3" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                     <strong>Trust Indicator 1:</strong> {promotion.trustIndicator1}
                   </p>
-                  <p className="text-gray-600 mb-3" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                  <p className="text-gray-600 mb-3" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                     <strong>Trust Indicator 2:</strong> {promotion.trustIndicator2}
+                  </p>
+                  <p className="text-gray-600 mb-3" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
+                    <strong>Status:</strong> {promotion.status ? 'Active' : 'Inactive'}
                   </p>
                   <div className="flex gap-3">
                     <button
                       type="button"
                       onClick={(e) => handleEditPromotion(e, promotion)}
                       className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-xl font-semibold transition-all duration-300"
-                      style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                      style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                     >
                       <Edit size={16} className="inline mr-2" /> Edit
                     </button>
@@ -593,9 +661,27 @@ const PromotionManagement = ({ searchTerm }) => {
                       type="button"
                       onClick={() => handleDeletePromotion(promotion._id, promotion.title)}
                       className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl font-semibold transition-all duration-300"
-                      style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                      style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                     >
                       <Trash2 size={16} className="inline mr-2" /> Delete
+                    </button>
+                    <button
+                      type="button"
+                      title="Duplicate Promotion"
+                      onClick={() => handleDuplicatePromotion(promotion._id)}
+                      className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-xl font-semibold transition-all duration-300"
+                      style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
+                    >
+                      <FaRegClone size={18} />
+                    </button>
+                    <button
+                      type="button"
+                      title={promotion.status ? 'Set Inactive' : 'Set Active'}
+                      onClick={() => handleToggleStatus(promotion._id, promotion.status)}
+                      className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-xl font-semibold transition-all duration-300"
+                      style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
+                    >
+                      {promotion.status ? <FaToggleOn color="green" size={22} /> : <FaToggleOff color="gray" size={22} />}
                     </button>
                   </div>
                 </div>
