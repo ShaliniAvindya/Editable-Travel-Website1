@@ -22,6 +22,10 @@ const AtollSchema = new mongoose.Schema({
   amenities: {
     type: [String],
     default: []
+  },
+  status: {
+    type: Boolean,
+    default: true 
   }
 }, {
   timestamps: true
