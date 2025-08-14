@@ -7,6 +7,10 @@ const BlogContentSchema = new mongoose.Schema({
 }, { _id: false });
 
 const BlogSchema = new mongoose.Schema({
+  status: {
+    type: Boolean,
+    default: true
+  },
   title: {
     type: String,
     required: true
