@@ -33,7 +33,7 @@ const ResortProfile = () => {
     const fetchResort = async () => {
       try {
         setLoading(true);
-        const resortResponse = await axios.get(`/api/resorts/${id}`);
+        const resortResponse = await axios.get(`https://editable-travel-website1-rpfv.vercel.app/api/resorts/${id}`);
         const data = resortResponse.data;
         // Use cover_images for hero, images for about slider
         const mappedResort = {
@@ -61,7 +61,7 @@ const ResortProfile = () => {
         setResortData(mappedResort);
 
         // Fetch resorts in the same atoll
-        const allResortsResponse = await axios.get('/api/resorts');
+        const allResortsResponse = await axios.get('https://editable-travel-website1-rpfv.vercel.app/api/resorts');
         const allResorts = allResortsResponse.data;
         console.log('All Resorts API Response:', allResorts);
         const filteredResorts = allResorts
@@ -114,7 +114,7 @@ const ResortProfile = () => {
 
       const fetchSameLocationResorts = async () => {
         try {
-          const response = await axios.get('/api/resorts');
+          const response = await axios.get('https://editable-travel-website1-rpfv.vercel.app/api/resorts');
           const allResorts = response.data;
           const filteredResorts = allResorts
             .filter((item) => item.atoll?._id === state.item.atoll?._id && item._id !== id && item.type === type)
@@ -200,7 +200,7 @@ const ResortProfile = () => {
 
   const handleInquirySubmit = async (submissionData) => {
     try {
-      const response = await axios.post('/api/inquiries', submissionData);
+      const response = await axios.post('https://editable-travel-website1-rpfv.vercel.app/api/inquiries', submissionData);
       console.log('Anfrage erfolgreich abgeschickt:', response.data);
       setShowInquiryModal(false);
       setSelectedRoom(null);
@@ -759,3 +759,4 @@ const ResortProfile = () => {
 };
 
 export default ResortProfile;
+
