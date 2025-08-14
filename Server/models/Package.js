@@ -1,6 +1,10 @@
 const mongoose = require('mongoose');
 
 const PackageSchema = new mongoose.Schema({
+  status: {
+    type: Boolean,
+    default: true
+  },
   title: {
     type: String,
     required: true
