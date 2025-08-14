@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, ChevronDown } from 'lucide-react';
+import { Menu, X, ChevronDown, Home } from 'lucide-react';
 import axios from 'axios';
 import TranslationWidget from '../components/TranslationWidget';
 import AdminTranslationWidget from '../components/AdminTranslationWidget';
@@ -88,10 +88,10 @@ const Header = () => {
     const fetchDropdownData = async () => {
       try {
         const [hotelsRes, resortsRes, adventuresRes, activitiesRes] = await Promise.all([
-          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/resorts?type=hotel'),
-          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/resorts?type=resort'),
-          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/resorts?type=adventure'),
-          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/activities'),
+          axios.get('/api/resorts?type=hotel'),
+          axios.get('/api/resorts?type=resort'),
+          axios.get('/api/resorts?type=adventure'),
+          axios.get('/api/activities'),
         ]);
 
         const hotelsData = (hotelsRes.data || [])
@@ -163,7 +163,7 @@ const Header = () => {
   useEffect(() => {
     const fetchLogo = async () => {
       try {
-        const response = await axios.get('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/logo-favicon');
+        const response = await axios.get('/api/ui-content/logo-favicon');
         const logoSection = response.data?.sections?.find((s) => s.sectionId === 'logo');
         setLogoUrl(logoSection?.content?.imageUrl || null);
       } catch (err) {
@@ -258,7 +258,7 @@ const Header = () => {
   };
 
   const navigationItems = [
-    { name: 'Heim', href: '/', hasDropdown: false },
+    { name: '', href: '/', hasDropdown: false, icon: <Home className="w-6 h-6" aria-label="Home" /> },
     {
       name: 'Unterkunft',
       href: '/accommodations',
@@ -501,7 +501,7 @@ const Header = () => {
                       }}
                       onClick={() => handleNavigation(null, true)}
                     >
-                      {item.name}
+                      {item.icon ? item.icon : item.name}
                     </NavLink>
                   )}
                   {item.hasDropdown && dropdownOpen[item.name.toLowerCase()] && item.name === 'Unterkunft' && (
