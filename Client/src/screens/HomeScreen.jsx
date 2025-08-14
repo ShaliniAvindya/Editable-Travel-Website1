@@ -25,45 +25,62 @@ const HomeScreen = () => {
       try {
         setLoading(true);
         const [uiContentRes, accommodationsRes, activitiesRes, packagesRes, blogsRes] = await Promise.all([
-          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/home'),
-          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/resorts'),
-          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/activities'),
-          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/packages'),
-          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/blogs')
+          axios.get('/api/ui-content/home'),
+          axios.get('/api/resorts'),
+          axios.get('/api/activities'),
+          axios.get('/api/packages'),
+          axios.get('/api/blogs')
         ]);
 
         setUIContent(uiContentRes.data);
 
         const transformedAccommodations = accommodationsRes.data
-          .slice(0, 7)
-          .map(item => ({
-            id: item._id,
-            type: item.type,
-            name: item.name,
-            image: item.cover_image || item.images?.[0] || 'https://via.placeholder.com/400',
-            location: `${item.island} Island, ${item.atoll?.name || 'Maldives'}`,
-            price: item.rooms?.length > 0
-              ? `$${Math.min(...item.rooms
-                  .filter(room => room.price_per_night && room.price_per_night > 0)
-                  .map(room => room.price_per_night))} /nacht`
-              : 'Price on request'
-          }));
+          .map(item => {
+            let price = null;
+            if (item.rooms?.length > 0) {
+              const validPrices = item.rooms
+                .map(room => room.price_per_night)
+                .filter(p => p !== null && p !== undefined && p !== '' && !isNaN(p) && Number(p) > 0 && isFinite(p));
+              if (validPrices.length > 0) {
+                const minPrice = Math.min(...validPrices.map(Number));
+                price = String(minPrice).startsWith('$') ? String(minPrice) : `$${minPrice}`;
+              }
+            }
+            return {
+              id: item._id,
+              type: item.type,
+              name: item.name,
+              image: item.cover_image || item.images?.[0] || 'https://via.placeholder.com/400',
+              location: `${item.atoll?.name || 'Maldives'} Island, ${item.island}`,
+              price
+            };
+          });
 
         const transformedActivities = activitiesRes.data
-          .slice(0, 6)
-          .map(item => ({
-            id: item._id,
-            name: item.name,
-            description: item.description || 'No description available',
-            image: item.media?.[0] || 'https://via.placeholder.com/400',
-            rating: 5,
-            location: item.atolls || 'Various Locations',
-            tags: item.tags || [],
-            price: `$${item.price}`
-          }));
+          .map(item => {
+            let price = null;
+            if (
+              item.price !== null &&
+              item.price !== undefined &&
+              item.price !== '' &&
+              !isNaN(item.price) &&
+              isFinite(item.price)
+            ) {
+              price = String(item.price).startsWith('$') ? String(item.price) : `$${item.price}`;
+            }
+            return {
+              id: item._id,
+              name: item.name,
+              description: item.description || 'No description available',
+              image: item.media?.[0] || 'https://via.placeholder.com/400',
+              rating: 5,
+              location: item.atolls || 'Various Locations',
+              tags: item.tags || [],
+              price
+            };
+          });
 
         const transformedPackages = packagesRes.data
-          .slice(0, 7)
           .map(item => ({
             id: item._id,
             name: item.title,
@@ -512,14 +529,18 @@ const HomeScreen = () => {
                         )}
                         <div className="flex flex-col sm:flex-row justify-between items-center gap-2">
                           {contentSlides[currentContentSlide].key === 'activities' && (
-                            <div className="absolute bottom-4 right-4 bg-[#1e809b] text-white px-4 py-2 rounded-full shadow-lg">
-                              <span className="font-bold text-lg">{item.price}</span>
-                            </div>
+                            item.price ? (
+                              <div className="absolute bottom-4 right-4 bg-[#1e809b] text-white px-4 py-2 rounded-full shadow-lg">
+                                <span className="font-bold text-lg">{item.price}</span>
+                              </div>
+                            ) : null
                           )}
                           {(contentSlides[currentContentSlide].key === 'accommodations' || contentSlides[currentContentSlide].key === 'packages') && (
-                            <span className="text-lg sm:text-xl md:text-2xl font-bold text-[#1e809b] max-w-[50%] truncate">
-                              {item.price}
-                            </span>
+                            item.price ? (
+                              <span className="text-lg sm:text-xl md:text-2xl font-bold text-[#1e809b] max-w-[50%] truncate">
+                                {item.price}
+                              </span>
+                            ) : null
                           )}
                           <button
                             onClick={() => handleViewDetails(item)}
