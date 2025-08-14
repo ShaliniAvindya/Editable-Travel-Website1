@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, ChevronDown,X } from 'lucide-react';
+import { MapPin, ChevronDown, X } from 'lucide-react';
+import { FaRegClone, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import { AuthContext } from '../context/AuthContext';
 
 const imgbbAxios = axios.create();
@@ -13,18 +14,20 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md">
-        <h3 className="text-lg font-semibold text-[#074a5b] mb-4">{title}</h3>
-        <p className="text-gray-600 mb-6">{message}</p>
+        <h3 className="text-lg font-semibold text-[#074a5b] mb-4" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>{title}</h3>
+        <p className="text-gray-600 mb-6" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>{message}</p>
         <div className="flex justify-end gap-4">
           <button
             onClick={onClose}
             className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-xl font-semibold transition-all"
+            style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
             className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl font-semibold transition-all"
+            style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
           >
             Delete
           </button>
@@ -63,11 +66,11 @@ const AtollDropdown = ({ atolls, selectedAtolls, onChange, disabled }) => {
   const selectedNames = selectedAtolls
     .map((id) => atolls.find((a) => a._id === id)?.name)
     ?.filter(Boolean)
-    .join(', ') || 'Select Atolls';
+    .join(', ') || 'Select Islands';
 
   return (
-    <div className="relative">
-      <label className="block mb-2 text-[#074a5b] font-semibold">Available Atolls</label>
+    <div className="relative" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
+      <div className="block mb-2 text-[#074a5b] font-semibold">Available Islands</div>
       <button
         type="button"
         onClick={handleToggle}
@@ -100,7 +103,7 @@ const AtollDropdown = ({ atolls, selectedAtolls, onChange, disabled }) => {
               </label>
             ))
           ) : (
-            <div className="px-4 py-2 text-gray-600">No atolls available</div>
+            <div className="px-4 py-2 text-gray-600">No Islands available</div>
           )}
         </div>
       )}
@@ -135,6 +138,7 @@ const ActivityManagement = () => {
   const [visibleItems, setVisibleItems] = useState({});
   const [uploading, setUploading] = useState(false);
   const [modal, setModal] = useState({ isOpen: false, type: '', id: null, name: '' });
+  const [notification, setNotification] = useState('');
 
   useEffect(() => {
     if (!user || !user.isAdmin) {
@@ -162,8 +166,8 @@ const ActivityManagement = () => {
       try {
         setLoading(true);
         const [activitiesResponse, atollsResponse] = await Promise.all([
-          api.get('https://editable-travel-website1-rpfv.vercel.app/api/activities'),
-          api.get('https://editable-travel-website1-rpfv.vercel.app/api/atolls'),
+          api.get('/api/activities?all=true'),
+          api.get('/api/atolls'),
         ]);
         console.log('Fetched activities:', activitiesResponse.data);
         console.log('Fetched atolls:', atollsResponse.data);
@@ -267,7 +271,7 @@ const ActivityManagement = () => {
   const handleActivitySubmit = async (e) => {
     e.preventDefault();
     try {
-      if (!formData.name || !formData.price || (!formData.available_in_all_atolls && !formData.available_atoll_ids.length)) {
+      if (!formData.name  || (!formData.available_in_all_atolls && !formData.available_atoll_ids.length)) {
         setError('Please fill in all required fields');
         return;
       }
@@ -446,6 +450,13 @@ const ActivityManagement = () => {
       return;
     }
     console.log('Editing activity:', activity);
+    let numericPrice = '';
+    if (typeof activity.price === 'string') {
+      const match = activity.price.match(/\d+(?:\.\d+)?/);
+      numericPrice = match ? match[0] : '';
+    } else if (typeof activity.price === 'number') {
+      numericPrice = activity.price.toString();
+    }
     setSelectedActivity(activity);
     setFormData({
       name: activity.name,
@@ -455,7 +466,7 @@ const ActivityManagement = () => {
       available_in_all_atolls: activity.available_in_all_atolls,
       available_atoll_ids: activity.available_in_all_atolls ? [] : 
         (activity.available_atoll_ids || []).map(id => id._id || id),
-      price: activity.price,
+      price: numericPrice,
     });
   };
 
@@ -472,6 +483,30 @@ const ActivityManagement = () => {
       image: site.image || '',
       atoll_id: site.atoll_id._id || site.atoll_id,
     });
+  };
+
+  const handleDuplicateActivity = async (id) => {
+    try {
+      await api.post(`/api/activities/duplicate/${id}`);
+      setNotification('Duplicate created successfully');
+      setSuccess('Activity duplicated successfully');
+      const activitiesResponse = await api.get('/api/activities?all=true');
+      setActivities(activitiesResponse.data);
+      setTimeout(() => setNotification(''), 2500);
+    } catch (err) {
+      setError('Failed to duplicate activity');
+    }
+  };
+
+  const handleToggleStatus = async (id, currentStatus) => {
+    try {
+      await api.put(`/api/activities/status/${id}`, { status: !currentStatus });
+      setSuccess('Activity status updated');
+      const activitiesResponse = await api.get('/api/activities?all=true');
+      setActivities(activitiesResponse.data);
+    } catch (err) {
+      setError('Failed to update status');
+    }
   };
 
   const resetForm = () => {
@@ -509,13 +544,18 @@ const ActivityManagement = () => {
   if (loading || !user?.isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <p className="text-xl text-[#074a5b]" style={{ fontFamily: 'Comic Sans MS, cursive' }}>Loading activities...</p>
+        <p className="text-xl text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>Loading activities...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+    <div className="min-h-screen bg-white" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
+      {notification && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg z-50 transition-all duration-300">
+          {notification}
+        </div>
+      )}
       <ConfirmationModal
         isOpen={modal.isOpen}
         onClose={closeModal}
@@ -551,7 +591,6 @@ const ActivityManagement = () => {
                 value={formData.price}
                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                 className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
-                required
               />
             </div>
             <div>
@@ -576,7 +615,8 @@ const ActivityManagement = () => {
                 />
                 {uploading && <span className="ml-2 text-gray-600">Uploading...</span>}
               </div>
-              <div className="mt-2 flex flex-wrap gap-2">                {formData.media.map((img, index) => (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {formData.media.map((img, index) => (
                   <div key={index} className="relative">
                     <img
                       src={getSafeImageUrl(img)}
@@ -617,7 +657,7 @@ const ActivityManagement = () => {
                 }
                 className="mr-2 h-5 w-5"
               />
-              <label className="text-[#074a5b] font-semibold">Available in All Atolls</label>
+              <label className="text-[#074a5b] font-semibold">Available in All Islands</label>
             </div>
             <div className="col-span-2">
               <label className="block mb-2 text-[#074a5b] font-semibold">Description</label>
@@ -676,12 +716,12 @@ const ActivityManagement = () => {
                   </h3>
                   <p className="text-gray-600 mb-3 flex items-center">
                     <MapPin size={16} className="mr-2 text-[#074a5b]" />
-                    {activity.available_in_all_atolls ? 'All Atolls' : 
+                    {activity.available_in_all_atolls ? 'All Islands' : 
                       (activity.available_atoll_ids || []).map(id => 
                         atolls.find(a => a._id === (id._id || id))?.name || 'Unknown'
                       ).filter(name => name !== 'Unknown').join(', ') || 'None'}
                   </p>
-                  <p className="text-gray-600 mb-3">Price: ${activity.price}</p>
+                  <p className="text-gray-600 mb-3">Price: {activity.price || 'N/A'}</p>
                   <div className="flex gap-3">
                     <button
                       onClick={() => handleEditActivity(activity)}
@@ -696,10 +736,18 @@ const ActivityManagement = () => {
                       Delete
                     </button>
                     <button
-                      onClick={() => setSelectedActivity(activity)}
-                      className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl font-semibold transition-all"
+                      title="Duplicate Activity"
+                      onClick={() => handleDuplicateActivity(activity._id)}
+                      className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-xl font-semibold transition-all"
                     >
-                      Manage Sites
+                      <FaRegClone size={18} />
+                    </button>
+                    <button
+                      title={activity.status ? 'Set Inactive' : 'Set Active'}
+                      onClick={() => handleToggleStatus(activity._id, activity.status)}
+                      className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-xl font-semibold transition-all"
+                    >
+                      {activity.status ? <FaToggleOn color="green" size={22} /> : <FaToggleOff color="gray" size={22} />}
                     </button>
                   </div>
                 </div>
@@ -756,14 +804,14 @@ const ActivityManagement = () => {
                 )}
               </div>
               <div>
-                <label className="block mb-2 text-[#074a5b] font-semibold">Atoll</label>
+                <label className="block mb-2 text-[#074a5b] font-semibold">Island</label>
                 <select
                   value={siteFormData.atoll_id}
                   onChange={(e) => setSiteFormData({ ...siteFormData, atoll_id: e.target.value })}
                   className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
                   required
                 >
-                  <option value="">Select Atoll</option>
+                  <option value="">Select Island</option>
                   {getAvailableAtollsForSite().map((atoll) => (
                     <option key={atoll._id} value={atoll._id}>
                       {atoll.name}
@@ -805,7 +853,7 @@ const ActivityManagement = () => {
                     }`}
                   >
                     <h4 className="text-lg font-semibold mb-2 text-[#074a5b]">{site.name}</h4>
-                    <p className="text-gray-600">Atoll: {site.atoll_id?.name || 'Unknown'}</p>                    
+                    <p className="text-gray-600">Island: {site.atoll_id?.name || 'Unknown'}</p>                    
                     {site.image && (
                       <div className="relative inline-block group mt-2">
                         <img
