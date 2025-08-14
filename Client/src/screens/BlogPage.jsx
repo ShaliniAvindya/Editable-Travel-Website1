@@ -19,7 +19,7 @@ const BlogPage = () => {
   useEffect(() => {
     const fetchBlog = async () => {
       try {
-        const response = await axios.get(`https://editable-travel-website1-rpfv.vercel.app/api/blogs/${blogId}`);
+        const response = await axios.get(`/api/blogs/${blogId}`);
         const blogData = response.data;
 
         const mappedBlog = {
@@ -41,9 +41,9 @@ const BlogPage = () => {
           images: blogData.images || [],
           videos: (blogData.videos || []).map((url) => ({
             src: url,
-            thumbnail: url.includes('youtube.com/embed')
-              ? `https://img.youtube.com/vi/${url.split('/embed/')[1]?.split('?')[0]}/hqdefault.jpg`
-              : 'https://via.placeholder.com/800'
+            thumbnail: url.includes('cloudinary')
+              ? url.replace(/\.\w+$/, '.jpg')
+              : 'https://via.placeholder.com/800?text=Video',
           })),
           tags: blogData.tags || [],
           author: blogData.author || 'Unbekannter Autor'
@@ -74,11 +74,23 @@ const BlogPage = () => {
   };
 
   const togglePlayPause = () => {
-    setIsPlaying(!isPlaying);
+    const videoElement = document.getElementById('blog-video-player');
+    if (videoElement) {
+      if (isPlaying) {
+        videoElement.pause();
+      } else {
+        videoElement.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
   };
 
   const toggleMute = () => {
-    setIsMuted(!isMuted);
+    const videoElement = document.getElementById('blog-video-player');
+    if (videoElement) {
+      videoElement.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
   };
 
   const handleBack = () => {
@@ -126,6 +138,7 @@ const BlogPage = () => {
           src={blog.featuredImage}
           alt={blog.title}
           className="w-full h-full object-cover"
+          onError={(e) => (e.target.src = 'https://via.placeholder.com/1920')}
         />
         <div className="absolute bottom-0 left-0 right-0 z-20 p-8">
           <div className="max-w-4xl mx-auto">
@@ -180,11 +193,15 @@ const BlogPage = () => {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {blog.images.map((image, index) => (
-                <div key={index} className="group cursor-pointer overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300">
+                <div
+                  key={index}
+                  className="group cursor-pointer overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300"
+                >
                   <img
                     src={image}
                     alt={`Gallery image ${index + 1}`}
                     className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
+                    onError={(e) => (e.target.src = 'https://via.placeholder.com/400')}
                   />
                 </div>
               ))}
@@ -203,15 +220,16 @@ const BlogPage = () => {
             {currentVideo !== null && (
               <div className="mb-8 bg-black rounded-2xl overflow-hidden shadow-2xl">
                 <div className="relative aspect-video">
-                  <iframe
+                  <video
+                    id="blog-video-player"
                     className="w-full h-full"
-                    src={`${blog.videos[currentVideo].src}${isPlaying ? '?autoplay=1' : ''}${isMuted ? '&mute=1' : ''}`}
-                    title={`Video ${currentVideo + 1}`}
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  ></iframe>
-
+                    src={blog.videos[currentVideo].src}
+                    poster={blog.videos[currentVideo].thumbnail}
+                    controls={false}
+                    autoPlay={isPlaying}
+                    muted={isMuted}
+                    onError={() => setError('Failed to load video')}
+                  />
                   {/* Custom Controls Overlay */}
                   <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-white">
                     <div className="flex items-center gap-4">
@@ -250,6 +268,7 @@ const BlogPage = () => {
                       src={video.thumbnail}
                       alt={`Video ${index + 1}`}
                       className="w-full h-full object-cover"
+                      onError={(e) => (e.target.src = 'https://via.placeholder.com/800?text=Video')}
                     />
                     <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
                       <div className="bg-white/90 backdrop-blur-sm rounded-full p-4 group-hover:bg-white group-hover:scale-110 transition-all duration-300">
