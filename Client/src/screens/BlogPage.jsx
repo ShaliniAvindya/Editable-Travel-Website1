@@ -19,7 +19,7 @@ const BlogPage = () => {
   useEffect(() => {
     const fetchBlog = async () => {
       try {
-        const response = await axios.get(`/api/blogs/${blogId}`);
+        const response = await axios.get(`https://editable-travel-website1-rpfv.vercel.app/api/blogs/${blogId}`);
         const blogData = response.data;
 
         const mappedBlog = {
@@ -287,3 +287,4 @@ const BlogPage = () => {
 };
 
 export default BlogPage;
+
