@@ -15,6 +15,7 @@ const Header = () => {
     adventures: false,
     activities: false,
     packageoffers: false,
+    admin: false,
   });
   const [hotels, setHotels] = useState([]);
   const [resorts, setResorts] = useState([]);
@@ -281,6 +282,7 @@ const Header = () => {
     },
     { name: 'Paketangebote', href: '/packageoffers', hasDropdown: false },
     { name: 'Blogs', href: '/blogs', hasDropdown: false },
+    { name: 'Admin', href: '/admin', hasDropdown: false },
   ];
 
   useEffect(() => {
@@ -680,7 +682,7 @@ const Header = () => {
                       }}
                       onClick={() => handleNavigation(null, true)}
                     >
-                      {item.name}
+                      {item.icon ? item.icon : item.name}
                     </NavLink>
                   )}
                   {dropdownOpen[item.name.toLowerCase()] && item.name === 'Unterkunft' && (
@@ -755,5 +757,3 @@ const Header = () => {
 };
 
 export default Header;
-
-
