@@ -204,7 +204,7 @@ const InquiryManagement = () => {
   const fetchInquiries = async () => {
     setRefreshing(true);
     try {
-      const response = await axios.get('/api/inquiries');
+      const response = await axios.get('https://editable-travel-website1-rpfv.vercel.app/api/inquiries');
       setInquiries(response.data);
     } catch (err) {
       console.error('Fetch inquiries error:', err);
@@ -228,7 +228,7 @@ const InquiryManagement = () => {
 
   const confirmDelete = async () => {
     try {
-      await axios.delete(`/api/inquiries/${deleteModal.id}`);
+      await axios.delete(`https://editable-travel-website1-rpfv.vercel.app/api/inquiries/${deleteModal.id}`);
       setInquiries(inquiries.filter((i) => i._id.$oid !== deleteModal.id));
       setSuccess('Inquiry deleted successfully');
     } catch (err) {
@@ -250,7 +250,7 @@ const InquiryManagement = () => {
       return;
     }
     try {
-      await axios.post('/api/inquiries/reply', { inquiryId, subject, message });
+      await axios.post('//inquiries/reply', { inquiryId, subject, message });
       setInquiries((prev) => prev.map((i) =>
         (i._id && i._id.$oid === inquiryId) ? { ...i, replyMessage: message } : i
       ));
@@ -492,3 +492,4 @@ const InquiryManagement = () => {
 };
 
 export default InquiryManagement;
+
