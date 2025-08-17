@@ -760,3 +760,4 @@ const ResortProfile = () => {
 
 export default ResortProfile;
 
+
