@@ -4,7 +4,7 @@ const axios = require("axios");
 const router = express.Router();
 
 router.post("/subscribe", async (req, res) => {
-  try {
+  try { 
     const { email, name } = req.body;
 
     // POST to Listmonk API
