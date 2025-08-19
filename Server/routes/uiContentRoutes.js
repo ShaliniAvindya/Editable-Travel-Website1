@@ -3,7 +3,7 @@ const router = express.Router();
 const UIContent = require('../models/UIContent');
 const auth = require('../middleware/auth');
 
-// Get maintenance status
+// Get maintenance status  
 router.get('/maintenance-status', async (req, res) => {
   try {
     const content = await UIContent.findOne({ pageId: 'global' });
@@ -80,3 +80,4 @@ router.put('/:pageId', auth, async (req, res) => {
 });
 
 module.exports = router;
+
