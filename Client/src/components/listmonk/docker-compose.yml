@@ -1,0 +1,67 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: listmonk-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: listmonk
+      POSTGRES_USER: listmonk
+      POSTGRES_PASSWORD: listmonk
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - lmnet
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U listmonk"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+
+  listmonk:
+    image: listmonk/listmonk:latest
+    container_name: listmonk
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "9000:9000"
+    environment:
+      - TZ=UTC
+      - LISTMONK_db__host=postgres
+      - LISTMONK_db__port=5432
+      - LISTMONK_db__user=listmonk
+      - LISTMONK_db__password=listmonk
+      - LISTMONK_db__database=listmonk
+      - LISTMONK_db__ssl_mode=disable
+      - LISTMONK_app__address=0.0.0.0:9000
+      - LISTMONK_app__enable_cors=true
+      - LISTMONK_app__cors_origin=*
+      - LISTMONK_app__admin_username=shalini
+      - LISTMONK_app__admin_password=Travelicctedadmin
+      - LISTMONK_smtp__enabled=true
+      - LISTMONK_smtp__host=smtp.gmail.com
+      - LISTMONK_smtp__port=587
+      - LISTMONK_smtp__auth_type=login
+      - LISTMONK_smtp__username=shaliniavindya@gmail.com
+      - LISTMONK_smtp__password=qixlmxmzddotraof
+      - LISTMONK_smtp__use_tls=false
+      - LISTMONK_smtp__skip_tls_verify=false
+    volumes:
+      - ./Uploads:/listmonk/uploads:rw
+    command: >
+      sh -c "
+      ./listmonk --install --idempotent --yes &&
+      ./listmonk --upgrade --yes &&
+      ./listmonk
+      "
+    networks:
+      - lmnet
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  lmdata:
+
+networks:
+  lmnet:
