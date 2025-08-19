@@ -8,7 +8,7 @@ services:
       POSTGRES_USER: listmonk
       POSTGRES_PASSWORD: listmonk
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data 
     networks:
       - lmnet
     healthcheck:
