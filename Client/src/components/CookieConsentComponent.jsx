@@ -7,7 +7,7 @@ const CookieConsentComponent = () => {
   const [cookiePreferences, setCookiePreferences] = useState({
     essential: true, // Always enabled
     analytics: false,
-    marketing: false,
+    marketing: false, 
   });
   const [showBanner, setShowBanner] = useState(!getCookieConsentValue('myWebsiteCookieConsent'));
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
