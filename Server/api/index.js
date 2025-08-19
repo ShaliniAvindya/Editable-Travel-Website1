@@ -15,7 +15,7 @@ const atollRoutes = require('../routes/atollRoutes');
 const inquiryRoutes = require('../routes/inquiryRoutes');
 const uiContentRoutes = require('../routes/uiContentRoutes');
 const promotionRoutes = require('../routes/promotionRoutes');
-const newsletterRoutes = require('./routes/newsletterRoutes');
+const newsletterRoutes = require('../routes/newsletterRoutes');
 
 const app = express();
 
