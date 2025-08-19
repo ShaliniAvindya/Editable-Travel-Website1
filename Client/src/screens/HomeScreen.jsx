@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, MapPin, Calendar } from 'lucide-react';
 import GoogleReviews from './GoogleReviewsSection';
+import Newsletter from './Newsletter';
 import axios from 'axios';
 
 const HomeScreen = () => {
@@ -659,10 +660,12 @@ const HomeScreen = () => {
           </div>
         </div>
       </section>
+        <Newsletter />
     </div>
   );
 };
 
 export default HomeScreen;
+
 
 
