@@ -10,7 +10,7 @@ import InquiryManagement from './admin/InquiryManagement';
 import UserManagement from './admin/UserManagement';
 import UIContentManagement from './admin/UIContentManagement';
 import PageContentManagement from './admin/PageContentManagement';
-import PromotionManagement from './admin/PromotionManagement';
+import PromotionManagement from './admin/PromotionManagement'; 
 import LogoFaviconManagement from './admin/LogoFaviconManagement';
 import { AuthContext } from './context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -432,3 +432,4 @@ const AdminPanel = () => {
 };
 
 export default AdminPanel;
+
