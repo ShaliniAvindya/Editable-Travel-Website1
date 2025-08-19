@@ -47,7 +47,7 @@ const AppContent = () => {
   const location = useLocation();
 
   useEffect(() => {
-    fetch('/api/ui-content/maintenance-status')
+    fetch('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/maintenance-status')
       .then(res => res.json())
       .then(data => {
         setMaintenance(data.maintenanceMode || false);
@@ -116,4 +116,5 @@ const App = () => (
 );
 
 export default App;
+
 
