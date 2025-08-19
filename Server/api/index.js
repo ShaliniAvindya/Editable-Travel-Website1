@@ -15,6 +15,7 @@ const atollRoutes = require('../routes/atollRoutes');
 const inquiryRoutes = require('../routes/inquiryRoutes');
 const uiContentRoutes = require('../routes/uiContentRoutes');
 const promotionRoutes = require('../routes/promotionRoutes');
+const newsletterRoutes = require('./routes/newsletterRoutes');
 
 const app = express();
 
@@ -48,6 +49,7 @@ app.use('/api/atolls', atollRoutes);
 app.use('/api/inquiries', inquiryRoutes);
 app.use('/api/ui-content', uiContentRoutes);
 app.use('/api/promotions', promotionRoutes);
+app.use("/api/newsletter", newsletterRoutes);
 
 // ✅ Root routes
 app.get('/', (req, res) => {
