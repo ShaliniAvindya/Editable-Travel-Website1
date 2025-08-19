@@ -42,33 +42,61 @@ const AdminPanel = () => {
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
   const [notificationType, setNotificationType] = useState('');
-  const { user, logout } = useContext(AuthContext);
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const { user, logout, api, loading: authLoading } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  const showPopupNotification = (message, type) => {
-    setNotificationMessage(message);
-    setNotificationType(type);
-    setShowNotification(true);
-    setTimeout(() => {
-      setShowNotification(false);
-    }, 3000);
+  // Fetch maintenance status
+  useEffect(() => {
+    api.get('/api/ui-content/maintenance-status')
+      .then(response => {
+        setMaintenanceMode(response.data.maintenanceMode || false);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Error fetching maintenance status:', err);
+        message.error('Failed to fetch maintenance status');
+        setMaintenanceMode(false);
+        setLoading(false);
+      });
+  }, [api]);
+
+  const handleToggleMaintenance = () => {
+    const newMode = !maintenanceMode;
+    api.post('/api/ui-content/maintenance-status', { maintenanceMode: newMode })
+      .then(response => {
+        setMaintenanceMode(response.data.maintenanceMode);
+        message.success(`Maintenance mode ${response.data.maintenanceMode ? 'enabled' : 'disabled'}.`);
+      })
+      .catch(err => {
+        console.error('Error toggling maintenance mode:', err);
+        if (err.response?.status === 401) {
+          message.error('Unauthorized: Please log in again.');
+          logout('Session expired. Please log in again.');
+        } else if (err.response?.status === 403) {
+          message.error('Access denied: Admin privileges required.');
+          logout('Admin access required.');
+        } else {
+          message.error('Failed to toggle maintenance mode');
+        }
+      });
   };
 
   // Authentication check
   useEffect(() => {
-    if (!user) {
-      showPopupNotification('Please login to access this page.', 'error');
-      setTimeout(() => navigate('/login'), 2000);
-    } else if (!user.isAdmin) {
-      showPopupNotification('Access denied. This page is for administrators only.', 'warning');
-      setTimeout(() => navigate('/'), 2000);
+    if (!authLoading) {
+      if (!user) {
+        message.error('Please login to access this page.');
+        setTimeout(() => navigate('/login'), 2000);
+      } else if (!user.isAdmin) {
+        message.warning('Access denied. This page is for administrators only.');
+        setTimeout(() => navigate('/'), 2000);
+      }
     }
-  }, [user, navigate]);
+  }, [user, authLoading, navigate, logout]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1000);
+    const timer = setTimeout(() => setLoading(false), 1000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -150,6 +178,30 @@ const AdminPanel = () => {
       </div>
 
       {/* Main Content */}
+      <div style={{ margin: '2rem auto 0', maxWidth: '700px', padding: '1rem', background: '#fff', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.07)' }}>
+        <label style={{ fontWeight: 'bold', fontSize: '1.1rem', marginRight: '1rem' }}>Maintenance Mode:</label>
+        <button
+          onClick={handleToggleMaintenance}
+          style={{
+            background: maintenanceMode ? '#e53e3e' : '#38a169',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '6px',
+            padding: '0.5rem 1.2rem',
+            cursor: 'pointer',
+            fontWeight: 'bold',
+            fontSize: '1rem',
+            marginRight: '1rem',
+            transition: 'background 0.2s',
+          }}
+        >
+          {maintenanceMode ? 'Turn OFF' : 'Turn ON'}
+        </button>
+        <span style={{ color: maintenanceMode ? '#e53e3e' : '#38a169', fontWeight: 'bold', fontSize: '1.1rem' }}>
+          {maintenanceMode ? 'ON' : 'OFF'}
+        </span>
+      </div>
+
       <div className="flex-grow container mx-auto px-4 py-8 flex justify-center">
         <div className="flex-grow bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 max-w-7xl w-full">
           <div className="p-6 md:p-8">
@@ -191,194 +243,190 @@ const AdminPanel = () => {
       )}
 
       {/* Custom Styles */}
-      <style jsx>{`
-        .admin-tabs .ant-tabs-tab {
-          color: rgba(255, 255, 255, 0.9) !important;
-          font-weight: 600 !important;
-          padding: 0 16px !important;
-          height: 3rem !important;
-          display: flex !important;
-          align-items: center !important;
-          border-radius: 8px 8px 0 0 !important;
-          margin-right: 2px !important;
-          transition: all 0.3s ease !important;
-          font-size: 0.9rem !important;
-        }
-        
-        .admin-tabs .ant-tabs-tab:hover {
-          color: rgb(255, 255, 255) !important;
-        }
-        
-        .admin-tabs .ant-tabs-tab-active {
-          color: #000000 !important;
-          background:rgb(212, 214, 232) !important;
-          font-weight: 700 !important;
-        }
-        
-        .admin-tabs .ant-tabs-nav {
-          margin-bottom: 1rem !important;
-          display: flex !important;
-          justify-content: center !important;
-          width: 100% !important;
-        }
-
-        .admin-tabs .ant-tabs-nav-list {
-          width: auto !important;
-        }
-        
-        .admin-tabs .ant-tabs-content-holder {
-          background: transparent !important;
-        }
-        
-        .admin-tabs .ant-tabs-tabpane {
-          background: transparent !important;
-        }
-
-        .ant-input-search-custom .ant-input {
-          border-radius: 8px !important;
-          border: 1px solid #e5e7eb !important;
-        }
-
-        .ant-input-search-custom .ant-btn {
-          background: #1e3a8a !important;
-          border-color: #1e3a8a !important;
-          color: #ffffff !important;
-          border-radius: 0 8px 8px 0 !important;
-        }
-
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translate(-50%, -60%);
-          }
-          to {
-            opacity: 1;
-            transform: translate(-50%, -50%);
-          }
-        }
-
-        @keyframes timer {
-          from {
-            width: 100%;
-          }
-          to {
-            width: 0%;
-          }
-        }
-
-        .animate-fadeIn {
-          animation: fadeIn 0.3s ease-out;
-        }
-
-        .animate-timer {
-          animation: timer 3s linear;
-        }
-
-        .admin-tabs.reduce-tab-gap .ant-tabs-tab {
-          margin-right: 0px !important;
-          padding-left: 8px !important;
-          padding-right: 8px !important;
-        }
-
-        /* Mobile-responsive styles */
-        @media (max-width: 600px) {
-          .container {
-            padding-left: 8px;
-            padding-right: 8px;
-          }
-
-          /* Hero Section */
-          .relative.container {
-            padding: 2rem 1rem !important;
-          }
-
-          h1.text-3xl {
-            font-size: 1.8rem !important;
-            line-height: 1.3 !important;
-            margin-bottom: 8px !important;
-          }
-
-          p.text-lg {
-            font-size: 0.875rem !important;
-            max-width: 100% !important;
-            margin-bottom: 16px !important;
-          }
-
-          button.bg-white.bg-opacity-20 {
-            padding: 0.5rem 1.5rem !important;
-            font-size: 0.875rem !important;
-          }
-
-          /* Main Content */
-          .flex-grow.container {
-            padding: 0.5rem !important;
-          }
-
-          .bg-white {
-            margin: 0 !important;
-            border-radius: 8px !important;
-          }
-
-          .p-6 {
-            padding: 1rem !important;
-          }
-
-          .p-4 {
-            padding: 0.5rem !important;
-            min-height: auto !important;
-          }
-
-          /* Tabs */
+      <style>
+        {`
           .admin-tabs .ant-tabs-tab {
-            font-size: 0.7rem !important;
-            padding: 0 8px !important;
-            height: 2.5rem !important;
-            margin-right: 1px !important;
-          }
-
-          .admin-tabs ul {
-            padding: 0 !important;
-          }
-
-          .admin-tabs .ant-tabs-nav {
-            flex-wrap: wrap !important;
-            padding: 0 0.5rem !important;
-            height: auto !important;
-          }
-
-          .admin-tabs .ant-tabs-tab-active {
-            font-size: 0.75rem !important;
-          }
-
-          /* Notification Popup */
-          .fixed.top-20 {
-            min-width: 80vw !important;
-            padding: 1rem !important;
-            font-size: 0.875rem !important;
-          }
-
-          /* Adjust tab bar */
-          .admin-tabs .tabBarStyle {
-            font-size: 14px !important;
-            padding: 0 1rem !important;
+            color: rgba(255, 255, 255, 0.9) !important;
+            font-weight: 600 !important;
+            padding: 0 16px !important;
             height: 3rem !important;
-            border-radius: 8px 8px 0 !important;
+            display: flex !important;
+            align-items: center !important;
+            border-radius: 8px 8px 0 0 !important;
+            margin-right: 2px !important;
+            transition: all 0.3s ease !important;
+            font-size: 0.9rem !important;
           }
-        }
+          
+          .admin-tabs .ant-tabs-tab:hover {
+            color: rgb(255, 255, 255) !important;
+          }
+          
+          .admin-tabs .ant-tabs-tab-active {
+            color: #000000 !important;
+            background: rgb(212, 214, 232) !important;
+            font-weight: 700 !important;
+          }
+          
+          .admin-tabs .ant-tabs-nav {
+            margin-bottom: 1rem !important;
+            display: flex !important;
+            justify-content: center !important;
+            width: 100% !important;
+          }
 
-        @media (max-width: 400px) {
-          .admin-tabs .ant-tabs-tab {
-            font-size: 0.65rem !important;
-            padding: 0 6px !important;
+          .admin-tabs .ant-tabs-nav-list {
+            width: auto !important;
+          }
+          
+          .admin-tabs .ant-tabs-content-holder {
+            background: transparent !important;
+          }
+          
+          .admin-tabs .ant-tabs-tabpane {
+            background: transparent !important;
           }
 
-          .fixed.top-20 {
-            min-width: 90vw !important;
-            padding: 0.75rem !important;
-            font-size: 0.8rem !important;
+          .ant-input-search-custom .ant-input {
+            border-radius: 8px !important;
+            border: 1px solid #e5e7eb !important;
           }
-        }
-      `}</style>
+
+          .ant-input-search-custom .ant-btn {
+            background: #1e3a8a !important;
+            border-color: #1e3a8a !important;
+            color: #ffffff !important;
+            border-radius: 0 8px 8px 0 !important;
+          }
+
+          @keyframes fadeIn {
+            from {
+              opacity: 0;
+              transform: translate(-50%, -60%);
+            }
+            to {
+              opacity: 1;
+              transform: translate(-50%, -50%);
+            }
+          }
+
+          @keyframes timer {
+            from {
+              width: 100%;
+            }
+            to {
+              width: 0%;
+            }
+          }
+
+          .animate-fadeIn {
+            animation: fadeIn 0.3s ease-out;
+          }
+
+          .animate-timer {
+            animation: timer 3s linear;
+          }
+
+          .admin-tabs.reduce-tab-gap .ant-tabs-tab {
+            margin-right: 0px !important;
+            padding-left: 8px !important;
+            padding-right: 8px !important;
+          }
+
+          @media (max-width: 600px) {
+            .container {
+              padding-left: 8px;
+              padding-right: 8px;
+            }
+
+            .relative.container {
+              padding: 2rem 1rem !important;
+            }
+
+            h1.text-3xl {
+              font-size: 1.8rem !important;
+              line-height: 1.3 !important;
+              margin-bottom: 8px !important;
+            }
+
+            p.text-lg {
+              font-size: 0.875rem !important;
+              max-width: 100% !important;
+              margin-bottom: 16px !important;
+            }
+
+            button.bg-white.bg-opacity-20 {
+              padding: 0.5rem 1.5rem !important;
+              font-size: 0.875rem !important;
+            }
+
+            .flex-grow.container {
+              padding: 0.5rem !important;
+            }
+
+            .bg-white {
+              margin: 0 !important;
+              border-radius: 8px !important;
+            }
+
+            .p-6 {
+              padding: 1rem !important;
+            }
+
+            .p-4 {
+              padding: 0.5rem !important;
+              min-height: auto !important;
+            }
+
+            .admin-tabs .ant-tabs-tab {
+              font-size: 0.7rem !important;
+              padding: 0 8px !important;
+              height: 2.5rem !important;
+              margin-right: 1px !important;
+            }
+
+            .admin-tabs ul {
+              padding: 0 !important;
+            }
+
+            .admin-tabs .ant-tabs-nav {
+              flex-wrap: wrap !important;
+              padding: 0 0.5rem !important;
+              height: auto !important;
+            }
+
+            .admin-tabs .ant-tabs-tab-active {
+              font-size: 0.75rem !important;
+            }
+
+            .fixed.top-1/2 {
+              min-width: 80vw !important;
+              padding: 1rem !important;
+              font-size: 0.875rem !important;
+            }
+
+            .admin-tabs .tabBarStyle {
+              font-size: 14px !important;
+              padding: 0 1rem !important;
+              height: 3rem !important;
+              border-radius: 8px 8px 0 !important;
+            }
+          }
+
+          @media (max-width: 400px) {
+            .admin-tabs .ant-tabs-tab {
+              font-size: 0.65rem !important;
+              padding: 0 6px !important;
+            }
+
+            .fixed.top-1/2 {
+              min-width: 90vw !important;
+              padding: 0.75rem !important;
+              font-size: 0.8rem !important;
+            }
+          }
+        `}
+      </style>
     </div>
   );
 };
