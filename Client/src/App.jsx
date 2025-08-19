@@ -4,7 +4,7 @@ import Navigation from './screens/Navigation';
 import HomeScreen from './screens/HomeScreen';
 import Accommodations from './screens/Accommodations';
 import Contact from './screens/Contact';
-import Footer from './screens/Footer';
+import Footer from './screens/Footer'; 
 import WhatsappFloatingButton from './components/WhatsappFloatingButton';
 import ResortProfile from './screens/ResortProfile';
 import Activities from './screens/Activities';
@@ -116,3 +116,4 @@ const App = () => (
 );
 
 export default App;
+
