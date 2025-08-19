@@ -38,6 +38,10 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
   );
 };
 
+const handleNewsletterClick = () => {
+  window.open('http://localhost:9000/', '_blank');
+};
+
 const PromotionManagement = ({ searchTerm }) => {
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
@@ -386,9 +390,17 @@ const PromotionManagement = ({ searchTerm }) => {
         </div>
       )}
       <div className="container mx-auto p-6">
-        <h1 className="text-4xl font-bold mb-8 text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
-          Promotion Management
-        </h1>
+          <div className="flex items-center justify-between mb-8">
+          <h1 className="text-4xl font-bold text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
+            Promotion Management
+          </h1>
+          <button
+            onClick={handleNewsletterClick}
+            className="bg-[#1e809b] hover:bg-[#074a5b] text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 ml-4"
+          >
+            Go to Newsletter (Listmonk)
+          </button>
+        </div>
 
         {error && (
           <div className="bg-red-100 text-red-700 p-4 mb-6 rounded-xl" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
@@ -695,4 +707,5 @@ const PromotionManagement = ({ searchTerm }) => {
 };
 
 export default PromotionManagement;
+
 
