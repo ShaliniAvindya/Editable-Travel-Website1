@@ -43,6 +43,8 @@ const sectionSchema = new mongoose.Schema({
 const uiContentSchema = new mongoose.Schema({
   pageId: { type: String, required: true, unique: true },
   sections: [sectionSchema],
+    maintenanceMode: { type: Boolean, default: false },
 }, { timestamps: true });
 
 module.exports = mongoose.model('UIContent', uiContentSchema);
+
