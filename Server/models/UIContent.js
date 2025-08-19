@@ -5,7 +5,7 @@ const reviewSchema = new mongoose.Schema({
   text: { type: String, required: true },
   date: { type: String, required: true },
   avatar: { type: String, required: true },
-});
+}); 
 
 const sectionSchema = new mongoose.Schema({
   sectionId: { type: String, required: true },
@@ -47,4 +47,5 @@ const uiContentSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 module.exports = mongoose.model('UIContent', uiContentSchema);
+
 
