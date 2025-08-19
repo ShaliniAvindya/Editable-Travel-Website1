@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, MapPin, Calendar } from 'lucide-react';
 import GoogleReviews from './GoogleReviewsSection';
 import Newsletter from './Newsletter';
-import axios from 'axios';
+import axios from 'axios'; 
 
 const HomeScreen = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -666,6 +666,7 @@ const HomeScreen = () => {
 };
 
 export default HomeScreen;
+
 
 
 
