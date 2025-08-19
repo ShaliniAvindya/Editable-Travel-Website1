@@ -520,7 +520,7 @@ const ResortProfile = () => {
 </div></div>
       </section>
 
-      {/* Other Resorts in Same Atoll */}
+      {/* Other Resorts in Same Island */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-12">
@@ -528,7 +528,7 @@ const ResortProfile = () => {
               Andere {typeDisplay} im {resortData.atoll?.name || 'Unbekannter Atoll'}
             </h2>
             <p className="text-gray-600 text-lg">
-              Entdecken Sie Weitere Erstaunliche Unterkünfte im Selben Atoll
+              Entdecken Sie Weitere Erstaunliche Unterkünfte im Selben Island
             </p>
           </div>
 
@@ -545,17 +545,32 @@ const ResortProfile = () => {
                   style={{ transitionDelay: `${index * 100}ms` }}
                 >
                   <div className="relative h-64 overflow-hidden">
-                    <img
-                      src={resort.cover_image}
-                      alt={resort.name || 'Accommodation'}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    />
+                    {(resort.cover_images?.[0] || resort.mainImage || resort.images?.[0]) && (
+                      <img
+                        src={resort.cover_images?.[0] || resort.mainImage || resort.images[0]}
+                        alt={resort.name || 'Accommodation'}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        onError={(e) => {
+                          console.warn(`Failed to load image for ${resort.name}: ${resort.cover_images?.[0] || resort.mainImage || resort.images[0]}`);
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    <div className="absolute top-4 left-4 bg-[#1e809b]/90 backdrop-blur-sm px-3 py-1 rounded-full shadow-lg">
-                      <span className="text-white text-sm font-semibold">
-                        {resort.price} / Nacht
-                      </span>
-                    </div>
+                    {(() => {
+                      let price = '';
+                      if (resort.rooms?.length > 0) {
+                        const validPrices = resort.rooms
+                          .map((room) => room.price_per_night)
+                          .filter((p) => p && typeof p === 'string' && p.trim() !== '' && p !== null && p !== undefined && p !== 'N/A');
+                        price = validPrices.length > 0 ? validPrices[0] : '';
+                      }
+                      return price ? (
+                        <div className="absolute top-4 left-4 bg-[#1e809b]/90 backdrop-blur-sm px-3 py-1 rounded-full shadow-lg">
+                          <span className="text-white text-sm font-semibold">{price}</span>
+                        </div>
+                      ) : null;
+                    })()}
                   </div>
                   <div className="p-6">
                     <h3 className="text-xl font-bold mb-2 text-[#074a5b] group-hover:text-[#1e809b] transition-colors duration-300">
@@ -601,7 +616,7 @@ const ResortProfile = () => {
             <div className="text-center py-16">
               <div className="text-6xl mb-4">🏝️</div>
               <h3 className="text-2xl font-bold text-[#074a5b] mb-2">Nichts gefunden</h3>
-              <p className="text-gray-600 mb-3">Nichts {typeDisplay.toLowerCase()} verfügbar in diesem Atoll</p>
+              <p className="text-gray-600 mb-3">Nichts {typeDisplay.toLowerCase()} verfügbar in diesem Island</p>
             </div>
           )}
         </div>
@@ -759,5 +774,3 @@ const ResortProfile = () => {
 };
 
 export default ResortProfile;
-
-
