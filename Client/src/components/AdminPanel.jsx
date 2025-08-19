@@ -48,7 +48,7 @@ const AdminPanel = () => {
 
   // Fetch maintenance status
   useEffect(() => {
-    api.get('/api/ui-content/maintenance-status')
+    api.get('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/maintenance-status')
       .then(response => {
         setMaintenanceMode(response.data.maintenanceMode || false);
         setLoading(false);
@@ -63,7 +63,7 @@ const AdminPanel = () => {
 
   const handleToggleMaintenance = () => {
     const newMode = !maintenanceMode;
-    api.post('/api/ui-content/maintenance-status', { maintenanceMode: newMode })
+    api.post('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/maintenance-status', { maintenanceMode: newMode })
       .then(response => {
         setMaintenanceMode(response.data.maintenanceMode);
         message.success(`Maintenance mode ${response.data.maintenanceMode ? 'enabled' : 'disabled'}.`);
@@ -432,4 +432,5 @@ const AdminPanel = () => {
 };
 
 export default AdminPanel;
+
 
