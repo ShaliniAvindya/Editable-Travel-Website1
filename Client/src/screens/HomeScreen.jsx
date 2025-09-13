@@ -93,7 +93,18 @@ const HomeScreen = () => {
           .map(blog => ({
             id: blog._id.toString(),
             title: blog.title,
-            excerpt: blog.content[0]?.text?.slice(0, 150) + (blog.content[0]?.text?.length > 150 ? '...' : '') || 'No excerpt available',
+ excerpt: (() => {
+              if (Array.isArray(blog.content) && blog.content.length > 0) {
+                const firstBlockWithText = blog.content.find(
+                  (block) => typeof block.text === 'string' && block.text.trim().length > 0
+                );
+                if (firstBlockWithText) {
+                  const plainText = firstBlockWithText.text.replace(/<[^>]+>/g, '');
+                  return plainText.slice(0, 150) + (plainText.length > 150 ? '...' : '');
+                }
+              }
+              return '';
+            })(),
             image: blog.images[0] || 'https://via.placeholder.com/800',
             date: new Date(blog.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
             author: blog.author || 'Unknown Author'
@@ -611,12 +622,16 @@ const HomeScreen = () => {
                 key={index}
                 className="bg-white rounded-2xl shadow-xl overflow-hidden hover:shadow-xl transition-all duration-300"
               >
-                <div className="h-32 sm:h-40 md:h-48 overflow-hidden">
-                  <img
-                    src={post.image}
-                    alt={post.title}
-                    className="w-full h-full object-cover transition-transform duration-200 hover:scale-110"
-                  />
+                <div className="h-32 sm:h-40 md:h-48 overflow-hidden w-full">
+                  {post.image && post.image !== 'https://via.placeholder.com/800' ? (
+                    <img
+                      src={post.image}
+                      className="w-full h-full object-cover transition-transform duration-200 hover:scale-110"
+                      alt={post.title}
+                    />
+                  ) : (
+                    <div className="w-full h-full" style={{ backgroundColor: '#074a5b' }}></div>
+                  )}
                 </div>
                 <div className="p-4 sm:p-6">
                   <div className="flex items-center mb-2 sm:mb-3 text-xs sm:text-sm" style={{ color: '#1e809b' }}>
@@ -629,7 +644,9 @@ const HomeScreen = () => {
                   >
                     {post.title}
                   </h3>
-                  <p className="text-gray-600 mb-2 sm:mb-4 text-sm sm:text-base">{post.excerpt}</p>
+                <div className="text-gray-600 mb-2 sm:mb-4 text-sm sm:text-base">
+                    {post.excerpt || <span style={{ color: '#bbb' }}>No excerpt available</span>}
+                  </div>
                   <button
                     onClick={() => handleBlogClick(post.id)}
                     className="text-sm sm:text-lg font-semibold hover:underline"
@@ -666,6 +683,7 @@ const HomeScreen = () => {
 };
 
 export default HomeScreen;
+
 
 
 
