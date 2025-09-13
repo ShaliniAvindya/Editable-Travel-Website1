@@ -36,17 +36,34 @@ const Blogs = () => {
         setUiContent(uiContentResponse.data);
 
         // Fetch blogs
-        const blogsResponse = await axios.get('https://editable-travel-website1-rpfv.vercel.app/api/blogs');
-        const mappedBlogs = blogsResponse.data.map((blog) => ({
-          id: blog._id.toString(),
-          title: blog.title,
-          excerpt: blog.content[0]?.text?.slice(0, 150) + (blog.content[0]?.text?.length > 150 ? '...' : '') || 'No excerpt available',
-          image: blog.images[0] || 'https://via.placeholder.com/800',
-          date: new Date(blog.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-          category: blog.tags[0] || 'General',
-          tags: blog.tags || [],
-          author: blog.author,
-        }));
+        const blogsResponse = await axios.get('https://editable-travel-website1-rpfv.vercel.app/api/blogs', {
+          params: {
+            search: searchTerm,
+            tag: selectedCategory === 'All' ? undefined : selectedCategory,
+          },
+        });
+        const mappedBlogs = blogsResponse.data.map((blog) => {
+          let excerpt = 'No excerpt available';
+          if (Array.isArray(blog.content) && blog.content.length > 0) {
+            const firstBlockWithText = blog.content.find(
+              (block) => typeof block.text === 'string' && block.text.trim().length > 0
+            );
+            if (firstBlockWithText) {
+              const plainText = firstBlockWithText.text.replace(/<[^>]+>/g, '');
+              excerpt = plainText.slice(0, 150) + (plainText.length > 150 ? '...' : '');
+            }
+          }
+          return {
+            id: blog._id.toString(),
+            title: blog.title,
+            excerpt,
+            image: blog.images[0],
+            date: new Date(blog.publish_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+            category: blog.tags[0] || 'General',
+            tags: blog.tags || [],
+            author: blog.author,
+          };
+        });
         setBlogs(mappedBlogs);
         const uniqueTags = [...new Set(mappedBlogs.flatMap((blog) => blog.tags))].sort();
         setCategories(['All', ...uniqueTags]);
@@ -59,7 +76,7 @@ const Blogs = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [searchTerm, selectedCategory]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -167,9 +184,9 @@ const Blogs = () => {
       <section className="py-12 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-white/20">
-            <div className="flex flex-col md:flex-row gap-6 items-center">
+            <div className="flex flex-col gap-6">
               {/* Search Bar */}
-              <div className="relative flex-1">
+              <div className="relative w-full mb-2">
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                 <input
                   type="text"
@@ -182,22 +199,24 @@ const Blogs = () => {
               </div>
 
               {/* Category Filter */}
-              <div className="flex flex-wrap gap-2">
-                {categories.map((category) => (
-                  <button
-                    key={category}
-                    onClick={() => setSelectedCategory(category)}
-                    className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 transform hover:scale-105 ${
-                      selectedCategory === category
-                        ? 'bg-[#1e809b] text-white shadow-lg'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                    aria-label={`Filter by ${category}`}
-                  >
-                    <Tag size={16} className="inline mr-2" />
-                    {category}
-                  </button>
-                ))}
+              <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                <div className="flex flex-nowrap gap-2 min-w-max pb-2">
+                  {categories.map((category) => (
+                    <button
+                      key={category}
+                      onClick={() => setSelectedCategory(category)}
+                      className={`px-6 py-3 rounded-full font-semibold transition-all duration-300 transform hover:scale-105 ${
+                        selectedCategory === category
+                          ? 'bg-[#1e809b] text-white shadow-lg'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                      aria-label={`Filter by ${category}`}
+                    >
+                      <Tag size={16} className="inline mr-2" />
+                      {category}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -226,11 +245,15 @@ const Blogs = () => {
                   className="bg-white rounded-2xl shadow-xl overflow-hidden hover:shadow-xl transition-all duration-300"
                 >
                   <div className="h-48 overflow-hidden">
-                    <img
-                      src={post.image}
-                      alt={post.title}
-                      className="w-full h-full object-cover transition-transform duration-200 hover:scale-110"
-                    />
+                    {post.image ? (
+                      <img
+                        src={post.image}
+                        className="w-full h-full object-cover transition-transform duration-200 hover:scale-110"
+                        alt={post.title}
+                      />
+                    ) : (
+                      <div className="w-full h-full" style={{ backgroundColor: '#074a5b' }}></div>
+                    )}
                   </div>
                   <div className="p-6">
                     <div className="flex justify-between items-center mb-5 text-sm" style={{ color: '#1e809b' }}>
@@ -246,7 +269,7 @@ const Blogs = () => {
                     <h3 className="text-xl font-bold mb-3" style={{ color: '#074a5b' }}>
                       {post.title}
                     </h3>
-                    <p className="text-gray-600 mb-4">{post.excerpt}</p>
+                    <div className="text-gray-600 mb-4">{post.excerpt}</div>
                     <button
                       className="text-lg font-semibold hover:underline"
                       style={{ color: '#1e809b' }}
