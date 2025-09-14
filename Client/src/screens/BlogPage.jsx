@@ -88,9 +88,9 @@ const BlogPage = () => {
         none: 'mb-0',
         xs: 'mb-1',
         sm: 'mb-3',
-        normal: 'mb-6',
-        lg: 'mb-10',
-        xl: 'mb-16'
+        normal: 'mb-4 sm:mb-6',
+        lg: 'mb-6 sm:mb-10',
+        xl: 'mb-8 sm:mb-16'
       };
       return spacingMap[spacing] || spacingMap.normal;
     };
@@ -113,7 +113,7 @@ const BlogPage = () => {
         return (
           <div key={index} className={`${spacingClass} flex justify-${alignment}`}> 
             <div
-              className={`p-6 rounded-xl max-w-2xl w-full mx-auto ${
+              className={`p-4 sm:p-6 rounded-xl max-w-full sm:max-w-2xl w-full mx-auto ${
                 ctaStyle === 'gradient' ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white' :
                 ctaStyle === 'minimal' ? 'bg-transparent border-2' : 'shadow-lg'
               }`}
@@ -126,17 +126,17 @@ const BlogPage = () => {
               }}
             >
               {(section.heading || ctaData.title) && (
-                <h3 className="text-2xl font-bold mb-3">{section.heading || ctaData.title}</h3>
+                <h3 className="text-xl sm:text-2xl font-bold mb-3">{section.heading || ctaData.title}</h3>
               )}
               {(ctaData.description || section.text) && (
-                <p className="mb-4 opacity-90">{ctaData.description || ''}</p>
+                <p className="mb-4 text-sm sm:text-base opacity-90">{ctaData.description || ''}</p>
               )}
               <div className="flex gap-3 justify-center items-center flex-wrap mb-4">
                 {ctaData.primaryButtonText && (
                   <a
                     href={ctaData.primaryButtonUrl || '#'}
                     style={{ backgroundColor: primaryColor }}
-                    className="px-6 py-3 text-white rounded-xl font-medium hover:opacity-90 transition-all no-underline"
+                    className="px-4 sm:px-6 py-2 sm:py-3 text-white rounded-xl font-medium hover:opacity-90 transition-all no-underline text-sm sm:text-base"
                     target="_blank" rel="noopener noreferrer"
                   >
                     {ctaData.primaryButtonText}
@@ -145,7 +145,7 @@ const BlogPage = () => {
                 {ctaData.secondaryButtonText && (
                   <a
                     href={ctaData.secondaryButtonUrl || '#'}
-                    className="px-6 py-3 border-2 rounded-xl font-medium hover:bg-gray-50 transition-all no-underline"
+                    className="px-4 sm:px-6 py-2 sm:py-3 border-2 rounded-xl font-medium hover:bg-gray-50 transition-all no-underline text-sm sm:text-base"
                     style={{ borderColor: primaryColor, color: primaryColor }}
                     target="_blank" rel="noopener noreferrer"
                   >
@@ -154,7 +154,7 @@ const BlogPage = () => {
                 )}
               </div>
               {(ctaData.email || ctaData.phone || ctaData.address) && (
-                <div className="pt-4 border-t border-gray-300 flex flex-wrap gap-4 justify-center text-sm opacity-75">
+                <div className="pt-4 border-t border-gray-300 flex flex-wrap gap-4 justify-center text-xs sm:text-sm opacity-75">
                   {ctaData.email && (
                     <div className="flex items-center gap-1">
                       <span role="img" aria-label="email">📧</span> {ctaData.email}
@@ -179,12 +179,12 @@ const BlogPage = () => {
       case 'heading':
         const HeadingTag = blockData.level || 'h2';
         const headingSize = {
-          h1: 'text-4xl',
-          h2: 'text-3xl',
-          h3: 'text-2xl',
-          h4: 'text-xl',
-          h5: 'text-lg',
-          h6: 'text-base'
+          h1: 'text-3xl sm:text-4xl',
+          h2: 'text-2xl sm:text-3xl',
+          h3: 'text-xl sm:text-2xl',
+          h4: 'text-lg sm:text-xl',
+          h5: 'text-base sm:text-lg',
+          h6: 'text-sm sm:text-base'
         };
         
         return React.createElement(HeadingTag, {
@@ -200,7 +200,7 @@ const BlogPage = () => {
         return (
           <div 
             key={index}
-            className={`prose max-w-none leading-relaxed ${spacingClass}`}
+            className={`prose prose-sm sm:prose-lg max-w-none leading-relaxed ${spacingClass}`}
             style={blockStyle}
             dangerouslySetInnerHTML={{ __html: section.text }}
           />
@@ -211,22 +211,22 @@ const BlogPage = () => {
         const imageSize = blockData.size || 'medium';
         const alignmentClass = `text-${imageAlignment}`;
         const sizeClass = imageSize === 'small' ? 'max-w-xs' : 
-                         imageSize === 'large' ? 'max-w-4xl' : 
-                         imageSize === 'full' ? 'w-full' : 'max-w-2xl';
+                         imageSize === 'large' ? 'max-w-3xl sm:max-w-4xl' : 
+                         imageSize === 'full' ? 'w-full' : 'max-w-lg sm:max-w-2xl';
         
         return (
           <div key={index} className={`${alignmentClass} ${spacingClass}`} style={blockStyle}>
             <img
               src={section.image}
               alt={blockData.caption || section.heading || 'Blog image'}
-              className={`rounded-xl ${sizeClass}`}
+              className={`rounded-xl w-full ${sizeClass}`}
               style={{ 
                 margin: imageAlignment === 'left' ? '0' : 
                        imageAlignment === 'right' ? '0 0 0 auto' : '0 auto'
               }}
             />
             {blockData.caption && (
-              <p className="text-sm text-gray-600 italic mt-3">{blockData.caption}</p>
+              <p className="text-xs sm:text-sm text-gray-600 italic mt-3">{blockData.caption}</p>
             )}
           </div>
         );
@@ -236,22 +236,22 @@ const BlogPage = () => {
         const videoSize = blockData.size || 'medium';
         const videoAlignmentClass = `text-${videoAlignment}`;
         const videoSizeClass = videoSize === 'small' ? 'max-w-xs' : 
-                              videoSize === 'large' ? 'max-w-4xl' : 
-                              videoSize === 'full' ? 'w-full' : 'max-w-2xl';
+                              videoSize === 'large' ? 'max-w-3xl sm:max-w-4xl' : 
+                              videoSize === 'full' ? 'w-full' : 'max-w-lg sm:max-w-2xl';
         
         return (
           <div key={index} className={`${videoAlignmentClass} ${spacingClass}`} style={blockStyle}>
             <video
               src={section.image}
               controls
-              className={`rounded-xl ${videoSizeClass}`}
+              className={`rounded-xl w-full ${videoSizeClass}`}
               style={{ 
                 margin: videoAlignment === 'left' ? '0' : 
                        videoAlignment === 'right' ? '0 0 0 auto' : '0 auto'
               }}
             />
             {blockData.caption && (
-              <p className="text-sm text-gray-600 italic mt-3">{blockData.caption}</p>
+              <p className="text-xs sm:text-sm text-gray-600 italic mt-3">{blockData.caption}</p>
             )}
           </div>
         );
@@ -276,7 +276,7 @@ const BlogPage = () => {
             <div key={index} className={`space-y-2 ${spacingClass}`} style={blockStyle}>
               {listData.items.map((item, itemIndex) => (
                 <div key={itemIndex} className="flex items-center gap-3">
-                  <span className={`text-lg ${listData.checkedItems?.[itemIndex] ? 'text-green-500' : 'text-gray-400'}`}>
+                  <span className={`text-base sm:text-lg ${listData.checkedItems?.[itemIndex] ? 'text-green-500' : 'text-gray-400'}`}>
                     {listData.checkedItems?.[itemIndex] ? '✓' : '○'}
                   </span>
                   <span className={listData.checkedItems?.[itemIndex] ? 'line-through text-gray-500' : ''}>{item}</span>
@@ -305,9 +305,9 @@ const BlogPage = () => {
         
         const ListTag = listData.listType === 'ordered' ? 'ol' : 'ul';
         return (
-          <ListTag key={index} className={`space-y-1 ml-6 ${spacingClass}`} style={{ ...blockStyle, listStyleType: getListStyleType() }}>
+          <ListTag key={index} className={`space-y-1 ml-4 sm:ml-6 ${spacingClass}`} style={{ ...blockStyle, listStyleType: getListStyleType() }}>
             {listData.items.map((item, itemIndex) => (
-              <li key={itemIndex} className="leading-relaxed">
+              <li key={itemIndex} className="leading-relaxed text-sm sm:text-base">
                 {item}
               </li>
             ))}
@@ -316,16 +316,16 @@ const BlogPage = () => {
 
       case 'quote':
         return (
-          <div key={index} className={`relative pl-8 py-6 ${spacingClass}`} style={blockStyle}>
+          <div key={index} className={`relative pl-6 sm:pl-8 py-4 sm:py-6 ${spacingClass}`} style={blockStyle}>
             <div 
               className="absolute left-0 top-0 bottom-0 w-1 rounded-full"
               style={{ backgroundColor: blockData.accentColor || theme.accentColor }}
             />
-            <blockquote className="text-xl italic leading-relaxed mb-3" style={{ color: blockData.textColor || theme.textColor }}>
+            <blockquote className="text-lg sm:text-xl italic leading-relaxed mb-3" style={{ color: blockData.textColor || theme.textColor }}>
               "{section.text}"
             </blockquote>
             {blockData.author && (
-              <cite className="text-sm text-gray-600 not-italic font-medium">— {blockData.author}</cite>
+              <cite className="text-xs sm:text-sm text-gray-600 not-italic font-medium">— {blockData.author}</cite>
             )}
           </div>
         );
@@ -346,7 +346,7 @@ const BlogPage = () => {
             );
           } else if (dividerStyle === 'stars') {
             return (
-              <div key={index} className={`text-center text-gray-400 ${spacingClass}`} style={{ fontSize: `${dividerSize * 20}px`, ...blockStyle }}>★ ★ ★</div>
+              <div key={index} className={`text-center text-gray-400 ${spacingClass}`} style={{ fontSize: `${dividerSize * 16}px sm:${dividerSize * 20}px`, ...blockStyle }}>★ ★ ★</div>
             );
           } else {
             return (
@@ -361,7 +361,7 @@ const BlogPage = () => {
           <div key={index} className={`${spacingClass}`} style={blockStyle}>
             <iframe
               src={getEmbedUrl(section.image)}
-              className="w-full h-[400px] rounded-xl"
+              className="w-full h-[200px] sm:h-[400px] rounded-xl"
               allowFullScreen
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               title="Embedded content"
@@ -377,7 +377,7 @@ const BlogPage = () => {
         return (
           <div key={index} className={spacingClass} style={blockStyle}>
             {galleryLayout === 'grid' ? (
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {galleryUrls.map((url, i) => (
                   <img key={i} src={url.trim()} alt={`Gallery ${i}`} className="w-full h-auto rounded-xl" />
                 ))}
@@ -385,7 +385,7 @@ const BlogPage = () => {
             ) : (
               <div className="flex overflow-x-auto gap-4">
                 {galleryUrls.map((url, i) => (
-                  <img key={i} src={url.trim()} alt={`Gallery ${i}`} className="h-64 object-cover rounded-xl flex-shrink-0" />
+                  <img key={i} src={url.trim()} alt={`Gallery ${i}`} className="h-48 sm:h-64 object-cover rounded-xl flex-shrink-0" />
                 ))}
               </div>
             )}
@@ -406,7 +406,7 @@ const BlogPage = () => {
                 color: blockData.buttonStyle === 'outline' ? (blockData.buttonColor || '#3B82F6') : (blockData.textColor || '#FFFFFF'),
                 borderColor: blockData.buttonColor || '#3B82F6'
               }}
-              className={`inline-block px-6 py-3 rounded-xl font-medium transition-all ${
+              className={`inline-block px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-medium transition-all text-sm sm:text-base ${
                 blockData.buttonStyle === 'outline' ? 'border-2' : ''
               } hover:opacity-80 no-underline`}
             >
@@ -423,7 +423,7 @@ const BlogPage = () => {
         } catch (e) {}
 
         return (
-          <div key={index} className={`grid grid-cols-2 gap-4 ${spacingClass}`} style={blockStyle}>
+          <div key={index} className={`grid grid-cols-1 sm:grid-cols-2 gap-4 ${spacingClass}`} style={blockStyle}>
             <div style={{ textAlign: columnsData.leftAlign || 'left' }}>
               {columnsData.leftType === 'image' && columnsData.leftImage ? (
                 <img src={columnsData.leftImage} alt="Left column" className="w-full rounded-lg mb-2" />
@@ -457,28 +457,28 @@ const BlogPage = () => {
         return (
           <div key={index} className={`border rounded-xl p-4 ${spacingClass}`} style={blockStyle}>
             {cardMedia.length > 0 && (
-              <div className={`mb-4 ${cardLayout === 'grid' ? 'grid grid-cols-3 gap-4' : 'flex overflow-x-auto gap-4'}`}>
+              <div className={`mb-4 ${cardLayout === 'grid' ? 'grid grid-cols-1 sm:grid-cols-3 gap-4' : 'flex overflow-x-auto gap-4'}`}>
                 {cardMedia.map((url, i) => (
                   <div key={i}>
                     {url.trim().endsWith('.mp4') || url.trim().endsWith('.webm') ? (
                       <video 
                         src={url.trim()} 
                         controls 
-                        className={`w-full rounded-xl ${cardSize === 'small' ? 'h-24' : cardSize === 'large' ? 'h-48' : 'h-32'}`} 
+                        className={`w-full rounded-xl ${cardSize === 'small' ? 'h-24' : cardSize === 'large' ? 'h-40 sm:h-48' : 'h-32'}`} 
                       />
                     ) : (
                       <img 
                         src={url.trim()} 
                         alt={`Card media ${i}`} 
-                        className={`w-full rounded-xl ${cardSize === 'small' ? 'h-24' : cardSize === 'large' ? 'h-48' : 'h-32'} object-cover`} 
+                        className={`w-full rounded-xl ${cardSize === 'small' ? 'h-24' : cardSize === 'large' ? 'h-40 sm:h-48' : 'h-32'} object-cover`} 
                       />
                     )}
                   </div>
                 ))}
               </div>
             )}
-            {section.heading && <h3 className="text-xl font-bold mb-2">{section.heading}</h3>}
-            {section.text && <p>{section.text}</p>}
+            {section.heading && <h3 className="text-lg sm:text-xl font-bold mb-2">{section.heading}</h3>}
+            {section.text && <p className="text-sm sm:text-base">{section.text}</p>}
           </div>
         );
 
@@ -487,7 +487,7 @@ const BlogPage = () => {
         return (
           <div key={index} className={spacingClass} style={blockStyle}>
             {section.heading && (
-              <h2 style={{ color: theme.primaryColor, fontSize: '28px', fontWeight: 'bold', margin: '32px 0 16px 0' }}>
+              <h2 style={{ color: theme.primaryColor, fontSize: '24px sm:28px', fontWeight: 'bold', margin: '24px 0 16px 0' }}>
                 {section.heading}
               </h2>
             )}
@@ -495,11 +495,11 @@ const BlogPage = () => {
               <img 
                 src={section.image} 
                 alt={section.heading || 'Blog image'} 
-                style={{ maxWidth: '300px', height: 'auto', margin: '16px 0', borderRadius: '8px' }} 
+                style={{ maxWidth: '100% sm:300px', height: 'auto', margin: '16px 0', borderRadius: '8px' }} 
               />
             )}
             {section.text && (
-              <p style={{ marginBottom: '24px' }}>{section.text}</p>
+              <p style={{ marginBottom: '24px' }} className="text-sm sm:text-base">{section.text}</p>
             )}
           </div>
         );
@@ -529,7 +529,7 @@ const BlogPage = () => {
             thumbnail: url.includes('cloudinary'),
           })),
           tags: blogData.tags || [],
-          author: blogData.author || 'Unknown Author',
+          author: blogData.author,
           theme: blogData.theme
         };
 
@@ -625,7 +625,7 @@ const BlogPage = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
-        <p className="text-2xl text-[#074a5b]">Blog wird geladen...</p>
+        <p className="text-xl sm:text-2xl text-[#074a5b]">Blog wird geladen...</p>
       </div>
     );
   }
@@ -634,7 +634,7 @@ const BlogPage = () => {
   if (error || !blog) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
-        <p className="text-2xl text-[#074a5b]">{error || 'Blog not found'}</p>
+        <p className="text-xl sm:text-2xl text-[#074a5b]">{error || 'Blog not found'}</p>
       </div>
     );
   }
@@ -642,7 +642,7 @@ const BlogPage = () => {
   return (
     <div className="min-h-screen bg-white" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
       {/* Hero Section */}
-      <section className="relative h-[65vh] overflow-hidden">
+      <section className="relative h-[50vh] sm:h-[65vh] overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent z-10"></div>
         {blog.featuredImage ? (
           <img
@@ -653,37 +653,37 @@ const BlogPage = () => {
         ) : (
           <div className="w-full h-full" style={{ backgroundColor: '#074a5b' }}></div>
         )}
-        <div className="absolute top-24 left-48 z-30">
+        <div className="absolute top-12 sm:top-24 left-4 sm:left-48 z-30">
             <button
               onClick={handleBack}
-              className="inline-flex items-center gap-2 text-[#1e809b] hover:text-[#074a5b] font-semibold transition-colors duration-300 group px-4 py-2 rounded-full bg-white shadow-sm border border-gray-200 w-auto"
+              className="inline-flex items-center gap-2 text-[#1e809b] hover:text-[#074a5b] font-semibold transition-colors duration-300 group px-3 sm:px-4 py-2 rounded-full bg-white shadow-sm border border-gray-200 w-auto"
               aria-label="Back to Blogs"
               style={{ minWidth: 'unset' }}
             >
-              <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform duration-300" />
+              <ArrowLeft className="w-4 sm:w-5 h-4 sm:h-5 group-hover:-translate-x-1 transition-transform duration-300" />
               Zurück zu Blogs
             </button>
           </div>
-        <div className="absolute bottom-0 left-0 right-0 z-20 p-9">
-          <div className="max-w-6xl mx-auto">
-            <h1 className="text-4xl md:text-6xl font-bold text-white drop-shadow-2xl mb-8" style={{ lineHeight: 1.1, letterSpacing: '0.01em'}}>
+        <div className="absolute bottom-0 left-0 right-0 z-20 p-4 sm:p-9">
+          <div className="max-w-4xl sm:max-w-6xl mx-auto">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold text-white drop-shadow-2xl mb-6 sm:mb-8" style={{ lineHeight: 1.1, letterSpacing: '0.01em' }}>
               {blog.title}
             </h1>
-            <div className="flex items-center gap-4 mb-4 text-white/90">
-              <span className="bg-[#1e809b] px-3 py-1 rounded-full text-sm font-semibold">
-                <Tag className="w-4 h-4 inline mr-1" />
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-4 text-white/90 text-sm sm:text-base">
+              <span className="bg-[#1e809b] px-2 sm:px-3 py-1 rounded-full font-semibold">
+                <Tag className="w-3 sm:w-4 h-3 sm:h-4 inline mr-1" />
                 {blog.tags[0] || 'General'}
               </span>
               <span className="flex items-center gap-1">
-                <Calendar className="w-4 h-4" />
+                <Calendar className="w-3 sm:w-4 h-3 sm:h-4" />
                 {blog.publishDate}
               </span>
               <span className="flex items-center gap-1">
-                <Clock className="w-4 h-4" />
+                <Clock className="w-3 sm:w-4 h-3 sm:h-4" />
                 {readingTime} Min Lesen
               </span>
               <span className="flex items-center gap-1">
-                <User className="w-4 h-4" />
+                <User className="w-3 sm:w-4 h-3 sm:h-4" />
                 {blog.author}
               </span>
             </div>
@@ -694,27 +694,27 @@ const BlogPage = () => {
       {/* Main Content */}
       <div className="max-w-8xl mx-auto px-4 py-12 flex flex-col lg:flex-row gap-12">
   <div className="flex-1 min-w-0 lg:ml-36">
-          <article className="prose prose-lg max-w-none mb-16">
-            <div className="space-y-6">
+          <article className="prose prose-sm sm:prose-lg max-w-none mb-12 sm:mb-16">
+            <div className="space-y-4 sm:space-y-6">
               {blog.content.map((section, index) => renderContentBlock(section, index))}
             </div>
             {blog.content.length === 0 && (
-              <div className="text-center py-16 text-gray-500">
-                <p className="text-xl mb-2">No content available</p>
+              <div className="text-center py-12 sm:py-16 text-gray-500">
+                <p className="text-lg sm:text-xl mb-2">No content available</p>
               </div>
             )}
           </article>
 
         {/* Video Section */}
         {blog.videos && blog.videos.length > 0 && (
-          <section className="mb-16">
-            <h2 className="text-3xl font-bold mb-8" style={{ color: '#074a5b' }}>
+          <section className="mb-12 sm:mb-16">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8" style={{ color: '#074a5b' }}>
               Vorgestellte Videos
             </h2>
 
               {/* Video Player */}
               {currentVideo !== null && (
-                <div className="mb-8 bg-black rounded-2xl overflow-hidden shadow-2xl">
+                <div className="mb-6 sm:mb-8 bg-black rounded-2xl overflow-hidden shadow-2xl">
                   <div className="relative aspect-video">
                     <video
                       id="blog-video-player"
@@ -728,20 +728,20 @@ const BlogPage = () => {
                     />
                     {/* Custom Controls Overlay */}
                     <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-white">
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-3 sm:gap-4">
                         <button
                           onClick={togglePlayPause}
-                          className="bg-white/20 backdrop-blur-sm rounded-full p-3 hover:bg-white/30 transition-all duration-300"
+                          className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3 hover:bg-white/30 transition-all duration-300"
                           aria-label={isPlaying ? 'Pause video' : 'Play video'}
                         >
-                          {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
+                          {isPlaying ? <Pause className="w-5 sm:w-6 h-5 sm:h-6" /> : <Play className="w-5 sm:w-6 h-5 sm:h-6" />}
                         </button>
                         <button
                           onClick={toggleMute}
-                          className="bg-white/20 backdrop-blur-sm rounded-full p-3 hover:bg-white/30 transition-all duration-300"
+                          className="bg-white/20 backdrop-blur-sm rounded-full p-2 sm:p-3 hover:bg-white/30 transition-all duration-300"
                           aria-label={isMuted ? 'Unmute video' : 'Mute video'}
                         >
-                          {isMuted ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
+                          {isMuted ? <VolumeX className="w-5 sm:w-6 h-5 sm:h-6" /> : <Volume2 className="w-5 sm:w-6 h-5 sm:h-6" />}
                         </button>
                       </div>
                     </div>
@@ -750,30 +750,30 @@ const BlogPage = () => {
               )}
 
               {/* Video Thumbnails */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {blog.videos.map((video, index) => (
-                  <div
-                    key={index}
-                    onClick={() => handleVideoPlay(index)}
-                    className={`group cursor-pointer rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105 ${
-                      currentVideo === index ? 'ring-4 ring-[#1e809b] ring-opacity-50' : ''
-                    }`}
-                  >
-                    <div className="relative aspect-video">
-                      <img
-                        src={video.thumbnail}
-                        alt={`Video ${index + 1}`}
-                        className="w-full h-full object-cover"
-                        onError={(e) => (e.target.src = 'https://via.placeholder.com/800?text=Video')}
-                      />
-                      <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
-                        <div className="bg-white/90 backdrop-blur-sm rounded-full p-4 group-hover:bg-white group-hover:scale-110 transition-all duration-300">
-                          <Play className="w-8 h-8 text-[#074a5b] ml-1" />
-                        </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+              {blog.videos.map((video, index) => (
+                <div
+                  key={index}
+                  onClick={() => handleVideoPlay(index)}
+                  className={`group cursor-pointer rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105 ${
+                    currentVideo === index ? 'ring-4 ring-[#1e809b] ring-opacity-50' : ''
+                  }`}
+                >
+                  <div className="relative aspect-video">
+                    <img
+                      src={video.thumbnail}
+                      alt={`Video ${index + 1}`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => (e.target.src = 'https://via.placeholder.com/800?text=Video')}
+                    />
+                    <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
+                      <div className="bg-white/90 backdrop-blur-sm rounded-full p-3 sm:p-4 group-hover:bg-white group-hover:scale-110 transition-all duration-300">
+                        <Play className="w-6 sm:w-8 h-6 sm:h-8 text-[#074a5b] ml-1" />
                       </div>
                     </div>
                   </div>
-                ))}
+                </div>
+              ))}
               </div>
             </section>
           )}
@@ -781,17 +781,17 @@ const BlogPage = () => {
 
         {/* Sidebar: Recent Blogs */}
         <aside className="w-full lg:w-72 flex-shrink-0 lg:mr-10 group/sidebar">
-          <div className="sticky top-28">
-            <h2 className="text-2xl font-bold mb-6" style={{ color: '#074a5b' }}>
+          <div className="sticky top-20 sm:top-28">
+            <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6" style={{ color: '#074a5b' }}>
               Recent Blogs
             </h2>
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               {recentBlogs.length === 0 && (
-                <div className="text-gray-400 text-center">Keine weiteren Blogs gefunden.</div>
+                <div className="text-gray-400 text-center text-sm sm:text-base">Keine weiteren Blogs gefunden.</div>
               )}
               {recentBlogs.map((blog) => (
-                <div key={blog.id} className="bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col md:flex-row lg:flex-col group hover:shadow-xl transition-all duration-300 border border-gray-100">
-                  <div className="h-32 w-full md:w-32 lg:w-full overflow-hidden flex-shrink-0">
+                <div key={blog.id} className="bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col group hover:shadow-xl transition-all duration-300 border border-gray-100">
+                  <div className="h-32 w-full overflow-hidden flex-shrink-0">
                     {blog.image ? (
                       <img
                         src={blog.image}
@@ -804,14 +804,14 @@ const BlogPage = () => {
                   </div>
                   <div className="p-4 flex flex-col justify-between flex-1">
                     <div>
-                      <h3 className="text-lg font-bold mb-1" style={{ color: '#074a5b' }}>{blog.title}</h3>
+                      <h3 className="text-base sm:text-lg font-bold mb-1" style={{ color: '#074a5b' }}>{blog.title}</h3>
                       <div className="text-xs text-gray-500 mb-2 flex items-center gap-2">
-                        <Calendar size={14} /> {blog.date} <User size={14} /> {blog.author}
+                        <Calendar size={12} /> {blog.date} <User size={12} /> {blog.author}
                       </div>
-                      <div className="text-gray-600 text-sm mb-2 line-clamp-3">{blog.excerpt}</div>
+                      <div className="text-gray-600 text-xs sm:text-sm mb-2 line-clamp-3">{blog.excerpt}</div>
                     </div>
                     <button
-                      className="text-sm font-semibold hover:underline mt-2 text-[#1e809b]"
+                      className="text-xs sm:text-sm font-semibold hover:underline mt-2 text-[#1e809b]"
                       onClick={() => navigate(`/blogs/${blog.id}`)}
                       aria-label={`Read more about ${blog.title}`}
                     >
