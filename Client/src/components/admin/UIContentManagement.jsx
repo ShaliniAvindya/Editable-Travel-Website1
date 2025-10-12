@@ -3,6 +3,7 @@ import axios from 'axios';
 import { X, Plus, Edit, Trash2, Save, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { API_BASE_URL } from '../apiConfig';
 
 const imgbbAxios = axios.create();
 
@@ -11,22 +12,22 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md">
-        <h3 className="text-lg font-semibold text-[#074a5b] mb-4" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+        <h3 className="text-lg font-semibold text-[#074a5b] mb-4" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
           {title}
         </h3>
-        <p className="text-gray-600 mb-6" style={{ fontFamily: 'Comic Sans MS, cursive' }}>{message}</p>
+        <p className="text-gray-600 mb-6" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>{message}</p>
         <div className="flex justify-end gap-4">
           <button
             onClick={onClose}
             className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-xl font-semibold transition-all"
-            style={{ fontFamily: 'Comic Sans MS, cursive' }}
+            style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
             className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl font-semibold transition-all"
-            style={{ fontFamily: 'Comic Sans MS, cursive' }}
+            style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
           >
             Delete
           </button>
@@ -89,7 +90,7 @@ const UIContentManagement = () => {
       try {
         setLoading(true);
         console.log(`Fetching content for page: ${selectedPage}`);
-        const response = await api.get(`https://editable-travel-website1-rpfv.vercel.app/api/ui-content/${selectedPage}`);
+        const response = await api.get(`${API_BASE_URL}/ui-content/${selectedPage}`);
         console.log('API Response:', response.data);
         setPageContent(response.data);
         const firstSectionId = response.data.sections[0]?.sectionId || 'hero';
@@ -324,7 +325,7 @@ const UIContentManagement = () => {
         setSuccess('Review deleted successfully');
       } else if (modal.type === 'section') {
         const newSections = pageContent.sections.filter((s) => s.sectionId !== modal.id);
-        await api.put(`https://editable-travel-website1-rpfv.vercel.app/api/ui-content/${selectedPage}`, { sections: newSections });
+        await api.put(`${API_BASE_URL}/ui-content/${selectedPage}`, { sections: newSections });
         setPageContent({ ...pageContent, sections: newSections });
         const newSectionId = newSections[0]?.sectionId || 'hero';
         setSelectedSection(newSectionId);
@@ -374,7 +375,7 @@ const UIContentManagement = () => {
           },
         });
       }
-      const response = await api.put(`https://editable-travel-website1-rpfv.vercel.app/api/ui-content/${selectedPage}`, { sections: newSections });
+      const response = await api.put(`${API_BASE_URL}/ui-content/${selectedPage}`, { sections: newSections });
       setPageContent(response.data);
       setSuccess('Section updated successfully');
       setEditingSlideIndex(null);
@@ -412,7 +413,7 @@ const UIContentManagement = () => {
   if (loading || !user?.isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <p className="text-xl text-[#074a5b]" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+        <p className="text-xl text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
           Loading content...
         </p>
       </div>
@@ -420,7 +421,7 @@ const UIContentManagement = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+    <div className="min-h-screen bg-white" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
       <ConfirmationModal
         isOpen={modal.isOpen}
         onClose={() => setModal({ isOpen: false, type: '', id: null, name: '' })}
@@ -429,37 +430,37 @@ const UIContentManagement = () => {
         message={`Are you sure you want to delete ${modal.name}? This action cannot be undone.`}
       />
       <div className="container mx-auto p-6">
-        <h1 className="text-4xl font-bold mb-8 text-[#074a5b]" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+        <h1 className="text-4xl font-bold mb-8 text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
           Home Page Management
         </h1>
 
         {error && (
-          <div className="bg-red-100 text-red-700 p-4 mb-6 rounded-xl" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+          <div className="bg-red-100 text-red-700 p-4 mb-6 rounded-xl" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
             {error}
           </div>
         )}
         {success && (
-          <div className="bg-green-100 text-green-700 p-4 mb-6 rounded-xl" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+          <div className="bg-green-100 text-green-700 p-4 mb-6 rounded-xl" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
             {success}
           </div>
         )}
 
         <div className="mb-12 p-6 bg-white rounded-2xl shadow-lg">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-semibold text-[#074a5b]" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+            <h2 className="text-2xl font-semibold text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
               Manage Content
             </h2>
           </div>
 
           <div className="mb-6">
-            <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+            <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
               Select Section
             </label>
             <select
               value={selectedSection}
               onChange={(e) => handleSectionChange(e.target.value)}
               className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full md:w-1/3"
-              style={{ fontFamily: 'Comic Sans MS, cursive' }}
+              style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
             >
               <option value="hero">Hero Section</option>
               <option value="welcome">Welcome Section</option>
@@ -472,19 +473,19 @@ const UIContentManagement = () => {
           <form onSubmit={handleSaveSection} className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {selectedSection === 'hero' && (
               <div className="col-span-2">
-                <h3 className="text-xl font-semibold mb-4 text-[#074a5b]" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                <h3 className="text-xl font-semibold mb-4 text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                   Hero Slides
                 </h3>
                 <button
                   type="button"
                   onClick={handleAddSlide}
                   className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl font-semibold transition-all mb-4"
-                  style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                  style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                 >
                   <Plus size={16} className="inline mr-2" /> Add Slide
                 </button>
                 {formData.slides.length === 0 && (
-                  <p className="text-gray-600" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                  <p className="text-gray-600" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                     No slides added yet.
                   </p>
                 )}
@@ -499,7 +500,7 @@ const UIContentManagement = () => {
                       }`}
                     >
                       <div className="flex justify-between items-center mb-4">
-                        <h4 className="text-lg font-bold text-[#074a5b]" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                        <h4 className="text-lg font-bold text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                           Slide {index + 1}
                         </h4>
                         <div className="flex gap-2">
@@ -507,7 +508,7 @@ const UIContentManagement = () => {
                             type="button"
                             onClick={(e) => handleEditSlide(e, index)}
                             className="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded-xl transition-all"
-                            style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                            style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                           >
                             <Edit size={16} />
                           </button>
@@ -515,7 +516,7 @@ const UIContentManagement = () => {
                             type="button"
                             onClick={() => handleDeleteSlide(index)}
                             className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-xl transition-all"
-                            style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                            style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                           >
                             <Trash2 size={16} />
                           </button>
@@ -524,7 +525,7 @@ const UIContentManagement = () => {
                       {editingSlideIndex === index && (
                         <div className="space-y-4">
                           <div>
-                            <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                            <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                               Title
                             </label>
                             <input
@@ -536,11 +537,11 @@ const UIContentManagement = () => {
                                 setFormData({ ...formData, slides: newSlides });
                               }}
                               className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
-                              style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                              style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                             />
                           </div>
                           <div>
-                            <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                            <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                               Description
                             </label>
                             <textarea
@@ -551,11 +552,11 @@ const UIContentManagement = () => {
                                 setFormData({ ...formData, slides: newSlides });
                               }}
                               className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none w-full h-24"
-                              style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                              style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                             />
                           </div>
                           <div>
-                            <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                            <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                               Image
                             </label>
                             <div className="flex items-center">
@@ -565,10 +566,10 @@ const UIContentManagement = () => {
                                 onChange={(e) => handleImageUpload(e, index)}
                                 className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12"
                                 disabled={uploading}
-                                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                                style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                               />
                               {uploading && (
-                                <span className="ml-2 text-gray-600" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                                <span className="ml-2 text-gray-600" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                                   Uploading...
                                 </span>
                               )}
@@ -592,7 +593,7 @@ const UIContentManagement = () => {
                             )}
                           </div>
                           <div>
-                            <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                            <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                               Button Text
                             </label>
                             <input
@@ -604,11 +605,11 @@ const UIContentManagement = () => {
                                 setFormData({ ...formData, slides: newSlides });
                               }}
                               className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
-                              style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                              style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                             />
                           </div>
                           <div>
-                            <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                            <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                               Button Link
                             </label>
                             <input
@@ -620,14 +621,14 @@ const UIContentManagement = () => {
                                 setFormData({ ...formData, slides: newSlides });
                               }}
                               className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
-                              style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                              style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                             />
                           </div>
                           <div className="flex gap-4">
                             <button
                               type="submit"
                               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-semibold transition-all"
-                              style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                              style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                             >
                               Save Slide
                             </button>
@@ -635,7 +636,7 @@ const UIContentManagement = () => {
                               type="button"
                               onClick={handleCancelEditSlide}
                               className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-xl font-semibold transition-all"
-                              style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                              style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                             >
                               Cancel
                             </button>
@@ -651,7 +652,7 @@ const UIContentManagement = () => {
             {selectedSection === 'googleReviews' && (
               <>
                 <div>
-                  <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                  <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                     Title
                   </label>
                   <input
@@ -659,18 +660,18 @@ const UIContentManagement = () => {
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
-                    style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                    style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                   />
                 </div>
                 <div className="col-span-2">
-                  <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                  <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                     Description
                   </label>
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none w-full h-24"
-                    style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                    style={{ fontFamily: "'Comic SSans MS', 'Comic Neue'" }}
                   />
                 </div>
               </>
@@ -679,7 +680,7 @@ const UIContentManagement = () => {
             {['welcome', 'offerings', 'blog'].includes(selectedSection) && (
               <>
                 <div>
-                  <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                  <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                     Title
                   </label>
                   <input
@@ -687,24 +688,24 @@ const UIContentManagement = () => {
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
-                    style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                    style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                   />
                 </div>
                 <div className="col-span-2">
-                  <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                  <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                     Description
                   </label>
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none w-full h-24"
-                    style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                    style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                   />
                 </div>
                 {selectedSection === 'blog' && (
                   <>
                     <div>
-                      <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                      <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                         Button Text
                       </label>
                       <input
@@ -712,11 +713,11 @@ const UIContentManagement = () => {
                         value={formData.buttonText}
                         onChange={(e) => setFormData({ ...formData, buttonText: e.target.value })}
                         className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
-                        style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                        style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                       />
                     </div>
                     <div>
-                      <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                      <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                         Button Link
                       </label>
                       <input
@@ -724,7 +725,7 @@ const UIContentManagement = () => {
                         value={formData.buttonLink}
                         onChange={(e) => setFormData({ ...formData, buttonLink: e.target.value })}
                         className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
-                        style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                        style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                       />
                     </div>
                   </>
@@ -737,7 +738,7 @@ const UIContentManagement = () => {
                 type="submit"
                 className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300"
                 disabled={uploading}
-                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
               >
                 <Save size={16} className="inline mr-2" /> Save Section
               </button>
@@ -746,7 +747,7 @@ const UIContentManagement = () => {
                 onClick={resetForm}
                 className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-3 rounded-xl font-semibold transition-all duration-300"
                 disabled={uploading}
-                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
               >
                 Cancel
               </button>
@@ -755,7 +756,7 @@ const UIContentManagement = () => {
                   type="button"
                   onClick={() => handleDeleteSection(selectedSection, selectedSection.charAt(0).toUpperCase() + selectedSection.slice(1) + ' Section')}
                   className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300"
-                  style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                  style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                 >
                   <Trash2 size={16} className="inline mr-2" /> Delete Section
                 </button>
@@ -765,7 +766,7 @@ const UIContentManagement = () => {
         </div>
 
         <div className="mb-12">
-          <h2 className="text-2xl font-semibold mb-6 text-[#074a5b]" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+          <h2 className="text-2xl font-semibold mb-6 text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
             Sections Overview
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -789,10 +790,10 @@ const UIContentManagement = () => {
                   </div>
                 )}
                 <div className="p-6">
-                  <h3 className="text-xl font-bold mb-2 text-[#074a5b] hover:text-blue-600 transition-colors" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                  <h3 className="text-xl font-bold mb-2 text-[#074a5b] hover:text-blue-600 transition-colors" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                     {section.content.title || section.sectionId.charAt(0).toUpperCase() + section.sectionId.slice(1)}
                   </h3>
-                  <p className="text-gray-600 mb-3 flex items-center" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                  <p className="text-gray-600 mb-3 flex items-center" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                     <MapPin size={16} className="mr-2 text-[#074a5b]" />
                     {section.type === 'hero' ? `${section.content.slides?.length || 0} Slides` : section.type === 'googleReviews' ? `${section.content.reviews?.length || 0} Reviews` : 'Text Section'}
                   </p>
@@ -801,7 +802,7 @@ const UIContentManagement = () => {
                       type="button"
                       onClick={() => handleSectionChange(section.sectionId)}
                       className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-xl font-semibold transition-all"
-                      style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                      style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                     >
                       Edit
                     </button>
@@ -809,7 +810,7 @@ const UIContentManagement = () => {
                       type="button"
                       onClick={() => handleDeleteSection(section.sectionId, section.content.title || section.sectionId)}
                       className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl font-semibold transition-all"
-                      style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                      style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                     >
                       Delete
                     </button>
