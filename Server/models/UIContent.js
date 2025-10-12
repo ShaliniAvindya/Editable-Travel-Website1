@@ -5,7 +5,7 @@ const reviewSchema = new mongoose.Schema({
   text: { type: String, required: true },
   date: { type: String, required: true },
   avatar: { type: String, required: true },
-}); 
+});
 
 const sectionSchema = new mongoose.Schema({
   sectionId: { type: String, required: true },
@@ -24,28 +24,26 @@ const sectionSchema = new mongoose.Schema({
       buttonLink: { type: String },
     }],
     reviews: [reviewSchema],
-    phone: { type: String },
-    phoneLabel: { type: String },
+    callPhone: { type: String },
+    whatsappPhone: { type: String },
+  callPhoneLabel: { type: String },
+  whatsappPhoneLabel: { type: String },
     email: { type: String },
     emailLabel: { type: String },
     address: { type: String },
     addressLabel: { type: String },
-  facebook: { type: String },
-  instagram: { type: String },
-  twitter: { type: String },
-  youtube: { type: String }, 
-  tiktok: { type: String }, 
-  youtube: { type: String },
-  tiktok: { type: String },
+    facebook: { type: String },
+    instagram: { type: String },
+    twitter: { type: String },
+    youtube: { type: String },
+    tiktok: { type: String },
   },
 });
 
 const uiContentSchema = new mongoose.Schema({
   pageId: { type: String, required: true, unique: true },
   sections: [sectionSchema],
-    maintenanceMode: { type: Boolean, default: false },
+  maintenanceMode: { type: Boolean, default: false },
 }, { timestamps: true });
 
 module.exports = mongoose.model('UIContent', uiContentSchema);
-
-
