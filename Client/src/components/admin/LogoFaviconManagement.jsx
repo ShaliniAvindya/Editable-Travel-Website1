@@ -3,6 +3,7 @@ import axios from 'axios';
 import { X, Save, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import { API_BASE_URL } from '../apiConfig';
 
 const imgbbAxios = axios.create();
 
@@ -11,22 +12,22 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md">
-        <h3 className="text-lg font-semibold text-[#074a5b] mb-4" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+        <h3 className="text-lg font-semibold text-[#074a5b] mb-4" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
           {title}
         </h3>
-        <p className="text-gray-600 mb-6" style={{ fontFamily: 'Comic Sans MS, cursive' }}>{message}</p>
+        <p className="text-gray-600 mb-6" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>{message}</p>
         <div className="flex justify-end gap-4">
           <button
             onClick={onClose}
             className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-xl font-semibold transition-all"
-            style={{ fontFamily: 'Comic Sans MS, cursive' }}
+            style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
             className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl font-semibold transition-all"
-            style={{ fontFamily: 'Comic Sans MS, cursive' }}
+            style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
           >
             Delete
           </button>
@@ -78,7 +79,7 @@ const LogoFaviconManagement = () => {
     const fetchImages = async () => {
       try {
         setLoading(true);
-        const response = await api.get('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/logo-favicon');
+        const response = await api.get(`${API_BASE_URL}/ui-content/logo-favicon`);
         console.log('API Response:', response.data);
         setPageContent(response.data);
         const section = response.data?.sections?.find((s) => s.sectionId === selectedType);
@@ -161,7 +162,7 @@ const LogoFaviconManagement = () => {
         newSections.push(newSection);
       }
 
-      const response = await api.put('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/logo-favicon', { sections: newSections });
+      const response = await api.put(`${API_BASE_URL}/ui-content/logo-favicon`, { sections: newSections });
       console.log('Section saved:', response.data);
       setPageContent(response.data);
       setSuccess(`${selectedType === 'logo' ? 'Logo' : 'Favicon'} updated successfully`);
@@ -187,7 +188,7 @@ const LogoFaviconManagement = () => {
           content: { imageUrl: '' },
         });
       }
-      const response = await api.put('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/logo-favicon', { sections: newSections });
+      const response = await api.put(`${API_BASE_URL}/ui-content/logo-favicon`, { sections: newSections });
       setPageContent(response.data);
       setFormData({ imageUrl: '' });
       setSuccess(`${modal.id === 'logo' ? 'Logo' : 'Favicon'} removed successfully`);
@@ -214,7 +215,7 @@ const LogoFaviconManagement = () => {
           content: { imageUrl: '' },
         },
       ];
-      const response = await api.put('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/logo-favicon', { sections: defaultSections });
+      const response = await api.put(`${API_BASE_URL}/ui-content/logo-favicon`, { sections: defaultSections });
       console.log('Default sections initialized:', response.data);
       setPageContent(response.data);
       setSelectedType('logo');
@@ -231,7 +232,7 @@ const LogoFaviconManagement = () => {
   if (loading || !user?.isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <p className="text-xl text-[#074a5b]" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+        <p className="text-xl text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
           Loading content...
         </p>
       </div>
@@ -239,7 +240,7 @@ const LogoFaviconManagement = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+    <div className="min-h-screen bg-white" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
       <ConfirmationModal
         isOpen={modal.isOpen}
         onClose={() => setModal({ isOpen: false, type: '', id: null, name: '' })}
@@ -248,34 +249,34 @@ const LogoFaviconManagement = () => {
         message={`Are you sure you want to delete ${modal.name}? This action cannot be undone.`}
       />
       <div className="container mx-auto p-6">
-        <h1 className="text-4xl font-bold text-[#074a5b] mb-8" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+        <h1 className="text-4xl font-bold text-[#074a5b] mb-8" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
           Logo & Favicon Management
         </h1>
 
         {error && (
-          <div className="bg-red-100 text-red-700 p-4 mb-6 rounded-xl" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+          <div className="bg-red-100 text-red-700 p-4 mb-6 rounded-xl" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
             {error}
           </div>
         )}
         {success && (
-          <div className="bg-green-100 text-green-700 p-4 mb-6 rounded-xl" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+          <div className="bg-green-100 text-green-700 p-4 mb-6 rounded-xl" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
             {success}
           </div>
         )}
 
         <div className="mb-12 p-6 bg-white rounded-2xl shadow-lg">
-          <h2 className="text-2xl font-semibold mb-6 text-[#074a5b]" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+          <h2 className="text-2xl font-semibold mb-6 text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
             Manage {selectedType === 'logo' ? 'Logo' : 'Favicon'}
           </h2>
           {pageContent?.sections?.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-lg text-[#074a5b] mb-4" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+              <p className="text-lg text-[#074a5b] mb-4" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                 No sections found. Initialize default sections.
               </p>
               <button
                 onClick={handleInitializeDefault}
                 className="bg-[#1e809b] hover:bg-[#074a5b] text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300"
-                style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
               >
                 Initialize Default Sections
               </button>
@@ -283,7 +284,7 @@ const LogoFaviconManagement = () => {
           ) : (
             <form onSubmit={handleSave} className="grid grid-cols-1 gap-6">
               <div>
-                <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                   Select Type
                 </label>
                 <select
@@ -294,7 +295,7 @@ const LogoFaviconManagement = () => {
                     setFormData({ imageUrl: section?.content?.imageUrl || '' });
                   }}
                   className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[#1e809b] outline-none h-12 w-full md:w-1/3"
-                  style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                  style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                 >
                   {types.map((type) => (
                     <option key={type.id} value={type.id}>
@@ -304,7 +305,7 @@ const LogoFaviconManagement = () => {
                 </select>
               </div>
               <div>
-                <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                   {selectedType === 'logo' ? 'Logo Image' : 'Favicon Image'}
                 </label>
                 <div className="flex items-center">
@@ -314,10 +315,10 @@ const LogoFaviconManagement = () => {
                     onChange={handleImageUpload}
                     className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[#1e809b] outline-none h-12"
                     disabled={uploading}
-                    style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                    style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                   />
                   {uploading && (
-                    <span className="ml-2 text-gray-600" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+                    <span className="ml-2 text-gray-600" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                       Uploading...
                     </span>
                   )}
@@ -346,7 +347,7 @@ const LogoFaviconManagement = () => {
                   type="submit"
                   className="bg-[#1e809b] hover:bg-[#074a5b] text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300"
                   disabled={uploading}
-                  style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                  style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                 >
                   <Save size={16} className="inline mr-2" /> Save {selectedType === 'logo' ? 'Logo' : 'Favicon'}
                 </button>
@@ -355,7 +356,7 @@ const LogoFaviconManagement = () => {
                     type="button"
                     onClick={handleRemoveImage}
                     className="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300"
-                    style={{ fontFamily: 'Comic Sans MS, cursive' }}
+                    style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                   >
                     <Trash2 size={16} className="inline mr-2" /> Delete {selectedType === 'logo' ? 'Logo' : 'Favicon'}
                   </button>
