@@ -8,6 +8,10 @@ const auth = require('../middleware/auth');
 // @access  Protected
 router.post('/', auth, async (req, res) => {
   try {
+    const allowed = ['Accommodation', 'Adventure', 'Activity'];
+    if (req.body.inquiry_form_type && !allowed.includes(req.body.inquiry_form_type)) {
+      return res.status(400).json({ msg: 'Invalid inquiry_form_type' });
+    }
     const pkg = new Package(req.body);
     await pkg.save();
     res.status(201).json(pkg);
@@ -83,6 +87,10 @@ router.get('/:id', async (req, res) => {
 // @access  Protected
 router.put('/:id', auth, async (req, res) => {
   try {
+    const allowed = ['Accommodation', 'Adventure', 'Activity'];
+    if (req.body.inquiry_form_type && !allowed.includes(req.body.inquiry_form_type)) {
+      return res.status(400).json({ msg: 'Invalid inquiry_form_type' });
+    }
     const pkg = await Package.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!pkg) return res.status(404).json({ error: 'Package not found' });
     res.json(pkg);
