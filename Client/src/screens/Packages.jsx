@@ -2,8 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, Calendar, MapPin, Clock, Phone } from 'lucide-react';
 import axios from 'axios';
 import InquiryFormModal from './InquiryFormModal';
-
-const API_URL = 'https://editable-travel-website1-rpfv.vercel.app';
+import { API_BASE_URL } from '../components/apiConfig';
 
 const Packages = () => {
   const [selectedPackage, setSelectedPackage] = useState(null);
@@ -46,11 +45,11 @@ const Packages = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const uiContentResponse = await axios.get(`${API_URL}/api/ui-content/packages`);
+        const uiContentResponse = await axios.get(`${API_BASE_URL}/ui-content/packages`);
         setUiContent(uiContentResponse.data);
 
         // Fetch packages
-        const packagesResponse = await axios.get(`${API_URL}/api/packages`);
+        const packagesResponse = await axios.get(`${API_BASE_URL}/packages`);
         const mappedPackages = packagesResponse.data.map((pkg) => ({
           _id: pkg._id,
           title: pkg.title,
@@ -65,6 +64,8 @@ const Packages = () => {
           expiryDate: pkg.expiry_date,
           offerNumber: pkg.offer_number || `${pkg.title.slice(0, 3).toUpperCase()}2025`,
           resort: pkg.resort || '',
+          inquiry_form_type: pkg.inquiry_form_type || null,
+          type: pkg.inquiry_form_type || null,
         }));
         setPackages(mappedPackages);
         const initialIndices = {};
@@ -107,6 +108,11 @@ const Packages = () => {
         console.warn('No package selected, cannot open inquiry form');
         return;
       }
+      const allowed = ['Accommodation', 'Adventure', 'Activity'];
+      if (!packageItem.type || !allowed.includes(packageItem.type)) {
+        console.warn('Package does not have a valid inquiry_form_type, cannot open inquiry modal', packageItem);
+        return;
+      }
       console.log('Opening inquiry form with buttonType:', type, 'package:', packageItem);
       setSelectedPackage(packageItem);
       setButtonType(type);
@@ -118,7 +124,7 @@ const Packages = () => {
 
   const handleSubmitInquiry = async (formData) => {
     try {
-      const response = await axios.post(`${API_URL}/api/inquiries`, {
+      const response = await axios.post(`${API_BASE_URL}/inquiries`, {
         ...formData,
         buttonType,
       });
@@ -457,7 +463,11 @@ const Packages = () => {
           setSelectedPackage(null);
           setButtonType(null);
         }}
-        item={selectedPackage}
+        item={{ ...selectedPackage, type: selectedPackage?.inquiry_form_type || '' }}
+        // Pass resortName from package if available
+        resortName={selectedPackage?.resort || selectedPackage?.resortName || ''}
+        isPackage={!!selectedPackage?._id}
+        packageInquiryFormType={selectedPackage?.inquiry_form_type || ''}
         onSubmit={handleSubmitInquiry}
         language={language}
         buttonType={buttonType}
