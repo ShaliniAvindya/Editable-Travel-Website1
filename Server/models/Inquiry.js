@@ -24,27 +24,55 @@ const InquirySchema = new mongoose.Schema({
   },
   entityType: {
     type: String,
-    enum: ['Package', 'Activity', 'Custom', 'Accommodation', 'Contact'],
+    enum: ['Package', 'Activity', 'Accommodation', 'Contact', 'Adventure'],
     required: true,
+  },
+  inquiry_form_type: {
+    type: String,
+    enum: ['Accommodation', 'Adventure', 'Activity'],
   },
   from_date: Date,
   to_date: Date,
   adults: {
     type: Number,
-    default: 1,
-    min: 1,
+    min: 0,
   },
   children: {
     type: Number,
-    default: 0,
     min: 0,
   },
   infants: {
     type: Number,
-    default: 0,
     min: 0,
   },
   travellers: Number,
+  number_of_rooms: {
+    type: Number,
+    min: 0,
+  },
+  // For hotel/resort activity
+  selectedActivities: [{ type: String }],
+  // Adventure specific fields
+  preferredMonth: String,
+  preferredYear: Number,
+  adventureOption: String,
+  participants: [
+    {
+      name: String,
+      gender: String,
+      diverStatus: String,
+      ageCategory: String,
+    },
+  ],
+  bookWholeBoat: {
+    type: Boolean,
+    default: false,
+  },
+  diverse_adults: { type: Number, min: 0 },
+  diverse_children: { type: Number, min: 0 },
+  nondiverse_adults: { type: Number, min: 0 },
+  nondiverse_children: { type: Number, min: 0 },
+  nondiverse_infants: { type: Number, min: 0 },
   country: String,
   buttonType: {
     type: String,
