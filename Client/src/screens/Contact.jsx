@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Phone, Mail, MapPin, Facebook, Instagram, Youtube, Music2 } from 'lucide-react';
 import axios from 'axios';
+import { API_BASE_URL } from '../components/apiConfig';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -44,7 +45,7 @@ const Contact = () => {
   useEffect(() => {
     const fetchContent = async () => {
       try {
-        const response = await axios.get('/api/ui-content/contact');
+        const response = await axios.get(`${API_BASE_URL}/ui-content/contact`);
         const sections = response.data.sections || [];
         const heroSection = sections.find((s) => s.sectionId === 'hero')?.content || {};
         const contactInfoSection = sections.find((s) => s.sectionId === 'contact-info')?.content || {};
@@ -102,7 +103,7 @@ const Contact = () => {
         throw new Error('Please fill in all fields.');
       }
 
-      const response = await axios.post('/api/inquiries/contact', {
+      const response = await axios.post(`${API_BASE_URL}/inquiries/contact`, {
         name: formData.name,
         email: formData.email,
         message: formData.message,
@@ -133,7 +134,7 @@ const Contact = () => {
     setNewsletterMessage('');
 
     try {
-      const resp = await axios.post('/api/newsletter/subscribe', { email });
+      const resp = await axios.post(`${API_BASE_URL}/newsletter/subscribe`, { email });
       const data = resp.data || {};
       const status = data.status || data.subscriber?.status;
 
@@ -188,7 +189,7 @@ const Contact = () => {
     setNewsletterMessage('');
 
     try {
-      const resp = await axios.post('/api/newsletter/unsubscribe', { email });
+      const resp = await axios.post(`${API_BASE_URL}/newsletter/unsubscribe`, { email });
       const data = resp.data || {};
       const status = data.status || data.subscriber?.status;
 
