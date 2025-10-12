@@ -5,6 +5,8 @@ const Inquiry = require('../models/Inquiry');
 const Package = require('../models/Package');
 const Activity = require('../models/Activity');
 const Resort = require('../models/Resort');
+const Newsletter = require('../models/Newsletter');
+const List = require('../models/List');
 const nodemailer = require('nodemailer');
 const twilio = require('twilio');
 require('dotenv').config();
@@ -20,27 +22,77 @@ const transporter = nodemailer.createTransport({
 
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
+async function sendMailSafe(mailOptions) {
+  if (!process.env.SMTP_HOST || !process.env.SMTP_USER) {
+    console.warn('SMTP not configured - skipping email send to', mailOptions && mailOptions.to);
+    return null;
+  }
+  try {
+    return await transporter.sendMail(mailOptions);
+  } catch (err) {
+    console.error('Failed to send email:', err);
+    return null;
+  }
+}
+
+async function sendWhatsAppSafe(body) {
+  if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_WHATSAPP_NUMBER || !process.env.ADMIN_WHATSAPP_NUMBER) {
+    console.warn('Twilio/WhatsApp not configured - skipping WhatsApp message');
+    return null;
+  }
+  try {
+    return await twilioClient.messages.create({
+      body,
+      from: `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER}`,
+      to: `whatsapp:${process.env.ADMIN_WHATSAPP_NUMBER}`,
+    });
+  } catch (err) {
+    console.error('Failed to send WhatsApp message:', err);
+    return null;
+  }
+}
+
+// Helpers to conditionally include fields only when they have meaningful values
+function isFilled(value) {
+  if (value === undefined || value === null) return false;
+  if (typeof value === 'string') return value.trim() !== '';
+  if (Array.isArray(value)) return value.length > 0;
+  return true; 
+}
+
+function plainIf(label, value) {
+  if (!isFilled(value)) return '';
+  if (Array.isArray(value)) return `${label}: ${value.join(', ')}\n`;
+  return `${label}: ${value}\n`;
+}
+
+function htmlRowIf(label, value) {
+  if (!isFilled(value)) return '';
+  const display = Array.isArray(value) ? value.join(', ') : value;
+  return `<tr><td><strong>${label}:</strong></td><td>${display}</td></tr>`;
+}
+
 // Function to generate admin email template
 const generateAdminEmailTemplate = (data) => {
-  const { entityType, entityTitle, resortName, roomName, name, email, phone_number, message, entity, from_date, to_date, adults, children, infants, country, buttonType, submitted_at } = data;
+  const { entityType, entityTitle, resortName, roomName, name, email, phone_number, message, entity, from_date, to_date, adults, children, infants, country, buttonType, submitted_at, travellers, number_of_rooms, selectedActivities, preferredMonth, preferredYear, adventureOption, participants, bookWholeBoat, diverse_adults, diverse_children, nondiverse_adults, nondiverse_children, nondiverse_infants } = data;
   
   const plainText = `
-New Inquiry for ${entityType}: ${entityTitle}
-${entityType === 'Accommodation' ? `Resort: ${resortName}\nRoom: ${roomName}` : ''}
-Name: ${name}
-Email: ${email}
-Phone: ${phone_number || 'N/A'}
-Message: ${message || 'N/A'}
-${entityType} ID: ${entity.$oid}
-From Date: ${from_date ? new Date(from_date).toLocaleDateString() : 'N/A'}
-To Date: ${to_date ? new Date(to_date).toLocaleDateString() : 'N/A'}
-Adults (12+): ${adults ?? 'N/A'}
-Children (2-11): ${children ?? 'N/A'}
-Infants (below 2): ${infants ?? 'N/A'}
-Country: ${country || 'N/A'}
-Inquiry Type: ${buttonType === 'bookNow' ? 'Email' : 'WhatsApp'}
-Submitted At: ${submitted_at.toISOString()}
-  `;
+    New Inquiry: ${entityTitle}
+    ${entityType === 'Accommodation' ? `Resort: ${resortName}\n${isFilled(roomName) ? `Room: ${roomName}` : ''}` : ''}
+    Name: ${name}
+    Email: ${email}
+    Phone: ${phone_number}
+    Message: ${message}
+    Entity ID: ${entity.$oid}
+    From Date: ${from_date}
+    To Date: ${to_date }
+    Adults (12+): ${adults}
+    Children (2-11): ${children }
+    Infants (below 2): ${infants}
+    Country: ${country}
+    Inquiry Type: ${buttonType === 'bookNow' ? 'Email' : 'WhatsApp'}
+    Submitted At: ${submitted_at.toISOString()}
+      `;
 
   const html = `
     <!DOCTYPE html>
@@ -48,7 +100,7 @@ Submitted At: ${submitted_at.toISOString()}
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>New Inquiry - ${entityType}</title>
+  <title>New Inquiry</title>
     </head>
     <body style="margin: 0; padding: 0; font-family: Helvetica, Arial, sans-serif; background-color: #f4f4f4;">
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 20px auto; background-color: #ffffff; border: 1px solid #e0e0e0;">
@@ -66,10 +118,10 @@ Submitted At: ${submitted_at.toISOString()}
               <!-- Inquiry Highlight -->
               <tr>
                 <td style="background-color: #1e809b; color: #ffffff; padding: 15px; text-align: center;">
-                  <h2 style="margin: 0; font-size: 18px; font-weight: bold;">${entityType}: ${entityTitle}</h2>
+                  <h2 style="margin: 0; font-size: 18px; font-weight: bold;">${entityTitle}</h2>
                   ${entityType === 'Accommodation' ? `
                     <p style="margin: 5px 0; font-size: 14px;"><strong>Resort:</strong> ${resortName}</p>
-                    <p style="margin: 5px 0; font-size: 14px;"><strong>Room:</strong> ${roomName}</p>
+                    ${isFilled(roomName) ? `<p style="margin: 5px 0; font-size: 14px;"><strong>Room:</strong> ${roomName}</p>` : ''}
                   ` : ''}
                 </td>
               </tr>
@@ -80,10 +132,11 @@ Submitted At: ${submitted_at.toISOString()}
                 <td>
                   <h3 style="color: #074a5b; font-size: 16px; margin: 0 0 10px;">Customer Details</h3>
                   <table width="100%" cellpadding="5" style="font-size: 14px; color: #333333;">
-                    <tr><td><strong>Name:</strong></td><td>${name}</td></tr>
-                    <tr><td><strong>Email:</strong></td><td><a href="mailto:${email}" style="color: #1e809b; text-decoration: none;">${email}</a></td></tr>
-                    <tr><td><strong>Phone:</strong></td><td>${phone_number || 'N/A'}</td></tr>
-                    <tr><td><strong>Country:</strong></td><td>${country || 'N/A'}</td></tr>
+                    ${htmlRowIf('Name', name)}
+                    ${isFilled(email) ? `<tr><td><strong>Email:</strong></td><td><a href="mailto:${email}" style="color: #1e809b; text-decoration: none;">${email}</a></td></tr>` : ''}
+                    ${htmlRowIf('Phone', phone_number)}
+                    ${htmlRowIf('Country', country)}
+                    ${htmlRowIf('Travellers', travellers)}
                   </table>
                 </td>
               </tr>
@@ -93,12 +146,24 @@ Submitted At: ${submitted_at.toISOString()}
               <tr>
                 <td>
                   <h3 style="color: #074a5b; font-size: 16px; margin: 0 0 10px;">Travel Details</h3>
-                  <table width="100%" cellpadding="5" style="font-size: 14px; color: #333333;">
-                    <tr><td><strong>From Date:</strong></td><td>${from_date ? new Date(from_date).toLocaleDateString() : 'N/A'}</td></tr>
-                    <tr><td><strong>To Date:</strong></td><td>${to_date ? new Date(to_date).toLocaleDateString() : 'N/A'}</td></tr>
-                    <tr><td><strong>Adults (12+):</strong></td><td>${adults ?? 'N/A'}</td></tr>
-                    <tr><td><strong>Children (2-11):</strong></td><td>${children ?? 'N/A'}</td></tr>
-                    <tr><td><strong>Infants (below 2):</strong></td><td>${infants ?? 'N/A'}</td></tr>
+                    <table width="100%" cellpadding="5" style="font-size: 14px; color: #333333;">
+                      ${isFilled(from_date) ? `<tr><td><strong>From Date:</strong></td><td>${new Date(from_date).toLocaleDateString()}</td></tr>` : ''}
+                    ${isFilled(to_date) ? `<tr><td><strong>To Date:</strong></td><td>${new Date(to_date).toLocaleDateString()}</td></tr>` : ''}
+                    ${htmlRowIf('Adults (12+)', adults)}
+                    ${htmlRowIf('Children (2-11)', children)}
+                    ${htmlRowIf('Infants (below 2)', infants)}
+                    ${htmlRowIf('Travellers', travellers)}
+                    ${htmlRowIf('Number of rooms', number_of_rooms)}
+                    ${isFilled(selectedActivities) ? htmlRowIf('Selected Activities', Array.isArray(selectedActivities) ? selectedActivities : [selectedActivities]) : ''}
+                    ${(isFilled(preferredMonth) || isFilled(preferredYear)) ? htmlRowIf('Preferred Month/Year', `${preferredMonth || ''} ${preferredYear || ''}`) : ''}
+                    ${htmlRowIf('Adventure Option', adventureOption)}
+                    ${bookWholeBoat ? htmlRowIf('Book Whole Boat', 'Yes') : ''}
+                    ${isFilled(participants) ? htmlRowIf('Participants', participants.map(p => p.name || '')) : ''}
+                    ${htmlRowIf('Diverse Adults', diverse_adults)}
+                    ${htmlRowIf('Diverse Children', diverse_children)}
+                    ${htmlRowIf('Non-diverse Adults', nondiverse_adults)}
+                    ${htmlRowIf('Non-diverse Children', nondiverse_children)}
+                    ${htmlRowIf('Non-diverse Infants', nondiverse_infants)}
                   </table>
                 </td>
               </tr>
@@ -146,32 +211,35 @@ Submitted At: ${submitted_at.toISOString()}
 
 // Function to generate user confirmation email template
 const generateUserConfirmationTemplate = (data) => {
-  const { entityType, entityTitle, resortName, roomName, name, email, phone_number, message, entity, from_date, to_date, adults, children, infants, country, submitted_at } = data;
-  
-  const plainText = `
-Dear ${name},
+  const { entityType, entityTitle, resortName, roomName, name, email, phone_number, message, entity, from_date, to_date, adults, children, infants, country, submitted_at, travellers, number_of_rooms, selectedActivities, preferredMonth, preferredYear, adventureOption, participants, bookWholeBoat, diverse_adults, diverse_children, nondiverse_adults, nondiverse_children, nondiverse_infants } = data;
+  let plainText = `Dear ${name},\n\nWe have received your booking details for ${entityTitle}\n\n`;
+  if (entityType === 'Accommodation') plainText += `Resort: ${resortName}\n${isFilled(roomName) ? `Room: ${roomName}\n` : ''}`;
+    plainText += plainIf('Name', name);
+    plainText += plainIf('Email', email);
+    plainText += plainIf('Phone', phone_number);
+    plainText += plainIf('Message', message);
+  plainText += plainIf('Entity ID', entity.$oid);
+    plainText += isFilled(from_date) ? plainIf('From Date', new Date(from_date).toLocaleDateString()) : '';
+    plainText += isFilled(to_date) ? plainIf('To Date', new Date(to_date).toLocaleDateString()) : '';
+    plainText += plainIf('Adults (12+)', adults);
+    plainText += plainIf('Children (2-11)', children);
+    plainText += plainIf('Infants (below 2)', infants);
+    plainText += plainIf('Travellers', travellers);
+    plainText += plainIf('Number of rooms', number_of_rooms);
+    plainText += isFilled(selectedActivities) ? plainIf('Selected Activities', Array.isArray(selectedActivities) ? selectedActivities.join(', ') : selectedActivities) : '';
+    if (isFilled(preferredMonth) || isFilled(preferredYear)) plainText += plainIf('Preferred Month/Year', `${preferredMonth || ''} ${preferredYear || ''}`);
+    plainText += plainIf('Adventure Option', adventureOption);
+    if (bookWholeBoat) plainText += plainIf('Book whole boat', 'Yes');
+    plainText += isFilled(participants) ? plainIf('Participants', participants.map(p=>p.name||'').join(', ')) : '';
+    plainText += plainIf('Diverse Adults', diverse_adults);
+    plainText += plainIf('Diverse Children', diverse_children);
+    plainText += plainIf('Non-diverse Adults', nondiverse_adults);
+    plainText += plainIf('Non-diverse Children', nondiverse_children);
+    plainText += plainIf('Non-diverse Infants', nondiverse_infants);
+    plainText += plainIf('Country', country);
+    plainText += plainIf('Submitted At', submitted_at ? submitted_at.toISOString() : '');
 
-We have received your booking details for ${entityType}: ${entityTitle}
-
-${entityType === 'Accommodation' ? `Resort: ${resortName}\nRoom: ${roomName}` : ''}
-Name: ${name}
-Email: ${email}
-Phone: ${phone_number || 'N/A'}
-Message: ${message || 'N/A'}
-${entityType} ID: ${entity.$oid}
-From Date: ${from_date ? new Date(from_date).toLocaleDateString() : 'N/A'}
-To Date: ${to_date ? new Date(to_date).toLocaleDateString() : 'N/A'}
-Adults (12+): ${adults ?? 'N/A'}
-Children (2-11): ${children ?? 'N/A'}
-Infants (below 2): ${infants ?? 'N/A'}
-Country: ${country || 'N/A'}
-Submitted At: ${submitted_at.toISOString()}
-
-We will get back to you as soon as possible.
-
-Best regards,
-Traveliccted Team
-  `;
+    plainText += `\nWe will get back to you as soon as possible.\n\nBest regards,\nTraveliccted Team\n`;
 
   const html = `
     <!DOCTYPE html>
@@ -179,7 +247,7 @@ Traveliccted Team
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Booking Confirmation - ${entityType}</title>
+  <title>Booking Confirmation</title>
     </head>
     <body style="margin: 0; padding: 0; font-family: Helvetica, Arial, sans-serif; background-color: #f4f4f4;">
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 20px auto; background-color: #ffffff; border: 1px solid #e0e0e0;">
@@ -217,10 +285,9 @@ Traveliccted Team
                 <td style="background-color: #1e809b; color: #ffffff; padding: 15px;">
                   <h3 style="font-size: 16px; margin: 0 0 10px; font-weight: bold;">Booking Details: ${entityTitle}</h3>
                   <table width="100%" cellpadding="5" style="font-size: 14px;">
-                    <tr><td><strong>Type:</strong></td><td>${entityType}</td></tr>
                     ${entityType === 'Accommodation' ? `
                       <tr><td><strong>Resort:</strong></td><td>${resortName}</td></tr>
-                      <tr><td><strong>Room:</strong></td><td>${roomName}</td></tr>
+                      ${isFilled(roomName) ? `<tr><td><strong>Room:</strong></td><td>${roomName}</td></tr>` : ''}
                     ` : ''}
                   </table>
                 </td>
@@ -232,10 +299,10 @@ Traveliccted Team
                 <td>
                   <h3 style="color: #074a5b; font-size: 16px; margin: 0 0 10px;">Your Information</h3>
                   <table width="100%" cellpadding="5" style="font-size: 14px; color: #333333;">
-                    <tr><td><strong>Name:</strong></td><td>${name}</td></tr>
-                    <tr><td><strong>Email:</strong></td><td>${email}</td></tr>
-                    <tr><td><strong>Phone:</strong></td><td>${phone_number || 'N/A'}</td></tr>
-                    <tr><td><strong>Country:</strong></td><td>${country || 'N/A'}</td></tr>
+                    ${htmlRowIf('Name', name)}
+                    ${isFilled(email) ? `<tr><td><strong>Email:</strong></td><td>${email}</td></tr>` : ''}
+                    ${htmlRowIf('Phone', phone_number)}
+                    ${htmlRowIf('Country', country)}
                   </table>
                 </td>
               </tr>
@@ -246,11 +313,11 @@ Traveliccted Team
                 <td>
                   <h3 style="color: #074a5b; font-size: 16px; margin: 0 0 10px;">Travel Details</h3>
                   <table width="100%" cellpadding="5" style="font-size: 14px; color: #333333;">
-                    <tr><td><strong>From Date:</strong></td><td>${from_date ? new Date(from_date).toLocaleDateString() : 'N/A'}</td></tr>
-                    <tr><td><strong>To Date:</strong></td><td>${to_date ? new Date(to_date).toLocaleDateString() : 'N/A'}</td></tr>
-                    <tr><td><strong>Adults (12+):</strong></td><td>${adults ?? 'N/A'}</td></tr>
-                    <tr><td><strong>Children (2-11):</strong></td><td>${children ?? 'N/A'}</td></tr>
-                    <tr><td><strong>Infants (below 2):</strong></td><td>${infants ?? 'N/A'}</td></tr>
+                    ${isFilled(from_date) ? `<tr><td><strong>From Date:</strong></td><td>${new Date(from_date).toLocaleDateString()}</td></tr>` : ''}
+                    ${isFilled(to_date) ? `<tr><td><strong>To Date:</strong></td><td>${new Date(to_date).toLocaleDateString()}</td></tr>` : ''}
+                    ${htmlRowIf('Adults (12+)', adults)}
+                    ${htmlRowIf('Children (2-11)', children)}
+                    ${htmlRowIf('Infants (below 2)', infants)}
                   </table>
                 </td>
               </tr>
@@ -309,19 +376,19 @@ const generateContactConfirmationTemplate = (data) => {
   const { name, email, message, submitted_at } = data;
   
   const plainText = `
-Dear ${name},
+    Dear ${name},
 
-We have received your inquiry.
+    We have received your inquiry.
 
-Name: ${name}
-Email: ${email}
-Message: ${message}
-Submitted At: ${submitted_at.toISOString()}
+    Name: ${name}
+    Email: ${email}
+    Message: ${message}
+    Submitted At: ${submitted_at.toISOString()}
 
-We will get back to you as soon as possible.
+    We will get back to you as soon as possible.
 
-Best regards,
-Traveliccted Team
+    Best regards,
+    Traveliccted Team
   `;
 
   const html = `
@@ -418,13 +485,13 @@ const generateAdminContactEmailTemplate = (data) => {
   const { name, email, message, submitted_at } = data;
   
   const plainText = `
-New Contact Inquiry
-Name: ${name}
-Email: ${email}
-Message: ${message}
-Inquiry Type: Email
-Submitted At: ${submitted_at.toISOString()}
-  `;
+    New Contact Inquiry
+    Name: ${name}
+    Email: ${email}
+    Message: ${message}
+    Inquiry Type: Email
+    Submitted At: ${submitted_at.toISOString()}
+      `;
 
   const html = `
     <!DOCTYPE html>
@@ -461,8 +528,8 @@ Submitted At: ${submitted_at.toISOString()}
                 <td>
                   <h3 style="color: #074a5b; font-size: 16px; margin: 0 0 10px;">Inquiry Details</h3>
                   <table width="100%" cellpadding="5" style="font-size: 14px; color: #333333;">
-                    <tr><td><strong>Name:</strong></td><td>${name}</td></tr>
-                    <tr><td><strong>Email:</strong></td><td><a href="mailto:${email}" style="color: #1e809b; text-decoration: none;">${email}</a></td></tr>
+                    ${htmlRowIf('Name', name)}
+                    ${isFilled(email) ? `<tr><td><strong>Email:</strong></td><td><a href="mailto:${email}" style="color: #1e809b; text-decoration: none;">${email}</a></td></tr>` : ''}
                   </table>
                 </td>
               </tr>
@@ -508,33 +575,37 @@ Submitted At: ${submitted_at.toISOString()}
 // Updated function to generate reply email template with inquiry details
 const generateReplyEmailTemplate = (data) => {
   const { name, email, subject, message, inquiry } = data;
-  
-  const plainText = `
-Dear ${name},
 
-Subject: ${subject}
-
-${message}
-
----
-
-Original Inquiry Details:
-${inquiry.entityType === 'Contact' ? '' : `Type: ${inquiry.entityType}\n`}
-${inquiry.entityType !== 'Contact' ? `Title: ${inquiry.title || 'N/A'}\n` : ''}
-${inquiry.entityType === 'Accommodation' ? `Resort: ${inquiry.resortName || 'N/A'}\nRoom: ${inquiry.roomName || 'N/A'}\n` : ''}
-Name: ${inquiry.name}
-Email: ${inquiry.email}
-${inquiry.entityType !== 'Contact' ? `Phone: ${inquiry.phone_number || 'N/A'}\nCountry: ${inquiry.country || 'N/A'}\n` : ''}
-${inquiry.entityType !== 'Contact' ? `Travellers: ${inquiry.travellers || 'N/A'}\n` : ''}
-${inquiry.entityType !== 'Contact' ? `Children Ages: ${inquiry.children?.length > 0 ? inquiry.children.join(', ') : 'None'}\n` : ''}
-${inquiry.entityType !== 'Contact' ? `From Date: ${inquiry.from_date ? new Date(inquiry.from_date).toLocaleDateString() : 'N/A'}\n` : ''}
-${inquiry.entityType !== 'Contact' ? `To Date: ${inquiry.to_date ? new Date(inquiry.to_date).toLocaleDateString() : 'N/A'}\n` : ''}
-Message: ${inquiry.message || 'N/A'}
-Submitted At: ${inquiry.submitted_at.toISOString()}
-
-Best regards,
-Traveliccted Team
-  `;
+  let plainText = `Dear ${name},\n\nSubject: ${subject}\n\n${message}\n\n---\n\nOriginal Inquiry Details:\n`;
+  // Type intentionally not displayed per request
+  if (isFilled(inquiry.title)) plainText += plainIf('Title', inquiry.title);
+  if (inquiry.entityType === 'Accommodation') {
+    if (isFilled(inquiry.resortName)) plainText += plainIf('Resort', inquiry.resortName);
+    if (isFilled(inquiry.roomName)) plainText += plainIf('Room', inquiry.roomName);
+  }
+  plainText += plainIf('Name', inquiry.name);
+  plainText += plainIf('Email', inquiry.email);
+  if (inquiry.entityType !== 'Contact') {
+    plainText += plainIf('Phone', inquiry.phone_number);
+    plainText += plainIf('Country', inquiry.country);
+    plainText += plainIf('Travellers', inquiry.travellers);
+    plainText += plainIf('Number of rooms', inquiry.number_of_rooms);
+    plainText += isFilled(inquiry.selectedActivities) ? plainIf('Selected Activities', Array.isArray(inquiry.selectedActivities) ? inquiry.selectedActivities.join(', ') : inquiry.selectedActivities) : '';
+    if (isFilled(inquiry.preferredMonth) || isFilled(inquiry.preferredYear)) plainText += plainIf('Preferred Month/Year', `${inquiry.preferredMonth || ''} ${inquiry.preferredYear || ''}`);
+    plainText += plainIf('Adventure Option', inquiry.adventureOption);
+    if (inquiry.bookWholeBoat) plainText += plainIf('Book whole boat', 'Yes');
+    plainText += isFilled(inquiry.participants) ? plainIf('Participants', inquiry.participants.map(p => p.name || '').join(', ')) : '';
+    plainText += plainIf('Diverse Adults', inquiry.diverse_adults);
+    plainText += plainIf('Diverse Children', inquiry.diverse_children);
+    plainText += plainIf('Non-diverse Adults', inquiry.nondiverse_adults);
+    plainText += plainIf('Non-diverse Children', inquiry.nondiverse_children);
+    plainText += isFilled(inquiry.children) ? plainIf('Children Ages', inquiry.children.join(', ')) : '';
+    plainText += isFilled(inquiry.from_date) ? plainIf('From Date', new Date(inquiry.from_date).toLocaleDateString()) : '';
+    plainText += isFilled(inquiry.to_date) ? plainIf('To Date', new Date(inquiry.to_date).toLocaleDateString()) : '';
+  }
+  plainText += plainIf('Message', inquiry.message);
+  plainText += plainIf('Submitted At', inquiry.submitted_at ? inquiry.submitted_at.toISOString() : '');
+  plainText += `\nBest regards,\nTraveliccted Team\n`;
 
   const html = `
     <!DOCTYPE html>
@@ -546,91 +617,44 @@ Traveliccted Team
     </head>
     <body style="margin: 0; padding: 0; font-family: Helvetica, Arial, sans-serif; background-color: #f4f4f4;">
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 20px auto; background-color: #ffffff; border: 1px solid #e0e0e0;">
-        <!-- Header -->
         <tr>
           <td style="background-color: #074a5b; color: #ffffff; padding: 20px; text-align: center;">
             <h1 style="margin: 0; font-size: 26px; font-weight: bold;">Traveliccted</h1>
-            <p style="margin: 5px 0; font-size: 14px; color: #a1d6e2;">Your Travel Dreams, Our Passion</p>
           </td>
         </tr>
-        <!-- Content -->
         <tr>
           <td style="padding: 20px;">
-            <table width="100%" cellpadding="0" cellspacing="0">
-              <!-- Greeting -->
-              <tr>
-                <td>
-                  <h2 style="color: #074a5b; font-size: 18px; margin: 0 0 10px;">Dear ${name},</h2>
-                  <p style="font-size: 14px; color: #333333; margin: 0;">Thank you for your inquiry. Here is our response:</p>
-                </td>
-              </tr>
-              <!-- Spacer -->
-              <tr><td style="height: 20px;"></td></tr>
-              <!-- Reply Details -->
-              <tr>
-                <td>
-                  <h3 style="color: #074a5b; font-size: 16px; margin: 0 0 10px;">Our Reply</h3>
-                  <table width="100%" cellpadding="5" style="font-size: 14px; color: #333333;">
-                    <tr><td><strong>Subject:</strong></td><td>${subject}</td></tr>
-                    <tr><td><strong>Message:</strong></td><td style="background-color: #f9f9f9; padding: 10px; border-left: 4px solid #1e809b;">${message}</td></tr>
-                  </table>
-                </td>
-              </tr>
-              <!-- Spacer -->
-              <tr><td style="height: 20px;"></td></tr>
-              <!-- Original Inquiry Details -->
-              <tr>
-                <td>
-                  <h3 style="color: #074a5b; font-size: 16px; margin: 0 0 10px;">Your Original Inquiry</h3>
-                  <table width="100%" cellpadding="5" style="font-size: 14px; color: #333333;">
-                    ${inquiry.entityType !== 'Contact' ? `
-                      <tr><td><strong>Type:</strong></td><td>${inquiry.entityType}</td></tr>
-                      <tr><td><strong>Title:</strong></td><td>${inquiry.title || 'N/A'}</td></tr>
-                    ` : ''}
-                    ${inquiry.entityType === 'Accommodation' ? `
-                      <tr><td><strong>Resort:</strong></td><td>${inquiry.resortName || 'N/A'}</td></tr>
-                      <tr><td><strong>Room:</strong></td><td>${inquiry.roomName || 'N/A'}</td></tr>
-                    ` : ''}
-                    <tr><td><strong>Name:</strong></td><td>${inquiry.name}</td></tr>
-                    <tr><td><strong>Email:</strong></td><td>${inquiry.email}</td></tr>
-                    ${inquiry.entityType !== 'Contact' ? `
-                      <tr><td><strong>Phone:</strong></td><td>${inquiry.phone_number || 'N/A'}</td></tr>
-                      <tr><td><strong>Country:</strong></td><td>${inquiry.country || 'N/A'}</td></tr>
-                      <tr><td><strong>Travellers:</strong></td><td>${inquiry.travellers || 'N/A'}</td></tr>
-                      <tr><td><strong>Children Ages:</strong></td><td>${inquiry.children?.length > 0 ? inquiry.children.join(', ') : 'None'}</td></tr>
-                      <tr><td><strong>From Date:</strong></td><td>${inquiry.from_date ? new Date(inquiry.from_date).toLocaleDateString() : 'N/A'}</td></tr>
-                      <tr><td><strong>To Date:</strong></td><td>${inquiry.to_date ? new Date(inquiry.to_date).toLocaleDateString() : 'N/A'}</td></tr>
-                    ` : ''}
-                    <tr><td><strong>Message:</strong></td><td style="background-color: #f9f9f9; padding: 10px; border-left: 4px solid #074a5b;">${inquiry.message || 'N/A'}</td></tr>
-                    <tr><td><strong>Submitted At:</strong></td><td>${inquiry.submitted_at.toISOString()}</td></tr>
-                  </table>
-                </td>
-              </tr>
-              <!-- Spacer -->
-              <tr><td style="height: 20px;"></td></tr>
-              <!-- Footer Note -->
-              <tr>
-                <td>
-                  <p style="font-size: 14px; color: #333333; margin: 0;">Best regards,<br>Traveliccted Team</p>
-                </td>
-              </tr>
-              <!-- Spacer -->
-              <tr><td style="height: 20px;"></td></tr>
-              <!-- Submission Time -->
-              <tr>
-                <td style="text-align: center;">
-                  <p style="font-size: 12px; color: #666666; margin: 0;"><strong>Replied At:</strong> ${new Date().toISOString()}</p>
-                </td>
-              </tr>
+            <h2 style="color: #074a5b; font-size: 18px; margin: 0 0 10px;">Dear ${name},</h2>
+            <p style="font-size: 14px; color: #333333; margin: 0 0 10px;">Subject: ${subject}</p>
+            <div style="margin: 10px 0 20px; padding: 10px; background-color: #f9f9f9; border-left: 4px solid #1e809b;">${message}</div>
+
+            <h3 style="color: #074a5b; font-size: 16px; margin: 0 0 10px;">Original Inquiry Details</h3>
+            <table width="100%" cellpadding="5" style="font-size: 14px; color: #333333;">
+              <!-- Type intentionally not displayed -->
+              ${htmlRowIf('Title', inquiry.title)}
+              ${inquiry.entityType === 'Accommodation' ? (isFilled(inquiry.resortName) ? htmlRowIf('Resort', inquiry.resortName) : '') : ''}
+              ${inquiry.entityType === 'Accommodation' ? (isFilled(inquiry.roomName) ? htmlRowIf('Room', inquiry.roomName) : '') : ''}
+              ${htmlRowIf('Name', inquiry.name)}
+              ${htmlRowIf('Email', inquiry.email)}
+              ${inquiry.entityType !== 'Contact' ? htmlRowIf('Phone', inquiry.phone_number) : ''}
+              ${inquiry.entityType !== 'Contact' ? htmlRowIf('Country', inquiry.country) : ''}
+              ${inquiry.entityType !== 'Contact' ? htmlRowIf('Travellers', inquiry.travellers) : ''}
+              ${inquiry.entityType !== 'Contact' ? htmlRowIf('Number of rooms', inquiry.number_of_rooms) : ''}
+              ${isFilled(inquiry.selectedActivities) ? htmlRowIf('Selected Activities', Array.isArray(inquiry.selectedActivities) ? inquiry.selectedActivities : [inquiry.selectedActivities]) : ''}
+              ${(isFilled(inquiry.preferredMonth) || isFilled(inquiry.preferredYear)) ? htmlRowIf('Preferred Month/Year', `${inquiry.preferredMonth || ''} ${inquiry.preferredYear || ''}`) : ''}
+              ${htmlRowIf('Adventure Option', inquiry.adventureOption)}
+              ${inquiry.bookWholeBoat ? htmlRowIf('Book whole boat', 'Yes') : ''}
+              ${isFilled(inquiry.participants) ? htmlRowIf('Participants', inquiry.participants.map(p => p.name || '')) : ''}
+              ${htmlRowIf('Diverse Adults', inquiry.diverse_adults)}
+              ${htmlRowIf('Diverse Children', inquiry.diverse_children)}
+              ${htmlRowIf('Non-diverse Adults', inquiry.nondiverse_adults)}
+              ${htmlRowIf('Non-diverse Children', inquiry.nondiverse_children)}
+              ${isFilled(inquiry.children) ? htmlRowIf('Children Ages', inquiry.children.join(', ')) : ''}
+              ${isFilled(inquiry.from_date) ? htmlRowIf('From Date', new Date(inquiry.from_date).toLocaleDateString()) : ''}
+              ${isFilled(inquiry.to_date) ? htmlRowIf('To Date', new Date(inquiry.to_date).toLocaleDateString()) : ''}
+              ${htmlRowIf('Message', inquiry.message)}
+              ${isFilled(inquiry.submitted_at) ? htmlRowIf('Submitted At', inquiry.submitted_at.toISOString()) : ''}
             </table>
-          </td>
-        </tr>
-        <!-- Footer -->
-        <tr>
-          <td style="background-color: #f4f4f4; padding: 15px; text-align: center; font-size: 12px; color: #666666;">
-            <p style="margin: 0; font-weight: bold;">Traveliccted</p>
-            <p style="margin: 5px 0;">Follow us: <a href="#" style="color: #1e809b; text-decoration: none;">Facebook</a> | <a href="#" style="color: #1e809b; text-decoration: none;">Twitter</a> | <a href="#" style="color: #1e809b; text-decoration: none;">Instagram</a></p>
-            <p style="margin: 5px 0;">© 2025 Traveliccted. All rights reserved.</p>
           </td>
         </tr>
       </table>
@@ -643,7 +667,17 @@ Traveliccted Team
 
 router.post('/', async (req, res) => {
   try {
-    console.log('Received inquiry payload:', req.body);
+    // Sanitize incoming body: trim strings and convert empty strings to undefined
+    const cleanBody = { ...(req.body || {}) };
+    Object.keys(cleanBody).forEach((k) => {
+      const v = cleanBody[k];
+      if (typeof v === 'string') {
+        const trimmed = v.trim();
+        cleanBody[k] = trimmed === '' ? undefined : trimmed;
+      }
+    });
+
+    console.log('Received inquiry payload:', cleanBody);
 
     const {
       name,
@@ -652,6 +686,7 @@ router.post('/', async (req, res) => {
       message,
       entity,
       entityType,
+      inquiry_form_type,
       from_date,
       to_date,
       adults,
@@ -662,18 +697,42 @@ router.post('/', async (req, res) => {
       title,
       resortName,
       roomName,
-    } = req.body;
-
-    if (!name || !email || !entityType || !buttonType || !title || !entity || !entity.$oid) {
-      return res.status(400).json({ error: 'Missing required fields or invalid entity format' });
-    }
-
+      travellers,
+      number_of_rooms,
+      selectedActivities,
+      preferredMonth,
+      preferredYear,
+      adventureOption,
+      participants,
+      bookWholeBoat,
+      diverse_adults,
+      diverse_children,
+      nondiverse_adults,
+      nondiverse_children,
+      nondiverse_infants,
+    } = cleanBody;
     if (entityType !== 'Custom' && entityType !== 'Accommodation' && !mongoose.isValidObjectId(entity.$oid)) {
       return res.status(400).json({ error: 'Invalid entity ID for non-custom/non-accommodation inquiry' });
     }
 
-    if (entityType === 'Accommodation' && (!resortName || !roomName)) {
-      return res.status(400).json({ error: 'resortName and roomName are required for Accommodation inquiries' });
+    // For accommodations require resortName, roomName to be optional
+    let effectiveInquiryFormType = inquiry_form_type;
+    if (entityType === 'Package' && !effectiveInquiryFormType) {
+      try {
+        const pkg = await Package.findById(entity?.$oid).select('inquiry_form_type resort resortName');
+        if (pkg) {
+          effectiveInquiryFormType = pkg.inquiry_form_type || effectiveInquiryFormType;
+          if (!resortName) {
+            resortName = pkg.resort || pkg.resortName || resortName;
+          }
+        }
+      } catch (e) {
+        console.warn('Could not lookup package for inquiry_form_type fallback', e?.message);
+      }
+    }
+
+    if ((entityType === 'Accommodation' || effectiveInquiryFormType === 'Accommodation') && !resortName) {
+      return res.status(400).json({ error: 'resortName is required for Accommodation inquiries' });
     }
 
     const inquiryData = {
@@ -683,21 +742,100 @@ router.post('/', async (req, res) => {
       message,
       entity: { $oid: entity.$oid },
       entityType,
-      from_date: from_date ? new Date(from_date) : undefined,
-      to_date: to_date ? new Date(to_date) : undefined,
-      adults: adults ?? 1,
-      children: children ?? 0,
-      infants: infants ?? 0,
+      from_date: from_date,
+      to_date: to_date,
+      adults: adults,
+      children: children,
+      infants: infants,
+      travellers,
+      number_of_rooms: number_of_rooms,
+      selectedActivities: Array.isArray(selectedActivities) ? selectedActivities : (selectedActivities ? [selectedActivities] : []),
+      preferredMonth,
+  preferredYear: preferredYear ? Number(preferredYear) : undefined,
+      adventureOption,
+      participants: Array.isArray(participants) ? participants : (participants ? [participants] : []),
+      bookWholeBoat: !!bookWholeBoat,
+      diverse_adults: diverse_adults,
+      diverse_children: diverse_children,
+      nondiverse_adults: nondiverse_adults,
+      nondiverse_children: nondiverse_children,
+      nondiverse_infants: nondiverse_infants,
       country,
       buttonType,
       title,
-      resortName: entityType === 'Accommodation' ? resortName : undefined,
-      roomName: entityType === 'Accommodation' ? roomName : undefined,
+      resortName: (entityType === 'Accommodation' || effectiveInquiryFormType === 'Accommodation') ? resortName : undefined,
+      roomName: (entityType === 'Accommodation' || effectiveInquiryFormType === 'Accommodation') ? roomName : undefined,
+      inquiry_form_type: effectiveInquiryFormType,
     };
+
+    if (entityType === 'Package' || effectiveInquiryFormType) {
+      const form = effectiveInquiryFormType;
+      // Accommodation fields
+      if (form === 'Accommodation') {
+        if (typeof cleanBody.resortName !== 'undefined') inquiryData.resortName = cleanBody.resortName;
+        if (typeof cleanBody.roomName !== 'undefined') inquiryData.roomName = cleanBody.roomName;
+        if (Array.isArray(cleanBody.selectedActivities)) inquiryData.selectedActivities = cleanBody.selectedActivities;
+        else if (typeof cleanBody.selectedActivities !== 'undefined') inquiryData.selectedActivities = [cleanBody.selectedActivities];
+        if (typeof cleanBody.diverse_adults !== 'undefined') inquiryData.diverse_adults = cleanBody.diverse_adults;
+        if (typeof cleanBody.diverse_children !== 'undefined') inquiryData.diverse_children = cleanBody.diverse_children;
+        if (typeof cleanBody.nondiverse_adults !== 'undefined') inquiryData.nondiverse_adults = cleanBody.nondiverse_adults;
+        if (typeof cleanBody.nondiverse_children !== 'undefined') inquiryData.nondiverse_children = cleanBody.nondiverse_children;
+        if (typeof cleanBody.nondiverse_infants !== 'undefined') inquiryData.nondiverse_infants = cleanBody.nondiverse_infants;
+        if (typeof cleanBody.number_of_rooms !== 'undefined') inquiryData.number_of_rooms = cleanBody.number_of_rooms;
+        if (typeof cleanBody.travellers !== 'undefined') inquiryData.travellers = cleanBody.travellers;
+        if (typeof cleanBody.from_date !== 'undefined') inquiryData.from_date = cleanBody.from_date;
+        if (typeof cleanBody.to_date !== 'undefined') inquiryData.to_date = cleanBody.to_date;
+      }
+      // Adventure fields
+      if (form === 'Adventure') {
+        if (typeof cleanBody.preferredMonth !== 'undefined') inquiryData.preferredMonth = cleanBody.preferredMonth;
+        if (typeof cleanBody.preferredYear !== 'undefined') inquiryData.preferredYear = Number(cleanBody.preferredYear);
+        if (typeof cleanBody.adventureOption !== 'undefined') inquiryData.adventureOption = cleanBody.adventureOption;
+        inquiryData.participants = Array.isArray(cleanBody.participants) ? cleanBody.participants : (cleanBody.participants ? [cleanBody.participants] : []);
+        inquiryData.bookWholeBoat = !!cleanBody.bookWholeBoat;
+      }
+    }
 
     const inquiry = new Inquiry(inquiryData);
     await inquiry.save();
     console.log('Inquiry saved to database:', inquiry._id);
+    try {
+      if (cleanBody.subscribe_newsletter) {
+        const emailLower = (email || '').toLowerCase().trim();
+        if (emailLower) {
+          const subscriber = await Newsletter.findOneAndUpdate(
+            { email: emailLower },
+            { email: emailLower, status: 'subscribed', language: cleanBody.language || 'en', subscribed_at: new Date(), unsubscribed_at: undefined },
+            { upsert: true, new: true, setDefaultsOnInsert: true }
+          );
+          console.log('Newsletter subscription applied for', emailLower);
+          // Add subscriber to all public lists (admin-controlled)
+          try {
+            if (subscriber && subscriber._id) {
+              const publicLists = await List.find({ is_public: true }).select('_id');
+              for (const l of publicLists) {
+                try {
+                  const list = await List.findById(l._id);
+                  if (!list) continue;
+                  const sid = String(subscriber._id);
+                  if (!list.subscribers) list.subscribers = [];
+                  if (!list.subscribers.map(String).includes(sid)) {
+                    list.subscribers.push(subscriber._id);
+                    await list.save();
+                  }
+                } catch (e) {
+                  console.warn('Failed to add subscriber to public list', l._id, e.message || e);
+                }
+              }
+            }
+          } catch (e) {
+            console.warn('Failed to resolve public lists for newsletter subscriber', e.message || e);
+          }
+        }
+      }
+    } catch (nlErr) {
+      console.warn('Newsletter subscribe failed:', nlErr?.message || nlErr);
+    }
 
     let entityTitle = title;
     if (entityType === 'Package') {
@@ -708,7 +846,8 @@ router.post('/', async (req, res) => {
       entityTitle = entityDoc?.title || entityDoc?.name || title;
     } else if (entityType === 'Accommodation') {
       const entityDoc = await Resort.findById(entity.$oid).select('name');
-      entityTitle = `${entityDoc?.name || resortName} - ${roomName}`;
+      const resortLabel = entityDoc?.name || resortName || '';
+      entityTitle = resortLabel + (isFilled(roomName) ? ` - ${roomName}` : '');
     }
 
     const emailData = {
@@ -726,26 +865,53 @@ router.post('/', async (req, res) => {
       adults: inquiry.adults,
       children: inquiry.children,
       infants: inquiry.infants,
+      travellers: inquiry.travellers,
+      number_of_rooms: inquiry.number_of_rooms,
+      selectedActivities: Array.isArray(inquiry.selectedActivities)
+        ? inquiry.selectedActivities.map(sa => (typeof sa === 'string' ? sa : (sa.title || sa.name || String(sa))))
+        : (inquiry.selectedActivities ? [String(inquiry.selectedActivities)] : []),
+      preferredMonth: inquiry.preferredMonth,
+      preferredYear: inquiry.preferredYear,
+      adventureOption: inquiry.adventureOption,
+      participants: inquiry.participants,
+      bookWholeBoat: inquiry.bookWholeBoat,
+      diverse_adults: inquiry.diverse_adults,
+      diverse_children: inquiry.diverse_children,
+      nondiverse_adults: inquiry.nondiverse_adults,
+      nondiverse_children: inquiry.nondiverse_children,
+      nondiverse_infants: inquiry.nondiverse_infants,
       country,
       buttonType,
       submitted_at: inquiry.submitted_at
     };
 
     // Admin notification message (for WhatsApp)
-    const adminNotificationMessage = `
-      New Inquiry for ${entityType}: ${entityTitle}
-      ${entityType === 'Accommodation' ? `Resort: ${resortName}\nRoom: ${roomName}` : ' '}
+      const adminNotificationMessage = `
+      New Inquiry: ${entityTitle}
+      ${entityType === 'Accommodation' ? `Resort: ${resortName}\n${isFilled(roomName) ? `Room: ${roomName}` : ''}` : ''}
       Name: ${name}
       Email: ${email}
-      Phone: ${phone_number || 'N/A'}
-      Message: ${message || 'N/A'}
-      ${entityType} ID: ${entity.$oid}
+      Phone: ${phone_number}
+      Message: ${message}
+      Entity ID: ${entity.$oid}
       From Date: ${from_date ? new Date(from_date).toLocaleDateString() : 'N/A'}
       To Date: ${to_date ? new Date(to_date).toLocaleDateString() : 'N/A'}
-      Adults (12+): ${inquiry.adults ?? 'N/A'}
-      Children (2-11): ${inquiry.children ?? 'N/A'}
-      Infants (below 2): ${inquiry.infants ?? 'N/A'}
-      Country: ${country || 'N/A'}
+      Adults (12+): ${inquiry.adults}
+      Children (2-11): ${inquiry.children}
+      Infants (below 2): ${inquiry.infants}
+      Travellers: ${inquiry.travellers}
+      Number of rooms: ${inquiry.number_of_rooms}
+  Selected Activities: ${Array.isArray(inquiry.selectedActivities) ? inquiry.selectedActivities.join(', ') : (inquiry.selectedActivities)}
+      Preferred Month/Year: ${inquiry.preferredMonth} / ${inquiry.preferredYear}
+      Adventure Option: ${inquiry.adventureOption}
+      Book whole boat: ${inquiry.bookWholeBoat ? 'Yes' : 'No'}
+      Participants: ${Array.isArray(inquiry.participants) ? inquiry.participants.map(p=>p.name||'').join(', ') : 'N/A'}
+      Diverse Adults: ${inquiry.diverse_adults}
+      Diverse Children: ${inquiry.diverse_children}
+      Non-diverse Adults: ${inquiry.nondiverse_adults}
+      Non-diverse Children: ${inquiry.nondiverse_children}
+      Non-diverse Infants: ${inquiry.nondiverse_infants}
+      Country: ${country}
       Inquiry Type: ${buttonType === 'bookNow' ? 'Email' : 'WhatsApp'}
       Submitted At: ${inquiry.submitted_at.toISOString()}
     `;
@@ -756,32 +922,28 @@ router.post('/', async (req, res) => {
       const adminMailOptions = {
         from: process.env.SMTP_USER,
         to: process.env.SMTP_USER,
-        subject: `New Inquiry for ${entityType}: ${entityTitle}`,
+  subject: `New Inquiry: ${entityTitle}`,
         html: adminEmail.html,
         text: adminEmail.text,
       };
-      await transporter.sendMail(adminMailOptions);
-      console.log('Admin email sent successfully');
+      await sendMailSafe(adminMailOptions);
+      console.log('Admin email send attempted');
     } else if (buttonType === 'whatsapp') {
-      const message = await twilioClient.messages.create({
-        body: adminNotificationMessage,
-        from: `whatsapp:${process.env.TWILIO_WHATSAPP_NUMBER}`,
-        to: `whatsapp:${process.env.ADMIN_WHATSAPP_NUMBER}`,
-      });
-      console.log('WhatsApp message sent:', message.sid);
+      await sendWhatsAppSafe(adminNotificationMessage);
+      console.log('WhatsApp send attempted');
     }
 
     // User confirmation email
-    const userEmail = generateUserConfirmationTemplate(emailData);
+  const userEmail = generateUserConfirmationTemplate(emailData);
     const userMailOptions = {
       from: process.env.SMTP_USER,
       to: email,
-      subject: `Booking Confirmation: ${entityType} - ${entityTitle}`,
+  subject: `Booking Confirmation: ${entityTitle}`,
       html: userEmail.html,
       text: userEmail.text,
     };
-    await transporter.sendMail(userMailOptions);
-    console.log('User confirmation email sent successfully');
+  await sendMailSafe(userMailOptions);
+  console.log('User confirmation email send attempted');
 
     res.status(201).json(inquiry);
   } catch (err) {
@@ -890,8 +1052,8 @@ router.post('/contact', async (req, res) => {
       html: adminEmail.html,
       text: adminEmail.text,
     };
-    await transporter.sendMail(adminMailOptions);
-    console.log('Admin contact inquiry email sent successfully');
+  await sendMailSafe(adminMailOptions);
+  console.log('Admin contact inquiry email send attempted');
 
     // User confirmation email
     const userEmail = generateContactConfirmationTemplate(adminEmailData);
@@ -902,9 +1064,8 @@ router.post('/contact', async (req, res) => {
       html: userEmail.html,
       text: userEmail.text,
     };
-    await transporter.sendMail(userMailOptions);
-    console.log('User confirmation email sent successfully');
-
+  await sendMailSafe(userMailOptions);
+  console.log('User contact confirmation send attempted');
     res.status(201).json(inquiry);
   } catch (err) {
     console.error('Error processing contact inquiry:', err);
@@ -947,6 +1108,18 @@ router.post('/reply', async (req, res) => {
         from_date: inquiry.from_date,
         to_date: inquiry.to_date,
         message: inquiry.message,
+        number_of_rooms: inquiry.number_of_rooms,
+        selectedActivities: inquiry.selectedActivities,
+        preferredMonth: inquiry.preferredMonth,
+        preferredYear: inquiry.preferredYear,
+        adventureOption: inquiry.adventureOption,
+        participants: inquiry.participants,
+        bookWholeBoat: inquiry.bookWholeBoat,
+        diverse_adults: inquiry.diverse_adults,
+        diverse_children: inquiry.diverse_children,
+        nondiverse_adults: inquiry.nondiverse_adults,
+        nondiverse_children: inquiry.nondiverse_children,
+        nondiverse_infants: inquiry.nondiverse_infants,
         submitted_at: inquiry.submitted_at
       }
     };
@@ -959,8 +1132,8 @@ router.post('/reply', async (req, res) => {
       html: replyEmail.html,
       text: replyEmail.text,
     };
-    await transporter.sendMail(replyMailOptions);
-    console.log('Reply email sent successfully to:', inquiry.email);
+  await sendMailSafe(replyMailOptions);
+  console.log('Reply email send attempted to:', inquiry.email);
 
     // Save reply message to inquiry
     inquiry.replyMessage = message;
