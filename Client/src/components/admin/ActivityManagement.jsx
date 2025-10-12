@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { MapPin, ChevronDown, X } from 'lucide-react';
 import { FaRegClone, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import { AuthContext } from '../context/AuthContext';
+import { API_BASE_URL } from '../apiConfig';
 
 const imgbbAxios = axios.create();
 
@@ -166,8 +167,8 @@ const ActivityManagement = () => {
       try {
         setLoading(true);
         const [activitiesResponse, atollsResponse] = await Promise.all([
-          api.get('/api/activities?all=true'),
-          api.get('/api/atolls'),
+          api.get(`${API_BASE_URL}/activities?all=true`),
+          api.get(`${API_BASE_URL}/atolls`),
         ]);
         console.log('Fetched activities:', activitiesResponse.data);
         console.log('Fetched atolls:', atollsResponse.data);
@@ -291,11 +292,11 @@ const ActivityManagement = () => {
       };
       let response;
       if (selectedActivity) {
-        response = await api.put(`/api/activities/${selectedActivity._id}`, data);
+        response = await api.put(`${API_BASE_URL}/activities/${selectedActivity._id}`, data);
         setActivities(activities.map(a => a._id === selectedActivity._id ? response.data : a));
         setSuccess('Activity updated successfully');
       } else {
-        response = await api.post('/api/activities', data);
+        response = await api.post(`${API_BASE_URL}/activities`, data);
         setActivities([...activities, response.data]);
         setSuccess('Activity created successfully');
       }
@@ -342,11 +343,11 @@ const ActivityManagement = () => {
       } else {
         updatedSites = [...selectedActivity.activity_sites, data];
       }
-      const response = await api.put(`/api/activities/${selectedActivity._id}`, {
+      const response = await api.put(`${API_BASE_URL}/activities/${selectedActivity._id}`, {
         ...selectedActivity,
         activity_sites: updatedSites,
       });
-      const refreshedActivity = await api.get(`/api/activities/${selectedActivity._id}`);
+      const refreshedActivity = await api.get(`${API_BASE_URL}/activities/${selectedActivity._id}`);
       console.log('Refreshed activity:', refreshedActivity.data);
       setSelectedActivity(refreshedActivity.data);
       setActivities(activities.map(a => a._id === selectedActivity._id ? refreshedActivity.data : a));
@@ -401,7 +402,7 @@ const ActivityManagement = () => {
           setError('Invalid activity ID');
           return;
         }
-        await api.delete(`/api/activities/${modal.id}`);
+        await api.delete(`${API_BASE_URL}/activities/${modal.id}`);
         setActivities(activities.filter(a => a._id !== modal.id));
         setSuccess('Activity deleted successfully');
         resetForm();
@@ -413,11 +414,11 @@ const ActivityManagement = () => {
           return;
         }
         const updatedSites = selectedActivity.activity_sites.filter(s => s._id !== modal.id);
-        const response = await api.put(`/api/activities/${selectedActivity._id}`, {
+        const response = await api.put(`${API_BASE_URL}/activities/${selectedActivity._id}`, {
           ...selectedActivity,
           activity_sites: updatedSites,
         });
-        const refreshedActivity = await api.get(`/api/activities/${selectedActivity._id}`);
+        const refreshedActivity = await api.get(`${API_BASE_URL}/activities/${selectedActivity._id}`);
         console.log('Refreshed activity after delete:', refreshedActivity.data);
         setSelectedActivity(refreshedActivity.data);
         setActivities(activities.map(a => a._id === selectedActivity._id ? refreshedActivity.data : a));
@@ -487,10 +488,10 @@ const ActivityManagement = () => {
 
   const handleDuplicateActivity = async (id) => {
     try {
-      await api.post(`/api/activities/duplicate/${id}`);
+      await api.post(`${API_BASE_URL}/activities/duplicate/${id}`);
       setNotification('Duplicate created successfully');
       setSuccess('Activity duplicated successfully');
-      const activitiesResponse = await api.get('/api/activities?all=true');
+      const activitiesResponse = await api.get(`${API_BASE_URL}/activities?all=true`);
       setActivities(activitiesResponse.data);
       setTimeout(() => setNotification(''), 2500);
     } catch (err) {
@@ -500,9 +501,9 @@ const ActivityManagement = () => {
 
   const handleToggleStatus = async (id, currentStatus) => {
     try {
-      await api.put(`/api/activities/status/${id}`, { status: !currentStatus });
+      await api.put(`${API_BASE_URL}/activities/status/${id}`, { status: !currentStatus });
       setSuccess('Activity status updated');
-      const activitiesResponse = await api.get('/api/activities?all=true');
+      const activitiesResponse = await api.get(`${API_BASE_URL}/activities?all=true`);
       setActivities(activitiesResponse.data);
     } catch (err) {
       setError('Failed to update status');
@@ -868,11 +869,11 @@ const ActivityManagement = () => {
                             const updatedSites = selectedActivity.activity_sites.map(s => 
                               s._id === site._id ? { ...s, image: '' } : s
                             );
-                            api.put(`/api/activities/${selectedActivity._id}`, {
+                            api.put(`${API_BASE_URL}/activities/${selectedActivity._id}`, {
                               ...selectedActivity,
                               activity_sites: updatedSites,
                             }).then(() => {
-                              api.get(`/api/activities/${selectedActivity._id}`).then(response => {
+                              api.get(`${API_BASE_URL}/activities/${selectedActivity._id}`).then(response => {
                                 setSelectedActivity(response.data);
                                 setActivities(activities.map(a => 
                                   a._id === selectedActivity._id ? response.data : a
