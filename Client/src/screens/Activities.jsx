@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Search, Filter, Heart, Share2, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
+import { API_BASE_URL } from '../components/apiConfig';
 
 const Activities = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -21,8 +22,8 @@ const Activities = () => {
       try {
         setLoading(true);
         const [activitiesResponse, contentResponse] = await Promise.all([
-          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/activities'),
-          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/activities'),
+          axios.get(`${API_BASE_URL}/activities`),
+          axios.get(`${API_BASE_URL}/ui-content/activities`),
         ]);
         console.log('API Response (Activities):', activitiesResponse.data);
         console.log('API Response (Content):', contentResponse.data);
@@ -335,4 +336,3 @@ const Activities = () => {
 };
 
 export default Activities;
-
