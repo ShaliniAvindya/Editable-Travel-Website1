@@ -4,6 +4,7 @@ import { FaRegClone, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, X } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
+import { API_BASE_URL } from '../apiConfig';
 
 const imgbbAxios = axios.create();
 
@@ -42,10 +43,10 @@ const ResortManagement = () => {
   // Duplicate a resort
   const handleDuplicateResort = async (id) => {
     try {
-      await api.post(`/api/resorts/duplicate/${id}`);
+      await api.post(`${API_BASE_URL}/resorts/duplicate/${id}`);
       setNotification('Duplicate created successfully');
       setSuccess('Resort duplicated successfully');
-      const resortsResponse = await api.get('/api/resorts');
+      const resortsResponse = await api.get(`${API_BASE_URL}/resorts`);
       setResorts(resortsResponse.data);
       setTimeout(() => setNotification(''), 2500);
     } catch (err) {
@@ -56,9 +57,9 @@ const ResortManagement = () => {
   // Toggle resort status
   const handleToggleStatus = async (id, currentStatus) => {
     try {
-      await api.patch(`/api/resorts/status/${id}`, { status: !currentStatus });
+      await api.patch(`${API_BASE_URL}/resorts/status/${id}`, { status: !currentStatus });
       setSuccess('Resort status updated');
-      const resortsResponse = await api.get('/api/resorts');
+      const resortsResponse = await api.get(`${API_BASE_URL}/resorts`);
       setResorts(resortsResponse.data);
     } catch (err) {
       setError('Failed to update status');
@@ -126,8 +127,8 @@ const ResortManagement = () => {
       try {
         setLoading(true);
         const [resortsResponse, atollsResponse] = await Promise.all([
-          api.get('/api/resorts'),
-          api.get('/api/atolls'),
+          api.get(`${API_BASE_URL}/resorts`),
+          api.get(`${API_BASE_URL}/atolls`),
         ]);
         console.log('Fetched resorts:', resortsResponse.data);
         console.log('Fetched atolls:', atollsResponse.data);
@@ -280,12 +281,12 @@ const ResortManagement = () => {
       };
       let response;
       if (selectedResort) {
-        response = await api.put(`/api/resorts/${selectedResort._id}`, data);
+        response = await api.put(`${API_BASE_URL}/resorts/${selectedResort._id}`, data);
         setResorts(resorts.map((r) => (r._id === selectedResort._id ? response.data : r)));
         setSelectedResort(response.data);
         setSuccess('Resort updated successfully');
       } else {
-        response = await api.post('/api/resorts', data);
+        response = await api.post('${API_BASE_URL}/resorts', data);
         setResorts([...resorts, response.data]);
         setSuccess('Resort added successfully');
       }
@@ -338,11 +339,11 @@ const ResortManagement = () => {
       };
       let response;
       if (editingRoomId) {
-        response = await api.put(`/api/resorts/${selectedResort._id}/rooms/${editingRoomId}`, data);
+        response = await api.put(`${API_BASE_URL}/resorts/${selectedResort._id}/rooms/${editingRoomId}`, data);
       } else {
-        response = await api.post(`/api/resorts/${selectedResort._id}/rooms`, data);
+        response = await api.post(`${API_BASE_URL}/resorts/${selectedResort._id}/rooms`, data);
       }
-      const resortResponse = await api.get(`/api/resorts/${selectedResort._id}`);
+      const resortResponse = await api.get(`${API_BASE_URL}/resorts/${selectedResort._id}`);
       setSelectedResort(resortResponse.data);
       setResorts(resorts.map((r) => (r._id === selectedResort._id ? resortResponse.data : r)));
       setSuccess(editingRoomId ? 'Room updated successfully' : 'Room added successfully');
@@ -395,7 +396,7 @@ const ResortManagement = () => {
           setError('Invalid resort ID');
           return;
         }
-        await api.delete(`/api/resorts/${modal.id}`);
+        await api.delete(`${API_BASE_URL}/resorts/${modal.id}`);
         setResorts(resorts.filter((r) => r._id !== modal.id));
         setSelectedResort(null);
         setSuccess('Resort deleted successfully');
@@ -406,8 +407,8 @@ const ResortManagement = () => {
           setError('Invalid resort or room ID');
           return;
         }
-        await api.delete(`/api/resorts/${selectedResort._id}/rooms/${modal.id}`);
-        const updatedResort = await api.get(`/api/resorts/${selectedResort._id}`);
+        await api.delete(`${API_BASE_URL}/resorts/${selectedResort._id}/rooms/${modal.id}`);
+        const updatedResort = await api.get(`${API_BASE_URL}/resorts/${selectedResort._id}`);
         setSelectedResort(updatedResort.data);
         setResorts(resorts.map((r) => (r._id === selectedResort._id ? updatedResort.data : r)));
         setSuccess('Room deleted successfully');
