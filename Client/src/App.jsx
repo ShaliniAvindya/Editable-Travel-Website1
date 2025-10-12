@@ -22,6 +22,7 @@ import { AuthProvider, AuthContext } from './components/context/AuthContext';
 import MaintenancePage from './components/MaintenancePage';
 import ProtectedRoute from './components/ProtectedRoute';
 import CookieConsentComponent from './components/CookieConsentComponent';
+import { API_BASE_URL } from './components/apiConfig';
 
 const Layout = () => {
   const location = useLocation();
@@ -47,7 +48,7 @@ const AppContent = () => {
   const location = useLocation();
 
   useEffect(() => {
-    fetch('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/maintenance-status')
+    fetch(`${API_BASE_URL}/ui-content/maintenance-status`)
       .then(res => res.json())
       .then(data => {
         setMaintenance(data.maintenanceMode || false);
@@ -116,5 +117,6 @@ const App = () => (
 );
 
 export default App;
+
 
 
