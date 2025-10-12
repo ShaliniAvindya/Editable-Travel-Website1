@@ -5,6 +5,7 @@ import { FaRegClone, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import PromotionPopup from '../PromotionPopup';
 import { AuthContext } from '../context/AuthContext';
+import { API_BASE_URL } from '../apiConfig';
 
 const imgbbAxios = axios.create();
 
@@ -95,7 +96,7 @@ const PromotionManagement = ({ searchTerm }) => {
         setLoading(true);
         const token = localStorage.getItem('token');
         console.log('Fetching promotions with token:', token);
-        const res = await axios.get('https://editable-travel-website1-rpfv.vercel.app/api/promotions', {
+        const res = await axios.get(`${API_BASE_URL}/promotions`, {
           headers: { 'x-auth-token': token },
         });
         setPromotions(res.data);
@@ -215,7 +216,7 @@ const PromotionManagement = ({ searchTerm }) => {
     try {
       const token = localStorage.getItem('token');
       console.log('Deleting promotion with token:', token);
-      await axios.delete(`https://editable-travel-website1-rpfv.vercel.app/api/promotions/${modal.id}`, {
+      await axios.delete(`${API_BASE_URL}/promotions/${modal.id}`, {
         headers: { 'x-auth-token': token },
       });
       setPromotions(promotions.filter((p) => p._id !== modal.id));
@@ -240,7 +241,7 @@ const PromotionManagement = ({ searchTerm }) => {
   const handleDuplicatePromotion = async (id) => {
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.post(`https://editable-travel-website1-rpfv.vercel.app/api/promotions/duplicate/${id}`, {}, {
+      const res = await axios.post(`${API_BASE_URL}/promotions/duplicate/${id}`, {}, {
         headers: { 'x-auth-token': token },
       });
       setPromotions([...promotions, res.data]);
@@ -269,11 +270,11 @@ const PromotionManagement = ({ searchTerm }) => {
         }
       }
       const token = localStorage.getItem('token');
-      await axios.patch(`https://editable-travel-website1-rpfv.vercel.app/api/promotions/status/${id}`, { status: !currentStatus }, {
+      await axios.patch(`${API_BASE_URL}/promotions/status/${id}`, { status: !currentStatus }, {
         headers: { 'x-auth-token': token },
       });
       setSuccess('Promotion status updated');
-      const res = await axios.get('https://editable-travel-website1-rpfv.vercel.app/api/promotions', {
+      const res = await axios.get(`${API_BASE_URL}/promotions`, {
         headers: { 'x-auth-token': token },
       });
       setPromotions(res.data);
@@ -308,11 +309,11 @@ const PromotionManagement = ({ searchTerm }) => {
       const headers = { 'x-auth-token': token };
       let res;
       if (editingId) {
-        res = await axios.put(`https://editable-travel-website1-rpfv.vercel.app/api/promotions/${editingId}`, promotionData, { headers });
+        res = await axios.put(`${API_BASE_URL}/promotions/${editingId}`, promotionData, { headers });
         setPromotions(promotions.map((p) => (p._id === editingId ? res.data : p)));
         setSuccess('Promotion updated');
       } else {
-        res = await axios.post('https://editable-travel-website1-rpfv.vercel.app/api/promotions', promotionData, { headers });
+        res = await axios.post(`${API_BASE_URL}/promotions`, promotionData, { headers });
         setPromotions([...promotions, res.data]);
         setSuccess('Promotion added');
       }
@@ -390,16 +391,10 @@ const PromotionManagement = ({ searchTerm }) => {
         </div>
       )}
       <div className="container mx-auto p-6">
-          <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-8">
           <h1 className="text-4xl font-bold text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
             Promotion Management
           </h1>
-          <button
-            onClick={handleNewsletterClick}
-            className="bg-[#1e809b] hover:bg-[#074a5b] text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 transform hover:scale-105 ml-4"
-          >
-            Go to Newsletter (Listmonk)
-          </button>
         </div>
 
         {error && (
@@ -707,5 +702,3 @@ const PromotionManagement = ({ searchTerm }) => {
 };
 
 export default PromotionManagement;
-
-
