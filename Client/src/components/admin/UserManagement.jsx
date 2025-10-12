@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../apiConfig';
 
 const UserManagement = () => {
   const { user, api } = useContext(AuthContext);
@@ -43,7 +44,7 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await api.get('https://editable-travel-website1-rpfv.vercel.app/api/users/all');
+      const response = await api.get('${API_BASE_URL}/users/all');
       console.log('Fetched users:', response.data);
       setUsers(response.data);
     } catch (err) {
@@ -67,7 +68,7 @@ const UserManagement = () => {
   const executeDeleteUser = async (id) => {
     try {
       console.log('Executing delete for user:', id);
-      await api.delete(`https://editable-travel-website1-rpfv.vercel.app/api/users/${id}`);
+      await api.delete(`${API_BASE_URL}/users/${id}`);
       setUsers(users.filter(u => u._id !== id));
       setSuccess('User deleted successfully');
     } catch (err) {
@@ -90,7 +91,7 @@ const UserManagement = () => {
   const executeToggleAdmin = async (id, currentStatus) => {
     try {
       console.log('Executing toggle admin for user:', id);
-      const response = await api.put(`https://editable-travel-website1-rpfv.vercel.app/api/users/${id}/toggle-admin`, {
+      const response = await api.put(`${API_BASE_URL}/users/${id}/toggle-admin`, {
         isAdmin: !currentStatus
       });
       setUsers(users.map(u => u._id === id ? { ...u, isAdmin: response.data.user.isAdmin } : u));
@@ -109,7 +110,7 @@ const UserManagement = () => {
 
   if (loading || !user || !user.isAdmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+      <div className="min-h-screen flex items-center justify-center bg-white" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
         <p className="text-xl text-[#34495e]">{error || 'Loading users...'}</p>
       </div>
     );
@@ -180,7 +181,7 @@ const UserManagement = () => {
         {/* Confirmation Modal */}
         {confirmModal.open && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl p-6 max-w-md w-full" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+            <div className="bg-white rounded-xl p-6 max-w-md w-full" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
               <h3 className="text-xl font-semibold text-[#34495e] mb-4">Confirm Action</h3>
               <p className="text-gray-600 mb-6">{confirmModal.message}</p>
               <div className="flex justify-end gap-4">
