@@ -15,8 +15,10 @@ const Contact = () => {
     hero: { title: '', description: '' },
     contactInfo: {
       title: '',
-      phone: '',
-      phoneLabel: '',
+      callPhone: '',
+      whatsappPhone: '',
+      callPhoneLabel: '',
+      whatsappPhoneLabel: '',
       email: '',
       emailLabel: '',
       address: '',
@@ -32,11 +34,17 @@ const Contact = () => {
   });
   const [loading, setLoading] = useState(true);
 
+  // Newsletter state
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [newsletterLoading, setNewsletterLoading] = useState(false);
+  const [newsletterMessage, setNewsletterMessage] = useState('');
+  const [newsletterMessageType, setNewsletterMessageType] = useState('');
+
   // Fetch content
   useEffect(() => {
     const fetchContent = async () => {
       try {
-        const response = await axios.get('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/contact');
+        const response = await axios.get('/api/ui-content/contact');
         const sections = response.data.sections || [];
         const heroSection = sections.find((s) => s.sectionId === 'hero')?.content || {};
         const contactInfoSection = sections.find((s) => s.sectionId === 'contact-info')?.content || {};
@@ -48,8 +56,10 @@ const Contact = () => {
           },
           contactInfo: {
             title: contactInfoSection.title || '',
-            phone: contactInfoSection.phone || '',
-            phoneLabel: contactInfoSection.phoneLabel || '',
+            callPhone: contactInfoSection.callPhone || '',
+            whatsappPhone: contactInfoSection.whatsappPhone || '',
+            callPhoneLabel: contactInfoSection.callPhoneLabel || '',
+            whatsappPhoneLabel: contactInfoSection.whatsappPhoneLabel || '',
             email: contactInfoSection.email || '',
             emailLabel: contactInfoSection.emailLabel || '',
             address: contactInfoSection.address || '',
@@ -92,7 +102,7 @@ const Contact = () => {
         throw new Error('Please fill in all fields.');
       }
 
-      const response = await axios.post('https://editable-travel-website1-rpfv.vercel.app/api/inquiries/contact', {
+      const response = await axios.post('/api/inquiries/contact', {
         name: formData.name,
         email: formData.email,
         message: formData.message,
@@ -107,6 +117,99 @@ const Contact = () => {
       setError(errorMessage);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleNewsletterSubscribe = async (e) => {
+    e?.preventDefault?.();
+    const email = (newsletterEmail || '').trim();
+    if (!email || !email.includes('@')) {
+      setNewsletterMessage('Bitte geben Sie eine gültige E-Mail-Adresse ein');
+      setNewsletterMessageType('error');
+      return;
+    }
+
+    setNewsletterLoading(true);
+    setNewsletterMessage('');
+
+    try {
+      const resp = await axios.post('/api/newsletter/subscribe', { email });
+      const data = resp.data || {};
+      const status = data.status || data.subscriber?.status;
+
+      if (data.success || status === 'subscribed') {
+        setNewsletterMessage(data.message || 'Erfolgreich angemeldet!');
+        setNewsletterMessageType('success');
+        setNewsletterEmail('');
+      } else if (data.error || data.message) {
+        setNewsletterMessage(data.error || data.message);
+        setNewsletterMessageType('error');
+      } else {
+        setNewsletterMessage('Subscription failed');
+        setNewsletterMessageType('error');
+      }
+    } catch (err) {
+      console.error('Subscribe error:', err);
+      const statusCode = err.response?.status;
+      const serverMsg = err.response?.data?.error || err.response?.data?.message;
+      if (statusCode === 409) {
+        setNewsletterMessage(serverMsg || 'Bereits abonniert.');
+        setNewsletterMessageType('error');
+      } else {
+        setNewsletterMessage(serverMsg || 'Fehler beim Abonnieren. Bitte versuchen Sie es später.');
+        setNewsletterMessageType('error');
+      }
+    } finally {
+      setNewsletterLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!newsletterMessage) return;
+    const timer = setTimeout(() => {
+      setNewsletterMessage('');
+      setNewsletterMessageType('');
+      setNewsletterLoading(false);
+    }, 5000); // 5 seconds
+
+    return () => clearTimeout(timer);
+  }, [newsletterMessage]);
+
+  const handleNewsletterUnsubscribe = async (e) => {
+    e?.preventDefault?.();
+    const email = (newsletterEmail || '').trim();
+    if (!email || !email.includes('@')) {
+      setNewsletterMessage('Bitte geben Sie eine gültige E-Mail-Adresse ein');
+      setNewsletterMessageType('error');
+      return;
+    }
+
+    setNewsletterLoading(true);
+    setNewsletterMessage('');
+
+    try {
+      const resp = await axios.post('/api/newsletter/unsubscribe', { email });
+      const data = resp.data || {};
+      const status = data.status || data.subscriber?.status;
+
+      if (data.success || status === 'unsubscribed') {
+        setNewsletterMessage(data.message || 'Erfolgreich abgemeldet.');
+        setNewsletterMessageType('success');
+        setNewsletterEmail('');
+      } else if (data.error || data.message) {
+        setNewsletterMessage(data.error || data.message);
+        setNewsletterMessageType('error');
+      } else {
+        setNewsletterMessage('Unsubscribe failed');
+        setNewsletterMessageType('error');
+      }
+    } catch (err) {
+      console.error('Unsubscribe error:', err);
+      const serverMsg = err.response?.data?.error || err.response?.data?.message;
+      setNewsletterMessage(serverMsg || 'Fehler beim Abbestellen. Bitte versuchen Sie es später.');
+      setNewsletterMessageType('error');
+    } finally {
+      setNewsletterLoading(false);
     }
   };
 
@@ -141,14 +244,32 @@ const Contact = () => {
               <h3 className="text-2xl font-bold mb-6">{content.contactInfo.title}</h3>
             )}
             <div className="space-y-6">
-              {content.contactInfo.phone && content.contactInfo.phoneLabel && (
-                <div className="flex items-center p-4 bg-white bg-opacity-10 rounded-xl hover:bg-opacity-20 transition-all duration-300">
-                  <Phone className="mr-4 flex-shrink-0" style={{ color: '#1e809b' }} size={24} />
-                  <div>
-                    <p className="text-sm text-cyan-200">{content.contactInfo.phoneLabel}</p>
-                    <span className="text-lg font-semibold">{content.contactInfo.phone}</span>
-                  </div>
-                </div>
+              {(content.contactInfo.callPhone || content.contactInfo.whatsappPhone) && (
+                <>
+                  {content.contactInfo.callPhone && (
+                    <div className="flex items-center p-4 bg-white bg-opacity-10 rounded-xl hover:bg-opacity-20 transition-all duration-300">
+                      <Phone className="mr-4 flex-shrink-0" style={{ color: '#1e809b' }} size={24} />
+                      <div>
+                        <p className="text-sm text-cyan-200">{content.contactInfo.callPhoneLabel}</p>
+                        <span className="text-lg font-semibold">{content.contactInfo.callPhone}</span>
+                      </div>
+                    </div>
+                  )}
+                  {content.contactInfo.whatsappPhone && (
+                    <a
+                      href={`https://wa.me/${content.contactInfo.whatsappPhone.replace(/[^0-9]/g, '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center p-4 bg-white bg-opacity-10 rounded-xl hover:bg-opacity-20 transition-all duration-300"
+                    >
+                      <Music2 className="mr-4 flex-shrink-0" style={{ color: '#1e809b' }} size={24} />
+                      <div>
+                        <p className="text-sm text-cyan-200">{content.contactInfo.whatsappPhoneLabel || 'WhatsApp'}</p>
+                        <span className="text-lg font-semibold">{content.contactInfo.whatsappPhone}</span>
+                      </div>
+                    </a>
+                  )}
+                </>
               )}
               {content.contactInfo.email && content.contactInfo.emailLabel && (
                 <div className="flex items-center p-4 bg-white bg-opacity-10 rounded-xl hover:bg-opacity-20 transition-all duration-300">
@@ -168,62 +289,46 @@ const Contact = () => {
                   </div>
                 </div>
               )}
+              {/* Newsletter block */}
+              <div className="p-4 bg-white/70 bg-opacity-10 rounded-xl hover:bg-opacity-20 transition-all duration-300">
+               <h3 className="text-2xl font-bold mb-4" style={{ color: '#074a5b' }}>Newsletter</h3>
+            <p className="text-sm text-cyan-700 mb-4">Bleiben Sie über die neuesten Angebote und Nachrichten informiert.</p>
+
+            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+              <input
+                type="email"
+                value={newsletterEmail}
+                onChange={(e) => setNewsletterEmail(e.target.value)}
+                placeholder="Ihre E-Mail-Adresse"
+                className="w-full text-black px-4 sm:px-6 py-3 sm:py-4 text-sm sm:text-base rounded-2xl border-2 border-gray-200 focus:border-[#1e809b] focus:outline-none transition-all duration-300 bg-white/90"
+              />
+
+              <div className="flex gap-3 w-full sm:w-auto">
+                <button
+                  onClick={handleNewsletterSubscribe}
+                  disabled={newsletterLoading}
+                  className={`px-4 py-3 rounded-2xl font-semibold text-white ${newsletterLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                  style={{ background: 'linear-gradient(135deg, #1e809b 0%, #074a5b 100%)' }}
+                >
+                  Subscribe
+                </button>
+                <button
+                  onClick={handleNewsletterUnsubscribe}
+                  disabled={newsletterLoading}
+                  className={`px-4 py-3 rounded-2xl font-semibold text-white ${newsletterLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                  style={{ background: 'linear-gradient(135deg, #b03030 0%, #7a1e1e 100%)' }}
+                >
+                  Unsubscribe
+                </button>
+              </div>
             </div>
-            {(content.socialMedia.title || content.socialMedia.facebook || content.socialMedia.instagram) && (
-              <div className="mt-10">
-                {content.socialMedia.title && (
-                  <h4 className="text-xl font-bold mb-6">{content.socialMedia.title}</h4>
-                )}
-                {(content.socialMedia.facebook || content.socialMedia.instagram || content.socialMedia.youtube || content.socialMedia.tiktok) && (
-                  <div className="flex space-x-4">
-                    {content.socialMedia.facebook && (
-                      <a
-                        href={content.socialMedia.facebook}
-                        className="p-4 rounded-full transition-all duration-300 hover:scale-110 hover:shadow-lg"
-                        style={{ backgroundColor: '#1e809b' }}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Facebook className="text-white" size={20} />
-                      </a>
-                    )}
-                    {content.socialMedia.instagram && (
-                      <a
-                        href={content.socialMedia.instagram}
-                        className="p-4 rounded-full transition-all duration-300 hover:scale-110 hover:shadow-lg"
-                        style={{ backgroundColor: '#1e809b' }}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Instagram className="text-white" size={20} />
-                      </a>
-                    )}
-                    {content.socialMedia.youtube && (
-                      <a
-                        href={content.socialMedia.youtube}
-                        className="p-4 rounded-full transition-all duration-300 hover:scale-110 hover:shadow-lg"
-                        style={{ backgroundColor: '#1e809b' }}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Youtube className="text-white" size={20} />
-                      </a>
-                    )}
-                    {content.socialMedia.tiktok && (
-                      <a
-                        href={content.socialMedia.tiktok}
-                        className="p-4 rounded-full transition-all duration-300 hover:scale-110 hover:shadow-lg"
-                        style={{ backgroundColor: '#1e809b' }}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Music2 className="text-white" size={20} />
-                      </a>
-                    )}
+                {newsletterMessage && (
+                  <div className={`mt-3 p-2 rounded-md ${newsletterMessageType === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
+                    {newsletterMessage}
                   </div>
                 )}
               </div>
-            )}
+            </div>
           </div>
 
           {/* Contact Form */}
@@ -288,6 +393,7 @@ const Contact = () => {
               </button>
             </div>
           </div>
+
         </div>
       </div>
     </section>
@@ -295,4 +401,3 @@ const Contact = () => {
 };
 
 export default Contact;
-
