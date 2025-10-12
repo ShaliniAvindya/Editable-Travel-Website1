@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { FaRegClone, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import { AuthContext } from '../context/AuthContext';
+import { API_BASE_URL } from '../apiConfig';
 
 const imgbbAxios = axios.create();
 
@@ -53,6 +54,7 @@ const PackageManagement = () => {
     images: [],
     expiry_date: '',
     nights: '',
+    inquiry_form_type: '',
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -88,7 +90,7 @@ const PackageManagement = () => {
       try {
         setLoading(true);
         const cacheBuster = new Date().getTime();
-        const response = await api.get(`/api/packages?all=true&_cb=${cacheBuster}`);
+        const response = await api.get(`${API_BASE_URL}/packages?all=true&_cb=${cacheBuster}`);
         console.log('Fetched packages:', response.data);
         setPackages(response.data);
       } catch (err) {
@@ -187,6 +189,10 @@ const PackageManagement = () => {
         setError('Please fill in all required fields');
         return;
       }
+      if (!formData.inquiry_form_type) {
+        setError('Please select an Inquiry Form Type');
+        return;
+      }
       if (selectedPackage && !isValidId(selectedPackage._id)) {
         console.error('Invalid package ID:', selectedPackage._id);
         setError('Invalid package ID');
@@ -209,14 +215,15 @@ const PackageManagement = () => {
         images: formData.images || [],
         expiry_date: formData.expiry_date ? new Date(formData.expiry_date) : undefined,
         nights: formData.nights ? Number(formData.nights) : undefined,
+        inquiry_form_type: formData.inquiry_form_type ? formData.inquiry_form_type : undefined,
       };
       let response;
       if (selectedPackage) {
-        response = await api.put(`/api/packages/${selectedPackage._id}`, data);
+        response = await api.put(`${API_BASE_URL}/packages/${selectedPackage._id}`, data);
         setPackages(packages.map(p => p._id === selectedPackage._id ? response.data : p));
         setSuccess('Package updated successfully');
       } else {
-        response = await api.post('/api/packages', data);
+        response = await api.post(`${API_BASE_URL}/packages`, data);
         setPackages([...packages, response.data]);
         setSuccess('Package created successfully');
       }
@@ -244,10 +251,10 @@ const PackageManagement = () => {
 
   const handleDuplicatePackage = async (id) => {
     try {
-      await api.post(`/api/packages/duplicate/${id}`);
+      await api.post(`${API_BASE_URL}/packages/duplicate/${id}`);
       setNotification('Duplicate created successfully');
       setSuccess('Package duplicated successfully');
-      const packagesResponse = await api.get('/api/packages?all=true');
+      const packagesResponse = await api.get(`${API_BASE_URL}/packages?all=true`);
       setPackages(packagesResponse.data);
       setTimeout(() => setNotification(''), 2500);
     } catch (err) {
@@ -257,9 +264,9 @@ const PackageManagement = () => {
 
   const handleToggleStatus = async (id, currentStatus) => {
     try {
-      await api.put(`/api/packages/status/${id}`, { status: !currentStatus });
+      await api.put(`${API_BASE_URL}/packages/status/${id}`, { status: !currentStatus });
       setSuccess('Package status updated');
-      const packagesResponse = await api.get('/api/packages?all=true');
+      const packagesResponse = await api.get(`${API_BASE_URL}/packages?all=true`);
       setPackages(packagesResponse.data);
     } catch (err) {
       setError('Failed to update status');
@@ -273,7 +280,7 @@ const PackageManagement = () => {
         setError('Invalid package ID');
         return;
       }
-      await api.delete(`/api/packages/${modal.id}`);
+      await api.delete(`${API_BASE_URL}/packages/${modal.id}`);
       setPackages(packages.filter(p => p._id !== modal.id));
       setSuccess('Package deleted successfully');
       resetForm();
@@ -314,6 +321,7 @@ const PackageManagement = () => {
       images: pkg.images || [],
       expiry_date: pkg.expiry_date ? new Date(pkg.expiry_date).toISOString().split('T')[0] : '',
       nights: pkg.nights || '',
+      inquiry_form_type: pkg.inquiry_form_type || '',
     });
   };
 
@@ -330,6 +338,7 @@ const PackageManagement = () => {
       images: [],
       expiry_date: '',
       nights: '',
+      inquiry_form_type: '',
     });
     setSelectedPackage(null);
     setError('');
@@ -484,6 +493,20 @@ const PackageManagement = () => {
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none w-full h-24"
               />
+            </div>
+            <div>
+              <label className="block mb-2 text-[#074a5b] font-semibold">Inquiry Form Type</label>
+              <select
+                value={formData.inquiry_form_type}
+                onChange={(e) => setFormData({ ...formData, inquiry_form_type: e.target.value })}
+                className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
+                required
+              >
+                <option value="none">None</option>
+                <option value="Accommodation">Accommodation</option>
+                <option value="Adventure">Adventure</option>
+                <option value="Activity">Activity</option>
+              </select>
             </div>
             <div className="col-span-2 flex gap-4">
               <button
