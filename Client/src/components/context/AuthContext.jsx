@@ -1,17 +1,12 @@
 import React, { createContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../apiConfig';
 
 export const AuthContext = createContext();
-
-const API_URL = 'https://editable-travel-website1-rpfv.vercel.app';
-
-// Create axios instance with base configuration
 const api = axios.create({
-  baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json'
-  }
+  baseURL: API_BASE_URL,
+  headers: { 'Content-Type': 'application/json' }
 });
 
 export const AuthProvider = ({ children }) => {
@@ -19,7 +14,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [redirectPath, setRedirectPath] = useState(null);
   const navigate = useNavigate();
-  const inactivityTimeout = 5 * 60 * 1000; 
+  const inactivityTimeout = 8 * 60 * 1000; 
   let inactivityTimer = null;
 
   // Reset inactivity timer
@@ -64,7 +59,7 @@ export const AuthProvider = ({ children }) => {
     if (token) {
       api.defaults.headers['Authorization'] = `Bearer ${token}`;
       api
-        .get('https://editable-travel-website1-rpfv.vercel.app/api/users/me')
+        .get('/users/me')
         .then((response) => {
           setUser(response.data);
           if (response.data.isAdmin && redirectPath) {
