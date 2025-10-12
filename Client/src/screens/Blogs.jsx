@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Search, Tag, ChevronLeft, ChevronRight, ChevronDown, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_BASE_URL } from '../components/apiConfig';
 
 const Blogs = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -32,11 +33,11 @@ const Blogs = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const uiContentResponse = await axios.get('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/blogs');
+        const uiContentResponse = await axios.get(`${API_BASE_URL}/ui-content/blogs`);
         setUiContent(uiContentResponse.data);
 
         // Fetch blogs
-        const blogsResponse = await axios.get('https://editable-travel-website1-rpfv.vercel.app/api/blogs', {
+        const blogsResponse = await axios.get(`${API_BASE_URL}/blogs`, {
           params: {
             search: searchTerm,
             tag: selectedCategory === 'All' ? undefined : selectedCategory,
