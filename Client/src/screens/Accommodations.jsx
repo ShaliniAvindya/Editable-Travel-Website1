@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapPin, Coffee, Waves, Camera, Filter, Search, ChevronDown, TreePalm, Sailboat } from 'lucide-react';
 import axios from 'axios';
+import { API_BASE_URL } from '../components/apiConfig';
 
 const Accommodations = () => {
   const [activeSection, setActiveSection] = useState('hotel');
@@ -22,8 +23,8 @@ const Accommodations = () => {
       try {
         setLoading(true);
         const [resortsResponse, contentResponse] = await Promise.all([
-          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/resorts'),
-          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/accommodations'),
+          axios.get(`${API_BASE_URL}/resorts`),
+          axios.get(`${API_BASE_URL}/ui-content/accommodations`),
         ]);
         console.log('API Response (Resorts):', resortsResponse.data);
         console.log('API Response (Content):', contentResponse.data);
@@ -363,4 +364,3 @@ const Accommodations = () => {
 };
 
 export default Accommodations;
-
