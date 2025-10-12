@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-
-const API_URL = 'https://editable-travel-website1-rpfv.vercel.app';
+import { API_BASE_URL } from '../components/apiConfig';
 
 const GoogleReviewsSection = () => {
   const [scriptLoaded, setScriptLoaded] = useState(false);
@@ -12,7 +11,7 @@ const GoogleReviewsSection = () => {
   useEffect(() => {
     const fetchSection = async () => {
       try {
-        const res = await axios.get(`${API_URL}/api/ui-content/home`);
+        const res = await axios.get(`${API_BASE_URL}/ui-content/home`);
         const section = res.data.sections?.find(s => s.sectionId === 'googleReviews');
         setTitle(section?.content?.title || 'What Our Guests Say');
         setDescription(section?.content?.description || 'Hear from our valued customers about their experiences');
