@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { FaRegClone, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import { AuthContext } from '../context/AuthContext';
+import { API_BASE_URL } from '../apiConfig';
 
 const imgbbAxios = axios.create();
 
@@ -2484,7 +2485,7 @@ const BlogManagement = () => {
       try {
         setLoading(true);
         const cacheBuster = new Date().getTime();
-        const response = await api.get(`/api/blogs?all=true&_cb=${cacheBuster}`);
+        const response = await api.get(`${API_BASE_URL}/blogs?all=true&_cb=${cacheBuster}`);
         setBlogs(response.data);
       } catch (err) {
         console.error('Fetch error:', err);
@@ -2564,8 +2565,8 @@ const BlogManagement = () => {
     try {
       const formDataVid = new FormData();
       formDataVid.append('video', file);
-      
-      const response = await api.post('/api/blogs/upload/video', formDataVid, {
+
+      const response = await api.post(`${API_BASE_URL}/blogs/upload/video`, formDataVid, {
         headers: { 'Content-Type': 'multipart/form-data' },
         onUploadProgress: (progressEvent) => {
           const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
@@ -2965,11 +2966,11 @@ const BlogManagement = () => {
       console.log('Submitting blog payload:', data);
       let response;
       if (selectedBlog) {
-        response = await api.put(`/api/blogs/${selectedBlog._id}`, data);
+        response = await api.put(`${API_BASE_URL}/blogs/${selectedBlog._id}`, data);
         setBlogs(blogs.map(b => b._id === selectedBlog._id ? response.data : b));
         setSuccess('Blog updated successfully');
       } else {
-        response = await api.post('/api/blogs', data);
+        response = await api.post(`${API_BASE_URL}/blogs`, data);
         setBlogs([...blogs, response.data]);
         setSuccess('Blog created successfully');
       }
@@ -3003,7 +3004,7 @@ const BlogManagement = () => {
       return;
     }
     try {
-      const response = await api.post(`/api/blogs/duplicate/${id}`);
+      const response = await api.post(`${API_BASE_URL}/blogs/duplicate/${id}`);
       setBlogs([...blogs, response.data]);
       setNotification('Blog duplicated successfully');
       setSuccess('Blog duplicated successfully');
@@ -3020,7 +3021,7 @@ const BlogManagement = () => {
       return;
     }
     try {
-      const response = await api.put(`/api/blogs/status/${id}`, { status: !currentStatus });
+      const response = await api.put(`${API_BASE_URL}/blogs/status/${id}`, { status: !currentStatus });
       setBlogs(blogs.map(b => b._id === id ? { ...b, status: response.data.status } : b));
       setSuccess(`Blog ${currentStatus ? 'deactivated' : 'activated'} successfully`);
     } catch (err) {
@@ -3037,7 +3038,7 @@ const BlogManagement = () => {
           setError('Invalid blog ID');
           return;
         }
-        await api.delete(`/api/blogs/${modal.id}`);
+        await api.delete(`${API_BASE_URL}/blogs/${modal.id}`);
         setBlogs(blogs.filter(b => b._id !== modal.id));
         setSuccess('Blog deleted successfully');
         resetForm();
