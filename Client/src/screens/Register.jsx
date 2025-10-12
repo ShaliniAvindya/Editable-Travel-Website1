@@ -3,6 +3,7 @@ import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, User } from 'lucide-react';
+import { API_BASE_URL } from '../components/apiConfig';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -76,7 +77,7 @@ const Register = () => {
 
     try {
       const response = await axios.post(
-        'https://editable-travel-website1-rpfv.vercel.app/api/users/register',
+        `${API_BASE_URL}/users/register`,
         {
           name: formData.name,
           email: formData.email,
