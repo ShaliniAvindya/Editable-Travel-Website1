@@ -4,6 +4,7 @@ import { FaRegClone, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import { MapPin, X } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../apiConfig';
 
 const imgbbAxios = axios.create();
 
@@ -91,8 +92,8 @@ const AtollManagement = () => {
         setLoading(true);
         const cacheBuster = new Date().getTime();
         const [atollsResponse, resortsResponse] = await Promise.all([
-          api.get(`/api/atolls?_cb=${cacheBuster}`),
-          api.get(`/api/resorts?_cb=${cacheBuster}`),
+          api.get(`${API_BASE_URL}/atolls?_cb=${cacheBuster}`),
+          api.get(`${API_BASE_URL}/resorts?_cb=${cacheBuster}`),
         ]);
         console.log('Fetched Islands:', atollsResponse.data.map(a => ({
           _id: a._id,
@@ -223,12 +224,12 @@ const AtollManagement = () => {
       };
       let response;
       if (selectedAtoll) {
-        response = await api.put(`/api/atolls/${selectedAtoll._id}`, data);
+        response = await api.put(`${API_BASE_URL}/atolls/${selectedAtoll._id}`, data);
         setAtolls(atolls.map((a) => (a._id === selectedAtoll._id ? response.data : a)));
         setSelectedAtoll({ ...response.data, accommodations: selectedAtoll.accommodations }); // Preserve accommodations
         setSuccess('Island updated successfully');
       } else {
-        response = await api.post('/api/atolls', data);
+        response = await api.post(`${API_BASE_URL}/atolls`, data);
         setAtolls([...atolls, response.data]);
         setSuccess('Island created successfully');
       }
@@ -252,16 +253,16 @@ const AtollManagement = () => {
         setError('Invalid Island or resort ID');
         return;
       }
-      const resortResponse = await api.get(`/api/resorts/${accommodationId}`);
+      const resortResponse = await api.get(`${API_BASE_URL}/resorts/${accommodationId}`);
       if (!resortResponse.data) {
         setError('Selected resort does not exist');
         return;
       }
-      await api.post(`/api/atolls/${selectedAtoll._id}/accommodations`, {
+      await api.post(`${API_BASE_URL}/atolls/${selectedAtoll._id}/accommodations`, {
         accommodationId,
       });
       // Fetch updated accommodations
-      const updatedAtollResponse = await api.get(`/api/resorts/byAtoll/${selectedAtoll._id}`);
+      const updatedAtollResponse = await api.get(`${API_BASE_URL}/resorts/byAtoll/${selectedAtoll._id}`);
       const updatedAccommodations = updatedAtollResponse.data || [];
       console.log('Updated accommodations after adding:', updatedAccommodations.map(acc => ({
         _id: acc._id,
@@ -315,8 +316,8 @@ const AtollManagement = () => {
           setError('Invalid Island ID');
           return;
         }
-        await api.delete(`/api/atolls/${modal.id}`);
-        const atollsResponse = await api.get('/api/atolls');
+        await api.delete(`${API_BASE_URL}/atolls/${modal.id}`);
+        const atollsResponse = await api.get(`${API_BASE_URL}/atolls`);
         setAtolls(atollsResponse.data || []);
         setSelectedAtoll(null);
         setSuccess('Island deleted successfully');
@@ -326,12 +327,12 @@ const AtollManagement = () => {
           setError('Invalid Island or accommodation ID');
           return;
         }
-        await api.delete(`/api/atolls/${selectedAtoll._id}/accommodations/${modal.id}`);
-        const updatedAtollResponse = await api.get(`/api/resorts/byAtoll/${selectedAtoll._id}`);
+        await api.delete(`${API_BASE_URL}/atolls/${selectedAtoll._id}/accommodations/${modal.id}`);
+        const updatedAtollResponse = await api.get(`${API_BASE_URL}/resorts/byAtoll/${selectedAtoll._id}`);
         const updatedAccommodations = updatedAtollResponse.data || [];
         const updatedAtoll = { ...selectedAtoll, accommodations: updatedAccommodations };
         setSelectedAtoll(updatedAtoll);
-        const atollsResponse = await api.get('/api/atolls');
+        const atollsResponse = await api.get(`${API_BASE_URL}/atolls`);
         setAtolls(atollsResponse.data || []);
         setSuccess('Accommodation removed successfully');
       }
@@ -355,13 +356,13 @@ const AtollManagement = () => {
     }
     try {
       console.log('Fetching island and accommodations for edit:', atoll._id);
-      const atollResponse = await api.get(`/api/atolls/${atoll._id}`);
+      const atollResponse = await api.get(`${API_BASE_URL}/atolls/${atoll._id}`);
       const fetchedAtoll = atollResponse.data;
       if (!fetchedAtoll) {
         throw new Error('Island not found');
       }
       // Fetch accommodations using the working endpoint
-      const accommodationsResponse = await api.get(`/api/resorts/byAtoll/${atoll._id}`);
+      const accommodationsResponse = await api.get(`${API_BASE_URL}/resorts/byAtoll/${atoll._id}`);
       const accommodations = accommodationsResponse.data || [];
       console.log('Fetched island data:', {
         _id: fetchedAtoll._id,
@@ -414,9 +415,9 @@ const AtollManagement = () => {
   // Duplicate Atoll
   const handleDuplicateAtoll = async (id) => {
     try {
-      await api.post(`/api/atolls/duplicate/${id}`);
+      await api.post(`${API_BASE_URL}/atolls/duplicate/${id}`);
       setNotification('Island duplicated successfully!');
-      const atollsResponse = await api.get('/api/atolls');
+      const atollsResponse = await api.get(`${API_BASE_URL}/atolls`);
       setAtolls(atollsResponse.data || []);
       setTimeout(() => setNotification(''), 2000);
     } catch (err) {
@@ -427,8 +428,8 @@ const AtollManagement = () => {
   // Toggle Atoll Status
   const handleToggleStatus = async (id, currentStatus) => {
     try {
-      await api.patch(`/api/atolls/status/${id}`, { status: !currentStatus });
-      const atollsResponse = await api.get('/api/atolls');
+      await api.patch(`${API_BASE_URL}/atolls/status/${id}`, { status: !currentStatus });
+      const atollsResponse = await api.get(`${API_BASE_URL}/atolls`);
       setAtolls(atollsResponse.data || []);
     } catch (err) {
       setError('Failed to update status');
