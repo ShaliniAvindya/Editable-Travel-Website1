@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, MapPin, Calendar } from 'lucide-react';
 import GoogleReviews from './GoogleReviewsSection';
-import Newsletter from './Newsletter';
-import axios from 'axios'; 
+import axios from 'axios';
+import { API_BASE_URL } from '../components/apiConfig';
 
 const HomeScreen = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -26,11 +26,11 @@ const HomeScreen = () => {
       try {
         setLoading(true);
         const [uiContentRes, accommodationsRes, activitiesRes, packagesRes, blogsRes] = await Promise.all([
-          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/home'),
-          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/resorts'),
-          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/activities'),
-          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/packages'),
-          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/blogs')
+          axios.get(`${API_BASE_URL}/ui-content/home`),
+          axios.get(`${API_BASE_URL}/resorts`),
+          axios.get(`${API_BASE_URL}/activities`),
+          axios.get(`${API_BASE_URL}/packages`),
+          axios.get(`${API_BASE_URL}/blogs`)
         ]);
 
         setUIContent(uiContentRes.data);
@@ -93,7 +93,7 @@ const HomeScreen = () => {
           .map(blog => ({
             id: blog._id.toString(),
             title: blog.title,
- excerpt: (() => {
+            excerpt: (() => {
               if (Array.isArray(blog.content) && blog.content.length > 0) {
                 const firstBlockWithText = blog.content.find(
                   (block) => typeof block.text === 'string' && block.text.trim().length > 0
@@ -644,7 +644,7 @@ const HomeScreen = () => {
                   >
                     {post.title}
                   </h3>
-                <div className="text-gray-600 mb-2 sm:mb-4 text-sm sm:text-base">
+                  <div className="text-gray-600 mb-2 sm:mb-4 text-sm sm:text-base">
                     {post.excerpt || <span style={{ color: '#bbb' }}>No excerpt available</span>}
                   </div>
                   <button
@@ -677,14 +677,8 @@ const HomeScreen = () => {
           </div>
         </div>
       </section>
-        <Newsletter />
     </div>
   );
 };
 
 export default HomeScreen;
-
-
-
-
-
