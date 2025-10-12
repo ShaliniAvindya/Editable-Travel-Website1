@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, ArrowLeft, Play, Pause, Volume2, VolumeX, Tag, User, Clock } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-
+import { API_BASE_URL } from '../components/apiConfig';
 
 const BlogPage = () => {
   const [blog, setBlog] = useState(null);
@@ -510,7 +510,7 @@ const BlogPage = () => {
   useEffect(() => {
     const fetchBlog = async () => {
       try {
-        const response = await axios.get(`https://editable-travel-website1-rpfv.vercel.app/api/blogs/${blogId}`);
+        const response = await axios.get(`${API_BASE_URL}/blogs/${blogId}`);
         const blogData = response.data;
 
         const mappedBlog = {
@@ -552,7 +552,7 @@ const BlogPage = () => {
 
     const fetchRecentBlogs = async () => {
       try {
-        const response = await axios.get('https://editable-travel-website1-rpfv.vercel.app/api/blogs');
+        const response = await axios.get(`${API_BASE_URL}/blogs`);
         // Exclude current blog, sort by publish_date desc, take 6
         const blogs = response.data
           .filter(b => b._id.toString() !== blogId)
