@@ -44,7 +44,7 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await api.get('${API_BASE_URL}/users/all');
+      const response = await api.get(`${API_BASE_URL}/users/all`);
       console.log('Fetched users:', response.data);
       setUsers(response.data);
     } catch (err) {
@@ -208,3 +208,4 @@ Cancel</button>
 };
 
 export default UserManagement;
+
