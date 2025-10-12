@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
 import { X, Save, Trash2, Download, Youtube, Music2 } from 'lucide-react';
@@ -6,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import { API_BASE_URL } from '../apiConfig';
 
 const imgbbAxios = axios.create();
 
@@ -50,8 +50,10 @@ const PageContentManagement = () => {
     description: '',
     imageUrl: '',
     buttonText: '',
-    phone: '',
-    phoneLabel: '',
+    callPhone: '',
+    whatsappPhone: '',
+    callPhoneLabel: '',
+    whatsappPhoneLabel: '',
     email: '',
     emailLabel: '',
     address: '',
@@ -167,7 +169,7 @@ ${htmlToLatex(content.description || 'No content available.')}
       try {
         setLoading(true);
         console.log(`Fetching content for ${selectedPage}`);
-        const response = await api.get(`/api/ui-content/${selectedPage}`);
+        const response = await api.get(`${API_BASE_URL}/ui-content/${selectedPage}`);
         console.log('API Response:', response.data);
         setPageContent(response.data);
         const firstSectionId =
@@ -272,8 +274,10 @@ ${htmlToLatex(content.description || 'No content available.')}
         description: section.content.description || '',
         imageUrl: section.content.imageUrl || '',
         buttonText: section.content.buttonText || '',
-        phone: section.content.phone || '',
-        phoneLabel: section.content.phoneLabel || '',
+        callPhone: section.content.callPhone || '',
+        whatsappPhone: section.content.whatsappPhone || '',
+        callPhoneLabel: section.content.callPhoneLabel || '',
+        whatsappPhoneLabel: section.content.whatsappPhoneLabel || '',
         email: section.content.email || '',
         emailLabel: section.content.emailLabel || '',
         address: section.content.address || '',
@@ -290,8 +294,10 @@ ${htmlToLatex(content.description || 'No content available.')}
         description: '',
         imageUrl: '',
         buttonText: '',
-        phone: '',
-        phoneLabel: '',
+        callPhone: '',
+        whatsappPhone: '',
+        callPhoneLabel: '',
+        whatsappPhoneLabel: '',
         email: '',
         emailLabel: '',
         address: '',
@@ -329,8 +335,10 @@ ${htmlToLatex(content.description || 'No content available.')}
             type: 'contact',
             content: {
               title: formData.title,
-              phone: formData.phone,
-              phoneLabel: formData.phoneLabel,
+              callPhone: formData.callPhone,
+              whatsappPhone: formData.whatsappPhone,
+              callPhoneLabel: formData.callPhoneLabel,
+              whatsappPhoneLabel: formData.whatsappPhoneLabel,
               email: formData.email,
               emailLabel: formData.emailLabel,
               address: formData.address,
@@ -393,7 +401,7 @@ ${htmlToLatex(content.description || 'No content available.')}
         newSections.push(newSection);
       }
 
-      const response = await api.put(`/api/ui-content/${selectedPage}`, { sections: newSections });
+      const response = await api.put(`${API_BASE_URL}/ui-content/${selectedPage}`, { sections: newSections });
       console.log('Section saved:', response.data);
       setPageContent(response.data);
       setSuccess('Section updated successfully');
@@ -420,7 +428,7 @@ ${htmlToLatex(content.description || 'No content available.')}
         setSuccess('Image removed successfully');
       } else if (modal.type === 'section') {
         const newSections = pageContent.sections.filter((s) => s.sectionId !== modal.id);
-        const response = await api.put(`/api/ui-content/${selectedPage}`, { sections: newSections });
+        const response = await api.put(`${API_BASE_URL}/ui-content/${selectedPage}`, { sections: newSections });
         setPageContent(response.data);
         const newSectionId =
           selectedPage === 'activities'
@@ -461,8 +469,10 @@ ${htmlToLatex(content.description || 'No content available.')}
                 type: 'contact',
                 content: {
                   title: '',
-                  phone: '',
-                  phoneLabel: '',
+                  callPhone: '',
+                  whatsappPhone: '',
+                  callPhoneLabel: '',
+                  whatsappPhoneLabel: '',
                   email: '',
                   emailLabel: '',
                   address: '',
@@ -573,7 +583,7 @@ ${htmlToLatex(content.description || 'No content available.')}
                   ]
                 : []),
             ];
-      const response = await api.put(`/api/ui-content/${selectedPage}`, { sections: defaultSections });
+      const response = await api.put(`${API_BASE_URL}/ui-content/${selectedPage}`, { sections: defaultSections });
       console.log(`Default sections initialized for ${selectedPage}:`, response.data);
       setPageContent(response.data);
       setSelectedSection(selectedPage === 'legal' ? 'gtc' : 'hero');
@@ -593,8 +603,10 @@ ${htmlToLatex(content.description || 'No content available.')}
       description: '',
       imageUrl: '',
       buttonText: '',
-      phone: '',
-      phoneLabel: '',
+      callPhone: '',
+      whatsappPhone: '',
+      callPhoneLabel: '',
+      whatsappPhoneLabel: '',
       email: '',
       emailLabel: '',
       address: '',
@@ -655,8 +667,10 @@ ${htmlToLatex(content.description || 'No content available.')}
     if (section.sectionId === 'contact-info') {
       return (
         <div className="text-gray-600 space-y-2" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
-          <p><strong>Phone:</strong> {content.phone || 'N/A'}</p>
-          <p><strong>Phone Label:</strong> {content.phoneLabel || 'N/A'}</p>
+          <p><strong>Call Us Label:</strong> {content.callPhoneLabel || 'N/A'}</p>
+          <p><strong>Call Us:</strong> {content.callPhone || 'N/A'}</p>
+          <p><strong>WhatsApp Label:</strong> {content.whatsappPhoneLabel || 'N/A'}</p>
+          <p><strong>WhatsApp:</strong> {content.whatsappPhone || 'N/A'}</p>
           <p><strong>Email:</strong> {content.email || 'N/A'}</p>
           <p><strong>Email Label:</strong> {content.emailLabel || 'N/A'}</p>
           <p><strong>Address:</strong> {content.address || 'N/A'}</p>
@@ -885,27 +899,51 @@ ${htmlToLatex(content.description || 'No content available.')}
                       {selectedPage === 'contact' && selectedSection === 'contact-info' && (
                         <>
                           <div>
-                                  <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
-                              Phone Number
+                            <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
+                              Call us
                             </label>
                             <input
                               type="text"
-                              value={formData.phone}
-                              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                              value={formData.callPhone}
+                              onChange={(e) => setFormData({ ...formData, callPhone: e.target.value })}
                               className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[#1e809b] outline-none h-12 w-full"
-                                    style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
+                              style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                             />
                           </div>
                           <div>
-                                      <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
-                              Phone Label
+                            <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
+                              Whatsapp us
                             </label>
                             <input
                               type="text"
-                              value={formData.phoneLabel}
-                              onChange={(e) => setFormData({ ...formData, phoneLabel: e.target.value })}
+                              value={formData.whatsappPhone}
+                              onChange={(e) => setFormData({ ...formData, whatsappPhone: e.target.value })}
                               className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[#1e809b] outline-none h-12 w-full"
-                                        style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
+                              style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
+                            />
+                          </div>
+                          <div>
+                            <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
+                              Call us label
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.callPhoneLabel}
+                              onChange={(e) => setFormData({ ...formData, callPhoneLabel: e.target.value })}
+                              className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[#1e809b] outline-none h-12 w-full"
+                              style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
+                            />
+                          </div>
+                          <div>
+                            <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
+                              Whatsapp label
+                            </label>
+                            <input
+                              type="text"
+                              value={formData.whatsappPhoneLabel}
+                              onChange={(e) => setFormData({ ...formData, whatsappPhoneLabel: e.target.value })}
+                              className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[#1e809b] outline-none h-12 w-full"
+                              style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                             />
                           </div>
                           <div>
