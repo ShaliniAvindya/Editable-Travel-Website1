@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import InquiryFormModal from './InquiryFormModal';
+import { API_BASE_URL } from '../components/apiConfig';
 
 const ResortProfile = () => {
   const { type, id } = useParams();
@@ -33,7 +34,7 @@ const ResortProfile = () => {
     const fetchResort = async () => {
       try {
         setLoading(true);
-        const resortResponse = await axios.get(`https://editable-travel-website1-rpfv.vercel.app/api/resorts/${id}`);
+        const resortResponse = await axios.get(`${API_BASE_URL}/resorts/${id}`);
         const data = resortResponse.data;
         // Use cover_images for hero, images for about slider
         const mappedResort = {
@@ -61,7 +62,7 @@ const ResortProfile = () => {
         setResortData(mappedResort);
 
         // Fetch resorts in the same atoll
-        const allResortsResponse = await axios.get('https://editable-travel-website1-rpfv.vercel.app/api/resorts');
+        const allResortsResponse = await axios.get(`${API_BASE_URL}/resorts`);
         const allResorts = allResortsResponse.data;
         console.log('All Resorts API Response:', allResorts);
         const filteredResorts = allResorts
@@ -114,7 +115,7 @@ const ResortProfile = () => {
 
       const fetchSameLocationResorts = async () => {
         try {
-          const response = await axios.get('https://editable-travel-website1-rpfv.vercel.app/api/resorts');
+          const response = await axios.get(`${API_BASE_URL}/resorts`);
           const allResorts = response.data;
           const filteredResorts = allResorts
             .filter((item) => item.atoll?._id === state.item.atoll?._id && item._id !== id && item.type === type)
@@ -176,13 +177,13 @@ const ResortProfile = () => {
   };
 
   const nextRoomImage = () => {
-    if (showRoomModal) {
+    if (showRoomModal && Array.isArray(showRoomModal.images) && showRoomModal.images.length > 0) {
       setCurrentRoomImageIndex((prev) => (prev + 1) % showRoomModal.images.length);
     }
   };
 
   const prevRoomImage = () => {
-    if (showRoomModal) {
+    if (showRoomModal && Array.isArray(showRoomModal.images) && showRoomModal.images.length > 0) {
       setCurrentRoomImageIndex((prev) => (prev - 1 + showRoomModal.images.length) % showRoomModal.images.length);
     }
   };
@@ -200,14 +201,15 @@ const ResortProfile = () => {
 
   const handleInquirySubmit = async (submissionData) => {
     try {
-      const response = await axios.post('https://editable-travel-website1-rpfv.vercel.app/api/inquiries', submissionData);
+      const response = await axios.post(`${API_BASE_URL}/inquiries`, submissionData);
       console.log('Anfrage erfolgreich abgeschickt:', response.data);
       setShowInquiryModal(false);
       setSelectedRoom(null);
       setInquiryButtonType('bookNow');
     } catch (err) {
       console.error('Fehler beim Senden der Anfrage:', err);
-      throw new Error('Anfrage konnte nicht gesendet werden');
+      const serverMsg = err?.response?.data?.error || err?.response?.data?.msg || err?.message || 'Anfrage konnte nicht gesendet werden';
+      throw new Error(serverMsg);
     }
   };
 
@@ -287,11 +289,11 @@ const ResortProfile = () => {
               <div className="mb-12">
                 <h2 className="text-3xl font-bold mb-6 text-[#074a5b]">Über dieses {type.charAt(0).toUpperCase() + type.slice(1)}</h2>
                 {/* About Images Slider */}
-            {resortData.aboutImages && resortData.aboutImages.length >= 0 && (
+            {resortData.aboutImages && resortData.aboutImages.length > 0 && (
               <div className="mb-8">
-                {resortData.aboutImages.length === 0 ? (
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 h-80">
-                    <div className="relative rounded-2xl overflow-hidden shadow-lg group cursor-pointer col-span-2 md:col-span-1"
+                {resortData.aboutImages.length === 1 ? (
+                  <div className="grid grid-cols-1 gap-4 h-80">
+                    <div className="relative rounded-2xl overflow-hidden shadow-lg group cursor-pointer"
                         onClick={() => setCurrentImageIndex(0)}>
                       <img
                         src={resortData.aboutImages[0].url}
@@ -299,19 +301,6 @@ const ResortProfile = () => {
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                    </div>
-                    <div className="grid grid-rows-2 gap-4">
-                      {resortData.aboutImages.slice(1, 3).map((image, idx) => (
-                        <div key={idx + 1} className="relative rounded-2xl overflow-hidden shadow-lg group cursor-pointer"
-                            onClick={() => setCurrentImageIndex(idx + 1)}>
-                          <img
-                            src={image.url}
-                            alt={image.caption}
-                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                        </div>
-                      ))}
                     </div>
                   </div>
                 ) : (
@@ -355,7 +344,7 @@ const ResortProfile = () => {
                         >
                           <img
                             src={image.url}
-                            alt={`Thumbnail ${idx + 1}`}
+                            alt={image?.caption || `Thumbnail ${idx + 1}`}
                             className="w-full h-full object-cover"
                           />
                           {idx === (currentImageIndex % resortData.aboutImages.length) && (
@@ -500,7 +489,7 @@ const ResortProfile = () => {
           className="flex-1 bg-[#1e809b] hover:bg-[#074a5b] text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 flex items-center justify-center mb-2"
         >
           <Mail size={20} className="mr-2" />
-          Buchen Sie per E-Mail
+          Anfrage per E-Mail
         </button>
         <button
           onClick={() => {
@@ -511,7 +500,7 @@ const ResortProfile = () => {
           className="flex-1 bg-green-500 hover:bg-green-600 text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 flex items-center justify-center"
         >
           <MessageCircle size={20} className="mr-2" />
-          Buchen Sie per WhatsApp
+          Anfrage per WhatsApp
         </button>
       </div>
     </div>
@@ -641,11 +630,11 @@ const ResortProfile = () => {
               </button>
               <div className="relative h-48 sm:h-96 overflow-hidden rounded-t-2xl">
                 <img
-                  src={showRoomModal.images[currentRoomImageIndex]}
+                  src={(Array.isArray(showRoomModal.images) && showRoomModal.images[currentRoomImageIndex]) || 'https://via.placeholder.com/800'}
                   alt={`${showRoomModal.name} - Image ${currentRoomImageIndex + 1}`}
                   className="w-full h-full object-cover"
                 />
-                {showRoomModal.images.length > 1 && (
+                {Array.isArray(showRoomModal.images) && showRoomModal.images.length > 1 && (
                   <>
                     <button
                       onClick={prevRoomImage}
@@ -662,7 +651,7 @@ const ResortProfile = () => {
                   </>
                 )}
                 <div className="absolute bottom-2 sm:bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
-                  {showRoomModal.images.map((_, index) => (
+                  {Array.isArray(showRoomModal.images) ? showRoomModal.images.map((_, index) => (
                     <button
                       key={index}
                       onClick={() => setCurrentRoomImageIndex(index)}
@@ -670,7 +659,7 @@ const ResortProfile = () => {
                         index === currentRoomImageIndex ? 'bg-white' : 'bg-white/50 hover:bg-white/75'
                       }`}
                     />
-                  ))}
+                  )) : null}
                 </div>
               </div>
               <div className="p-3 sm:p-8">
@@ -711,8 +700,8 @@ const ResortProfile = () => {
                     className="flex-1 bg-[#1e809b] hover:bg-[#074a5b] text-white py-2 px-3 sm:py-3 sm:px-6 rounded-xl text-xs sm:text-base font-semibold transition-all duration-300 transform hover:scale-105 flex items-center justify-center"
                   >
                     <Mail size={16} className="mr-2 sm:mr-2.5" />
-                    <span className="hidden sm:inline">Buchen Sie Ihr Zimmer per E-Mail</span>
-                    <span className="sm:hidden">Per E-Mail buchen</span>
+                    <span className="hidden sm:inline">Zimmeranfrage per E-Mail</span>
+                    <span className="sm:hidden">Anfrage per E-Mail</span>
                   </button>
                   <button
                     onClick={() => {
@@ -723,8 +712,8 @@ const ResortProfile = () => {
                     className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-3 sm:py-3 sm:px-6 rounded-xl text-xs sm:text-base font-semibold transition-all duration-300 transform hover:scale-105 flex items-center justify-center"
                   >
                     <MessageCircle size={16} className="mr-2 sm:mr-2.5" />
-                    <span className="hidden sm:inline">Zimmer über WhatsApp buchen</span>
-                    <span className="sm:hidden">Per WhatsApp buchen</span>
+                    <span className="hidden sm:inline">Zimmeranfrage über WhatsApp</span>
+                    <span className="sm:hidden">Anfrage über WhatsApp</span>
                   </button>
                 </div>
               </div>
@@ -758,6 +747,7 @@ const ResortProfile = () => {
           }}
           item={{
             _id: resortData._id,
+              type: resortData.type || 'resort',
             title: selectedRoom ? `${resortData.name} - ${selectedRoom.name}` : resortData.name,
             description: selectedRoom ? selectedRoom.description : resortData.description,
             expiryDate: null,
