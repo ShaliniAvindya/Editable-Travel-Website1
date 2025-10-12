@@ -11,6 +11,7 @@ import {
 import { useParams } from "react-router-dom";
 import axios from 'axios';
 import InquiryFormModal from './InquiryFormModal'; 
+import { API_BASE_URL } from '../components/apiConfig';
 
 const ActivityProfile = () => {
   const [atolls, setAtolls] = useState([]);
@@ -49,7 +50,7 @@ const ActivityProfile = () => {
       try {
         setLoading(true);
         // Fetch all atolls
-        const atollsResponse = await axios.get('https://editable-travel-website1-rpfv.vercel.app/api/atolls');
+        const atollsResponse = await axios.get(`${API_BASE_URL}/atolls`);
         const atollsData = atollsResponse.data;
 
         const atollsWithData = await Promise.all(
@@ -57,12 +58,12 @@ const ActivityProfile = () => {
             try {
               // Fetch accommodations for this atoll
               const resortsResponse = await axios.get(
-                `https://editable-travel-website1-rpfv.vercel.app/api/resorts/byAtoll/${atoll._id}`
+                `${API_BASE_URL}/resorts/byAtoll/${atoll._id}`
               );
 
               // Fetch activities for this atoll
               const activitiesResponse = await axios.get(
-                `https://editable-travel-website1-rpfv.vercel.app/api/activities/byAtoll/${atoll._id}`
+                `${API_BASE_URL}/activities/byAtoll/${atoll._id}`
               );
 
               return {
@@ -96,7 +97,7 @@ const ActivityProfile = () => {
 
         // Fetch activity details with populated atoll data
         if (activityId) {
-          const activityResponse = await axios.get(`https://editable-travel-website1-rpfv.vercel.app/api/activities/${activityId}`);
+          const activityResponse = await axios.get(`${API_BASE_URL}/activities/${activityId}`);
           const activityData = activityResponse.data;
           
           // Make sure atoll IDs properly formatted
@@ -141,7 +142,7 @@ const ActivityProfile = () => {
 
   const handleModalSubmit = async (submissionData) => {
     try {
-      const response = await axios.post('https://editable-travel-website1-rpfv.vercel.app/api/inquiries', submissionData);
+      const response = await axios.post(`${API_BASE_URL}/inquiries`, submissionData);
       console.log('Anfrage erfolgreich übermittelt:', response.data);
     } catch (err) {
       console.error('Fehler beim Senden der Anfrage:', err);
@@ -285,7 +286,7 @@ const ActivityProfile = () => {
                 disabled={!activity}
               >
                 <MessageCircle size={16} />
-                Buchen Sie per E-Mail
+                Anfrage per E-Mail
               </button>
               <button
                 onClick={handleWhatsAppContact}
@@ -293,7 +294,7 @@ const ActivityProfile = () => {
                 disabled={!activity}
               >
                 <MessageCircle size={16} />
-                Buchen Sie per WhatsApp
+                Anfrage per WhatsApp
               </button>
             </div>
           </div>
@@ -554,7 +555,7 @@ const ActivityProfile = () => {
       <InquiryFormModal
         isOpen={isModalOpen && !!activity}
         onClose={() => setIsModalOpen(false)}
-        item={activity}
+        item={{ ...activity, type: activity?.type || activity?.entityType || 'activity' }}
         onSubmit={handleModalSubmit}
         language="en"
         buttonType={modalButtonType}
@@ -564,4 +565,3 @@ const ActivityProfile = () => {
 };
 
 export default ActivityProfile;
-
