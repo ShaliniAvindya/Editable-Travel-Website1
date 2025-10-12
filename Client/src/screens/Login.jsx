@@ -4,13 +4,7 @@ import axios from 'axios';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Lock } from 'lucide-react';
 import { AuthContext } from '../components/context/AuthContext';
-
-const api = axios.create({
-  baseURL: 'https://editable-travel-website1-rpfv.vercel.app',
-  headers: {
-    'Content-Type': 'application/json'
-  }
-});
+import { API_BASE_URL } from '../components/apiConfig';
 
 const Login = () => {
   const { user, login, redirectPath, setRedirectPath } = useContext(AuthContext);
@@ -84,7 +78,7 @@ const Login = () => {
     setSnackbarType('');
     setLoading(true);
     try {
-      const response = await api.post('https://editable-travel-website1-rpfv.vercel.app/api/users/login', {
+      const response = await axios.post(`${API_BASE_URL}/users/login`, {
         email: formData.email,
         password: formData.password
       });
