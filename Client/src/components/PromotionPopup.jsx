@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { X, Gift, Calendar, MapPin, Plane } from 'lucide-react';
 import { AuthContext } from './context/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from './apiConfig';
 
 const PromotionPopup = ({ promotion: propPromotion, onClose }) => {
   const { api } = useContext(AuthContext);
@@ -66,23 +67,31 @@ const PromotionPopup = ({ promotion: propPromotion, onClose }) => {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await api.get('https://editable-travel-website1-rpfv.vercel.app/api/promotions', {
-        headers: { 'x-auth-token': token },
+      let response;
+      try {
+        response = await api.get(`${API_BASE_URL}/promotions/active`);
+      } catch (err) {
+        console.error('Promotions fetch failed:', err);
+        return;
+      }
+
+      const promotions = (response && response.data) ? response.data : [];
+      if (promotions.length === 0) {
+        console.debug('No promotions returned from API');
+      }
+
+      const now = Date.now();
+      const activePromotion = promotions.find((p) => {
+        const isPopup = p && (p.isPopup === true || p.isPopup === 'true' || p.isPopup === 1 || Boolean(p.isPopup));
+        if (!isPopup) return false;
+        const from = p.validFrom ? new Date(p.validFrom).getTime() : -Infinity;
+        const to = p.validUntil ? (new Date(p.validUntil).setHours(23, 59, 59, 999)) : Infinity;
+        return from <= now && to >= now;
       });
-      
-      if (response.data && response.data.length > 0) {
-        const currentDate = new Date();
-        const activePromotion = response.data.find(
-          (p) =>
-            p.isPopup &&
-            new Date(p.validFrom) <= currentDate &&
-            new Date(p.validUntil).setHours(23, 59, 59, 999) >= currentDate.getTime()
-        );
-        
-        if (activePromotion) {
-          setPromotion(activePromotion);
-          setIsVisible(true);
-        }
+
+      if (activePromotion) {
+        setPromotion(activePromotion);
+        setIsVisible(true);
       }
     } catch (error) {
       console.error('Error fetching active promotions:', error);
@@ -91,9 +100,6 @@ const PromotionPopup = ({ promotion: propPromotion, onClose }) => {
 
   const handleClose = () => {
     setIsVisible(false);
-    if (onClose) {
-      onClose();
-    }
   };
 
   const handleCTAClick = () => {
@@ -148,7 +154,6 @@ const PromotionPopup = ({ promotion: propPromotion, onClose }) => {
               <div className="absolute inset-0 bg-black bg-opacity-10"></div>
             </div>
           </div>
-      {/* Desktop image full height adjustment */}
       <style>{`
         @media (min-width: 640px) {
           .promo-img-col {
@@ -184,8 +189,8 @@ const PromotionPopup = ({ promotion: propPromotion, onClose }) => {
                   <div className="w-10 sm:w-12 h-1 sm:h-1 bg-gradient-to-r from-[#074a5b] to-[#1e809b] rounded-full"></div>
                 </div>
               </div>
-              
-              <p className="text-sm xs:text-sm sm:text-base text-gray-600 leading-relaxed"style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
+
+              <p className="text-sm xs:text-sm sm:text-base text-gray-600 leading-relaxed" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                 {promotion.description}
               </p>
             </div>
