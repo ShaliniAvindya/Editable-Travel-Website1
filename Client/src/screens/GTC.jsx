@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, Download } from 'lucide-react';
 import axios from 'axios';
 import { jsPDF } from 'jspdf';
+import { API_BASE_URL } from '../components/apiConfig';
 
 const GTC = ({ isOpen, onClose }) => {
   const [content, setContent] = useState('');
@@ -125,7 +126,7 @@ const GTC = ({ isOpen, onClose }) => {
     if (isOpen) {
       const fetchGTC = async () => {
         try {
-          const response = await axios.get('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/legal');
+          const response = await axios.get(`${API_BASE_URL}/ui-content/legal`);
           const gtcSection = response.data.sections?.find((s) => s.sectionId === 'gtc');
           setContent(gtcSection?.content.description || '<p>No content available.</p>');
         } catch (err) {
