@@ -4,6 +4,7 @@ import { Menu, X, ChevronDown, Home } from 'lucide-react';
 import axios from 'axios';
 import TranslationWidget from '../components/TranslationWidget';
 import AdminTranslationWidget from '../components/AdminTranslationWidget';
+import { API_BASE_URL } from '../components/apiConfig';
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -15,7 +16,6 @@ const Header = () => {
     adventures: false,
     activities: false,
     packageoffers: false,
-    admin: false,
   });
   const [hotels, setHotels] = useState([]);
   const [resorts, setResorts] = useState([]);
@@ -89,10 +89,10 @@ const Header = () => {
     const fetchDropdownData = async () => {
       try {
         const [hotelsRes, resortsRes, adventuresRes, activitiesRes] = await Promise.all([
-          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/resorts?type=hotel'),
-          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/resorts?type=resort'),
-          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/resorts?type=adventure'),
-          axios.get('https://editable-travel-website1-rpfv.vercel.app/api/activities'),
+          axios.get(`${API_BASE_URL}/resorts?type=hotel`),
+          axios.get(`${API_BASE_URL}/resorts?type=resort`),
+          axios.get(`${API_BASE_URL}/resorts?type=adventure`),
+          axios.get(`${API_BASE_URL}/activities`),
         ]);
 
         const hotelsData = (hotelsRes.data || [])
@@ -164,7 +164,7 @@ const Header = () => {
   useEffect(() => {
     const fetchLogo = async () => {
       try {
-        const response = await axios.get('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/logo-favicon');
+        const response = await axios.get(`${API_BASE_URL}/ui-content/logo-favicon`);
         const logoSection = response.data?.sections?.find((s) => s.sectionId === 'logo');
         setLogoUrl(logoSection?.content?.imageUrl || null);
       } catch (err) {
@@ -221,7 +221,6 @@ const Header = () => {
       adventures: false,
       activities: false,
       packageoffers: false,
-      admin: false,
     });
   };
 
@@ -256,9 +255,6 @@ const Header = () => {
     if (parentPath === '/packageoffers') {
       return currentPath.startsWith('/packageoffers') && currentPath !== '/packageoffers';
     }
-    if (parentPath === '/admin') {
-      return currentPath.startsWith('/admin') && currentPath !== '/admin';
-    }
     return false;
   };
 
@@ -269,9 +265,9 @@ const Header = () => {
       href: '/accommodations',
       hasDropdown: true,
       subDropdowns: [
-        { name: 'Hotels', key: 'hotels', items: hotels },
-        { name: 'Resorts', key: 'resorts', items: resorts },
-        { name: 'Abenteuer', key: 'adventures', items: adventures },
+        { name: 'Local Hotels', key: 'hotels', items: hotels },
+        { name: 'Luxury Resorts', key: 'resorts', items: resorts },
+        { name: 'Liveaboard', key: 'adventures', items: adventures },
       ],
     },
     {
@@ -282,7 +278,6 @@ const Header = () => {
     },
     { name: 'Paketangebote', href: '/packageoffers', hasDropdown: false },
     { name: 'Blogs', href: '/blogs', hasDropdown: false },
-    { name: 'Admin', href: '/admin', hasDropdown: false },
   ];
 
   useEffect(() => {
@@ -682,7 +677,7 @@ const Header = () => {
                       }}
                       onClick={() => handleNavigation(null, true)}
                     >
-                      {item.icon ? item.icon : item.name}
+                      {item.name}
                     </NavLink>
                   )}
                   {dropdownOpen[item.name.toLowerCase()] && item.name === 'Unterkunft' && (
