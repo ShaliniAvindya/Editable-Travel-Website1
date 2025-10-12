@@ -20,7 +20,12 @@ const PackageSchema = new mongoose.Schema({
   activities: [String], // or use ObjectId if referencing Activity collection
   images: [String],
   expiry_date: Date,
-  nights: Number
+  nights: Number,
+  inquiry_form_type: {
+    type: String,
+    enum: ['Accommodation', 'Adventure', 'Activity'],
+    required: true
+  }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Package', PackageSchema);
