@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import NewsletterManagement from './NewsletterManagement';
 import { X } from 'lucide-react';
+import { API_BASE_URL } from '../apiConfig';
 
 const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
   if (!isOpen) return null;
@@ -176,12 +178,14 @@ const ViewReplyModal = ({ isOpen, onClose, replyMessage }) => {
 
 const InquiryManagement = () => {
   const [inquiries, setInquiries] = useState([]);
-  const [activeTab, setActiveTab] = useState('Package');
+  const [activeTab, setActiveTab] = useState('Accommodation');
+  const [packageSubTab, setPackageSubTab] = useState('Accommodation');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null, name: '' });
   const [replyModal, setReplyModal] = useState({ isOpen: false, inquiry: null });
   const [viewReplyModal, setViewReplyModal] = useState({ isOpen: false, replyMessage: '' });
+  const [viewDetailsModal, setViewDetailsModal] = useState({ isOpen: false, inquiry: null });
   const [refreshing, setRefreshing] = useState(false);
 
   // Auto-clear error and success messages
@@ -204,7 +208,7 @@ const InquiryManagement = () => {
   const fetchInquiries = async () => {
     setRefreshing(true);
     try {
-      const response = await axios.get('https://editable-travel-website1-rpfv.vercel.app/api/inquiries');
+      const response = await axios.get(`${API_BASE_URL}/inquiries`);
       setInquiries(response.data);
     } catch (err) {
       console.error('Fetch inquiries error:', err);
@@ -212,6 +216,172 @@ const InquiryManagement = () => {
     } finally {
       setRefreshing(false);
     }
+  };
+
+  const DetailsModal = ({ isOpen, onClose, inquiry }) => {
+    if (!isOpen || !inquiry) return null;
+    const effectiveForm = (inquiry.entityType === 'Package')
+      ? (inquiry.inquiry_form_type || 'Accommodation')
+      : (inquiry.entityType || 'Contact');
+
+    const labels = {
+      name: 'Name',
+      email: 'Email',
+      phone_number: 'Phone',
+      country: 'Country',
+      message: 'Message',
+      from_date: 'From Date',
+      to_date: 'To Date',
+      number_of_rooms: 'Number of Rooms',
+      diverse_adults: 'Diverse Adults',
+      diverse_children: 'Diverse Children',
+      nondiverse_adults: 'Nondiverse Adults',
+      nondiverse_children: 'Nondiverse Children',
+      nondiverse_infants: 'Nondiverse Infants',
+      selectedActivities: 'Selected Activities',
+      resortName: 'Resort Name',
+      roomName: 'Room Name',
+      preferredMonth: 'Preferred Month',
+      preferredYear: 'Preferred Year',
+      adventureOption: 'Option',
+      participants: 'Participants',
+      bookWholeBoat: 'Book Whole Boat',
+      submitted_at: 'Submitted At',
+      buttonType: 'Mode of Book',
+      title: 'Title',
+      inquiry_form_type: 'Inquiry Form Type',
+      entityType: 'Entity Type',
+      _id: 'ID'
+    };
+
+    const fieldsByForm = {
+      Accommodation: [
+        'name','email','phone_number','country','message','from_date','to_date','number_of_rooms',
+        'diverse_adults','diverse_children','nondiverse_adults','nondiverse_children','nondiverse_infants',
+        'selectedActivities','resortName','roomName','submitted_at','buttonType','entityType','inquiry_form_type','title','_id'
+      ],
+      Adventure: [
+        'name','email','phone_number','country','message','preferredMonth','preferredYear','adventureOption',
+        'participants','bookWholeBoat','submitted_at','buttonType','entityType','inquiry_form_type','title','_id'
+      ],
+      Activity: [
+        'name','email','phone_number','country','message','title','submitted_at','buttonType','entityType','inquiry_form_type','_id'
+      ],
+      Contact: [
+        'name','email','message','submitted_at','buttonType','entityType','_id'
+      ]
+    };
+
+    const chosenFields = fieldsByForm[effectiveForm] || Object.keys(inquiry);
+
+    const renderValue = (val) => {
+      if (val == null) return 'N/A';
+      if (Array.isArray(val)) return val.map(v => (typeof v === 'object' ? JSON.stringify(v) : String(v))).join(', ');
+      if (typeof val === 'object') {
+        // Friendly render for participants array or other known shapes
+        if (val.name || val.email) return JSON.stringify(val, null, 2);
+        return JSON.stringify(val, null, 2);
+      }
+      if (typeof val === 'boolean') return val ? 'Yes' : 'No';
+      return String(val);
+    };
+
+    const getLabel = (key) => labels[key] || key;
+
+    const getId = (i) => {
+      if (!i) return '';
+      if (i._id && typeof i._id === 'object' && i._id.$oid) return i._id.$oid;
+      if (typeof i._id === 'string') return i._id;
+      return '';
+    };
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-3xl overflow-auto max-h-[80vh]">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-[#074a5b]">
+              {effectiveForm} Inquiry - {inquiry.name} {getId(inquiry) ? `(${getId(inquiry)})` : ''}
+            </h3>
+            <button
+              onClick={onClose}
+              className="text-gray-600 hover:text-gray-800"
+              aria-label="Close modal"
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          <div className="mb-4">
+            <table className="w-full text-sm">
+              <tbody>
+                {chosenFields.map((key) => {
+                  // Render participants specially for Activity inquiries
+                  if (key === 'participants') {
+                    const parts = Array.isArray(inquiry.participants) ? inquiry.participants : [];
+                    if (parts.length === 0) {
+                      return (
+                        <tr key={key} className="border-t">
+                          <td className="py-2 align-top font-semibold text-[#074a5b] w-1/3">{getLabel(key)}</td>
+                          <td className="py-2 align-top whitespace-pre-wrap">N/A</td>
+                        </tr>
+                      );
+                    }
+                    return (
+                      <React.Fragment key={key}>
+                        <tr className="border-t bg-gray-50">
+                          <td className="py-2 font-semibold text-[#074a5b]">{getLabel(key)}</td>
+                          <td className="py-2">{parts.length} participant(s)</td>
+                        </tr>
+                        {parts.map((p, idx) => (
+                          <tr key={`${key}-${idx}`} className="border-t">
+                            <td className="py-2 align-top font-semibold text-[#074a5b] w-1/3">Participant {idx + 1}</td>
+                            <td className="py-2 align-top whitespace-pre-wrap">
+                              <div className="space-y-1">
+                                {(() => {
+                                  const partLabels = { name: 'Name', gender: 'Gender', diverStatus: 'Diver status', ageCategory: 'Age category' };
+                                  return (
+                                    <>
+                                      {['name','gender','diverStatus','ageCategory'].map((field) => (
+                                        p[field] != null ? (
+                                          <div key={field}><strong className="text-gray-700">{partLabels[field] || (field.charAt(0).toUpperCase() + field.slice(1))}:</strong> <span className="text-gray-900">{String(p[field])}</span></div>
+                                        ) : null
+                                      ))}
+                                      {Object.keys(p).filter(f => !['name','gender','diverStatus','ageCategory','_id'].includes(f)).map(f => (
+                                        <div key={f}><strong className="text-gray-700">{f}:</strong> <span className="text-gray-900">{renderValue(p[f])}</span></div>
+                                      ))}
+                                    </>
+                                  );
+                                })()}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </React.Fragment>
+                    );
+                  }
+
+                  return (
+                    <tr key={key} className="border-t">
+                      <td className="py-2 align-top font-semibold text-[#074a5b] w-1/3">{getLabel(key)}</td>
+                      <td className="py-2 align-top whitespace-pre-wrap">{renderValue(inquiry[key])}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="flex justify-end">
+            <button
+              onClick={onClose}
+              className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-xl font-semibold transition-all duration-300"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const handleDeleteInquiry = (id, name) => {
@@ -228,7 +398,7 @@ const InquiryManagement = () => {
 
   const confirmDelete = async () => {
     try {
-      await axios.delete(`https://editable-travel-website1-rpfv.vercel.app/api/inquiries/${deleteModal.id}`);
+      await axios.delete(`${API_BASE_URL}/inquiries/${deleteModal.id}`);
       setInquiries(inquiries.filter((i) => i._id.$oid !== deleteModal.id));
       setSuccess('Inquiry deleted successfully');
     } catch (err) {
@@ -250,7 +420,7 @@ const InquiryManagement = () => {
       return;
     }
     try {
-      await axios.post('//inquiries/reply', { inquiryId, subject, message });
+      await axios.post(`${API_BASE_URL}/inquiries/reply`, { inquiryId, subject, message });
       setInquiries((prev) => prev.map((i) =>
         (i._id && i._id.$oid === inquiryId) ? { ...i, replyMessage: message } : i
       ));
@@ -268,43 +438,91 @@ const InquiryManagement = () => {
     setViewReplyModal({ isOpen: true, replyMessage });
   };
 
-  const tabs = ['Package', 'Activity', 'Accommodation', 'Contact'];
+  const tabs = ['Accommodation', 'Adventure', 'Activity', 'Package', 'Contact', 'Newsletter'];
+
+  const displayTabLabel = (t) => {
+    if (!t) return t;
+    if (t === 'Adventure') return 'Liveaboard';
+    return t;
+  };
 
   const renderTable = (tab) => {
-    const filteredInquiries = inquiries.filter((inquiry) => inquiry.entityType === tab);
+    const effectiveTab = tab === 'Package' ? packageSubTab : tab;
+    const filteredInquiries = tab === 'Package'
+      ? inquiries.filter((inquiry) => inquiry.entityType === 'Package' && inquiry.inquiry_form_type === packageSubTab)
+      : inquiries.filter((inquiry) => inquiry.entityType === tab);
+
+    const packageSubTabs = tab === 'Package' ? (
+      <div className="mb-4 flex justify-center">
+        <div className="inline-flex rounded bg-gray-100 p-1">
+          {['Accommodation', 'Adventure', 'Activity'].map((sub) => (
+            <button
+              key={sub}
+              onClick={() => setPackageSubTab(sub)}
+              className={`px-4 py-2 rounded ${packageSubTab === sub ? 'bg-white shadow' : 'bg-transparent'}`}
+            >
+              {displayTabLabel(sub)}
+            </button>
+          ))}
+        </div>
+      </div>
+    ) : null;
 
     if (filteredInquiries.length === 0) {
       return (
-        <p className="text-gray-600" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
-          No {tab.toLowerCase()} inquiries found.
-        </p>
+        <div>
+          {packageSubTabs}
+          <p className="text-gray-600" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
+            No {displayTabLabel(effectiveTab).toLowerCase()} inquiries found.
+          </p>
+        </div>
       );
     }
 
     const headers = {
       Package: [
-        'Name', 'Email', 'Phone', 'Country', 'Adults', 'Children', 'Infants',
-        'From Date', 'To Date', 'Message', 'Title', 'Submitted At', 'Mode of Book', 'Actions'
+        'Name', 'Email', 'Phone', 'Country', 'Message','From Date', 'To Date', 'Hotel', 'Submitted At', 'Mode of Book', 'Actions'
       ],
       Activity: [
-        'Name', 'Email', 'Phone', 'Country', 'Adults', 'Children', 'Infants',
-        'From Date', 'To Date', 'Message', 'Title', 'Submitted At', 'Mode of Book', 'Actions'
+        'Name', 'Email', 'Phone', 'Country', 'Message', 'Activity', 'Submitted At', 'Mode of Book', 'Actions'
       ],
       Accommodation: [
-        'Name', 'Email', 'Phone', 'Country', 'Adults', 'Children', 'Infants',
-        'From Date', 'To Date', 'Message', 'Resort Name', 'Room Name', 'Submitted At', 'Mode of Book', 'Actions'
+        'Name', 'Email', 'Phone', 'Country','Message', 'From Date', 'To Date', 'Number of Rooms', 'Diverse Adults', 'Diverse Children', 'Nondiverse Adults', 'Nondiverse Children', 'Nondiverse Infants', 'Selected Activities', 'Resort Name', 'Room Name', 'Submitted At', 'Mode of Book', 'Actions'
+      ],
+      Adventure: [
+        'Name', 'Email', 'Phone', 'Country','Message', 'Preferred Month', 'Preferred Year', 'Option', 'Participants', 'Book Whole Boat', 'Submitted At', 'Mode of Book', 'Actions'
       ],
       Contact: [
         'Name', 'Email', 'Message', 'Submitted At', 'Mode of Book', 'Actions'
       ]
     };
 
+    const headersToShow = (() => {
+      const base = Array.isArray(headers[effectiveTab]) ? [...headers[effectiveTab]] : [];
+      if (tab === 'Package' && packageSubTab === 'Accommodation') {
+        return base.map(h => (h === 'Room Name' ? 'Package Name' : h));
+      }
+      if (tab === 'Package' && packageSubTab === 'Activity') {
+        return base.map(h => (h === 'Activity' ? 'Package Name' : h));
+      }
+      if (tab === 'Package' && packageSubTab === 'Adventure') {
+        const idx = base.indexOf('Message');
+        if (idx >= 0) {
+          const copy = [...base];
+          copy.splice(idx + 1, 0, 'Package Name');
+          return copy;
+        }
+      }
+      return base;
+    })();
+
     return (
       <div className="overflow-x-auto">
+        {packageSubTabs}
         <table className="min-w-full bg-white rounded-2xl shadow-lg table-fixed font-sans">
           <thead>
             <tr className="bg-[#074a5b] text-white">
-              {headers[tab].map((header) => (
+              {headersToShow.map((header) => (
                 <th
                   key={header}
                   className="px-4 py-2 text-center text-sm font-semibold min-w-[100px] max-w-[200px] font-sans"
@@ -338,25 +556,100 @@ const InquiryManagement = () => {
                 cells.push(
                   <td key={rowId+"-phone"} className="px-4 py-2 text-gray-600 min-w-[100px] max-w-[120px] font-sans">{inquiry.phone_number || 'N/A'}</td>,
                   <td key={rowId+"-country"} className="px-4 py-2 text-gray-600 min-w-[80px] max-w-[100px] font-sans">{inquiry.country || 'N/A'}</td>,
-                  <td key={rowId+"-adults"} className="px-4 py-2 text-gray-600 min-w-[80px] max-w-[100px] font-sans">{typeof inquiry.adults === 'number' ? inquiry.adults : (inquiry.adults ? Number(inquiry.adults) : 0)}</td>,
-                  <td key={rowId+"-children"} className="px-4 py-2 text-gray-600 min-w-[80px] max-w-[100px] font-sans">{typeof inquiry.children === 'number' ? inquiry.children : (inquiry.children ? Number(inquiry.children) : 0)}</td>,
-                  <td key={rowId+"-infants"} className="px-4 py-2 text-gray-600 min-w-[80px] max-w-[100px] font-sans">{typeof inquiry.infants === 'number' ? inquiry.infants : (inquiry.infants ? Number(inquiry.infants) : 0)}</td>,
-                  <td key={rowId+"-from"} className="px-4 py-2 text-gray-600 min-w-[100px] max-w-[120px] font-sans">{parseDate(inquiry.from_date)}</td>,
-                  <td key={rowId+"-to"} className="px-4 py-2 text-gray-600 min-w-[100px] max-w-[120px] font-sans">{parseDate(inquiry.to_date)}</td>
+                  <td key={rowId+"-adults"} className="hidden" />,
+                  <td key={rowId+"-children"} className="hidden" />,
+                  <td key={rowId+"-infants"} className="hidden" />,
+                  <td key={rowId+"-from"} className="hidden" />,
+                  <td key={rowId+"-to"} className="hidden" />
                 );
               }
               cells.push(
                 <td key={rowId+"-message"} className="px-4 py-2 text-gray-600 truncate min-w-[120px] max-w-[200px] font-sans">{inquiry.message || 'N/A'}</td>
               );
-              if (tab === 'Package' || tab === 'Activity') {
+              if (effectiveTab === 'Package') {
+                const parseDate = (dateVal) => {
+                  if (!dateVal) return 'N/A';
+                  if (typeof dateVal === 'string') {
+                    const d = new Date(dateVal);
+                    return isNaN(d) ? 'N/A' : d.toLocaleDateString();
+                  }
+                  if (typeof dateVal === 'object' && dateVal.$date) {
+                    const d = new Date(dateVal.$date);
+                    return isNaN(d) ? 'N/A' : d.toLocaleDateString();
+                  }
+                  return 'N/A';
+                };
                 cells.push(
+                  <td key={rowId+"-from"} className="px-4 py-2 text-gray-600 min-w-[100px] max-w-[120px] font-sans">{parseDate(inquiry.from_date)}</td>,
+                  <td key={rowId+"-to"} className="px-4 py-2 text-gray-600 min-w-[100px] max-w-[120px] font-sans">{parseDate(inquiry.to_date)}</td>,
                   <td key={rowId+"-title"} className="px-4 py-2 text-gray-600 truncate min-w-[100px] max-w-[150px] font-sans">{inquiry.title || 'N/A'}</td>
                 );
-              } else if (tab === 'Accommodation') {
+              } else if (effectiveTab === 'Activity') {
+                // Activity: show only the activity title 
+                const parseDate = (dateVal) => {
+                  if (!dateVal) return 'N/A';
+                  if (typeof dateVal === 'string') {
+                    const d = new Date(dateVal);
+                    return isNaN(d) ? 'N/A' : d.toLocaleDateString();
+                  }
+                  if (typeof dateVal === 'object' && dateVal.$date) {
+                    const d = new Date(dateVal.$date);
+                    return isNaN(d) ? 'N/A' : d.toLocaleDateString();
+                  }
+                  return 'N/A';
+                };
                 cells.push(
-                  <td key={rowId+"-resort"} className="px-4 py-2 text-gray-600 truncate min-w-[100px] max-w-[150px] font-sans">{inquiry.resortName || 'N/A'}</td>,
-                  <td key={rowId+"-room"} className="px-4 py-2 text-gray-600 truncate min-w-[100px] max-w-[150px] font-sans">{inquiry.roomName || 'N/A'}</td>
+                  <td key={rowId+"-title"} className="px-4 py-2 text-gray-600 truncate min-w-[100px] max-w-[150px] font-sans">{(inquiry.entityType === 'Package') ? (inquiry.title || 'N/A') : (inquiry.title || 'N/A')}</td>
                 );
+              } else if (effectiveTab === 'Accommodation') {
+                // Accommodation: from/to, number_of_rooms, diverse_*, nondiverse_*, selectedActivities, resortName, roomName
+                const parseDate = (dateVal) => {
+                  if (!dateVal) return 'N/A';
+                  if (typeof dateVal === 'string') {
+                    const d = new Date(dateVal);
+                    return isNaN(d) ? 'N/A' : d.toLocaleDateString();
+                  }
+                  if (typeof dateVal === 'object' && dateVal.$date) {
+                    const d = new Date(dateVal.$date);
+                    return isNaN(d) ? 'N/A' : d.toLocaleDateString();
+                  }
+                  return 'N/A';
+                };
+                const activities = Array.isArray(inquiry.selectedActivities) ? inquiry.selectedActivities.join(', ') : (inquiry.selectedActivities || 'N/A');
+                cells.push(
+                  <td key={rowId+"-from"} className="px-4 py-2 text-gray-600 min-w-[100px] max-w-[120px] font-sans">{parseDate(inquiry.from_date)}</td>,
+                  <td key={rowId+"-to"} className="px-4 py-2 text-gray-600 min-w-[100px] max-w-[120px] font-sans">{parseDate(inquiry.to_date)}</td>,
+                  <td key={rowId+"-numrooms"} className="px-4 py-2 text-gray-600 min-w-[80px] max-w-[100px] font-sans">{inquiry.number_of_rooms ?? 'N/A'}</td>,
+                  <td key={rowId+"-diverse_adults"} className="px-4 py-2 text-gray-600 min-w-[80px] font-sans">{inquiry.diverse_adults ?? 'N/A'}</td>,
+                  <td key={rowId+"-diverse_children"} className="px-4 py-2 text-gray-600 min-w-[80px] font-sans">{inquiry.diverse_children ?? 'N/A'}</td>,
+                  <td key={rowId+"-nondiverse_adults"} className="px-4 py-2 text-gray-600 min-w-[80px] font-sans">{inquiry.nondiverse_adults ?? 'N/A'}</td>,
+                  <td key={rowId+"-nondiverse_children"} className="px-4 py-2 text-gray-600 min-w-[80px] font-sans">{inquiry.nondiverse_children ?? 'N/A'}</td>,
+                  <td key={rowId+"-nondiverse_infants"} className="px-4 py-2 text-gray-600 min-w-[80px] font-sans">{inquiry.nondiverse_infants ?? 'N/A'}</td>,
+                  <td key={rowId+"-selacts"} className="px-4 py-2 text-gray-600 truncate min-w-[120px] max-w-[200px] font-sans">{activities}</td>,
+                  <td key={rowId+"-resort"} className="px-4 py-2 text-gray-600 truncate min-w-[100px] max-w-[150px] font-sans">{inquiry.resortName || 'N/A'}</td>,
+                  <td key={rowId+"-room"} className="px-4 py-2 text-gray-600 truncate min-w-[100px] max-w-[150px] font-sans">{(inquiry.entityType === 'Package') ? (inquiry.title || inquiry.roomName || 'N/A') : (inquiry.roomName || 'N/A')}</td>
+                );
+              } else if (effectiveTab === 'Adventure') {
+                // Adventure: preferredMonth, preferredYear, adventureOption, participants, bookWholeBoat
+                const participants = Array.isArray(inquiry.participants) ? inquiry.participants.map(p => p.name || '').filter(Boolean).join(', ') : (inquiry.participants ? JSON.stringify(inquiry.participants) : 'N/A');
+                if (tab === 'Package' && packageSubTab === 'Adventure') {
+                  cells.push(
+                    <td key={rowId+"-pkgname"} className="px-4 py-2 text-gray-600 truncate min-w-[120px] max-w-[180px] font-sans">{inquiry.title || 'N/A'}</td>,
+                    <td key={rowId+"-prefMonth"} className="px-4 py-2 text-gray-600 min-w-[100px] max-w-[140px] font-sans">{inquiry.preferredMonth || 'N/A'}</td>,
+                    <td key={rowId+"-prefYear"} className="px-4 py-2 text-gray-600 min-w-[80px] max-w-[100px] font-sans">{inquiry.preferredYear || 'N/A'}</td>,
+                    <td key={rowId+"-option"} className="px-4 py-2 text-gray-600 min-w-[100px] max-w-[140px] font-sans">{inquiry.adventureOption || 'N/A'}</td>,
+                    <td key={rowId+"-participants"} className="px-4 py-2 text-gray-600 truncate min-w-[140px] max-w-[220px] font-sans">{participants}</td>,
+                    <td key={rowId+"-bookWhole"} className="px-4 py-2 text-gray-600 min-w-[80px] max-w-[100px] font-sans">{inquiry.bookWholeBoat ? 'Yes' : 'No'}</td>
+                  );
+                } else {
+                  cells.push(
+                    <td key={rowId+"-prefMonth"} className="px-4 py-2 text-gray-600 min-w-[100px] max-w-[140px] font-sans">{inquiry.preferredMonth || 'N/A'}</td>,
+                    <td key={rowId+"-prefYear"} className="px-4 py-2 text-gray-600 min-w-[80px] max-w-[100px] font-sans">{inquiry.preferredYear || 'N/A'}</td>,
+                    <td key={rowId+"-option"} className="px-4 py-2 text-gray-600 min-w-[100px] max-w-[140px] font-sans">{inquiry.adventureOption || 'N/A'}</td>,
+                    <td key={rowId+"-participants"} className="px-4 py-2 text-gray-600 truncate min-w-[140px] max-w-[220px] font-sans">{participants}</td>,
+                    <td key={rowId+"-bookWhole"} className="px-4 py-2 text-gray-600 min-w-[80px] max-w-[100px] font-sans">{inquiry.bookWholeBoat ? 'Yes' : 'No'}</td>
+                  );
+                }
               }
               const parseDate = (dateVal) => {
                 if (!dateVal) return 'N/A';
@@ -374,6 +667,13 @@ const InquiryManagement = () => {
                 <td key={rowId+"-submitted"} className="px-4 py-2 text-gray-600 min-w-[100px] max-w-[120px] font-sans">{parseDate(inquiry.submitted_at)}</td>,
                 <td key={rowId+"-mode"} className="px-4 py-2 text-gray-600 min-w-[100px] max-w-[120px] font-sans">{inquiry.buttonType === 'bookNow' ? 'Email' : inquiry.buttonType === 'whatsapp' ? 'WhatsApp' : 'N/A'}</td>,
                 <td key={rowId+"-actions"} className="px-4 py-2 flex gap-2 min-w-[200px]">
+                  <button
+                    onClick={() => setViewDetailsModal({ isOpen: true, inquiry })}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-xl text-sm transition-all duration-300"
+                    style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
+                  >
+                    View
+                  </button>
                   <button
                     onClick={() => handleDeleteInquiry(deleteId, inquiry.name)}
                     className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-xl text-sm transition-all duration-300"
@@ -425,6 +725,11 @@ const InquiryManagement = () => {
         onClose={() => setViewReplyModal({ isOpen: false, replyMessage: '' })}
         replyMessage={viewReplyModal.replyMessage}
       />
+      <DetailsModal
+        isOpen={viewDetailsModal.isOpen}
+        onClose={() => setViewDetailsModal({ isOpen: false, inquiry: null })}
+        inquiry={viewDetailsModal.inquiry}
+      />
       <div className="container mx-auto p-6">
         <h1 className="text-4xl font-bold mb-8 text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
           Inquiry Management
@@ -470,7 +775,7 @@ const InquiryManagement = () => {
                 }`}
                 onClick={() => setActiveTab(tab)}
               >
-                {tab} Inquiries
+                  {displayTabLabel(tab)} Inquiries
               </button>
             ))}
           </div>
@@ -483,7 +788,11 @@ const InquiryManagement = () => {
               <span className="ml-3 text-[#074a5b] font-semibold text-lg" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>Loading inquiries...</span>
             </div>
           ) : (
-            renderTable(activeTab)
+            activeTab === 'Newsletter' ? (
+              <NewsletterManagement />
+            ) : (
+              renderTable(activeTab)
+            )
           )}
         </div>
       </div>
@@ -492,4 +801,3 @@ const InquiryManagement = () => {
 };
 
 export default InquiryManagement;
-
