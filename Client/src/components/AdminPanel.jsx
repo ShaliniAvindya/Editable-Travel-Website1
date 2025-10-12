@@ -10,10 +10,11 @@ import InquiryManagement from './admin/InquiryManagement';
 import UserManagement from './admin/UserManagement';
 import UIContentManagement from './admin/UIContentManagement';
 import PageContentManagement from './admin/PageContentManagement';
-import PromotionManagement from './admin/PromotionManagement'; 
+import PromotionManagement from './admin/PromotionManagement';
 import LogoFaviconManagement from './admin/LogoFaviconManagement';
 import { AuthContext } from './context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from './apiConfig';
 
 const customTabStyle = {
   tabBarStyle: {
@@ -48,7 +49,7 @@ const AdminPanel = () => {
 
   // Fetch maintenance status
   useEffect(() => {
-    api.get('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/maintenance-status')
+    api.get(`${API_BASE_URL}/ui-content/maintenance-status`)
       .then(response => {
         setMaintenanceMode(response.data.maintenanceMode || false);
         setLoading(false);
@@ -63,7 +64,7 @@ const AdminPanel = () => {
 
   const handleToggleMaintenance = () => {
     const newMode = !maintenanceMode;
-    api.post('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/maintenance-status', { maintenanceMode: newMode })
+    api.post(`${API_BASE_URL}/ui-content/maintenance-status`, { maintenanceMode: newMode })
       .then(response => {
         setMaintenanceMode(response.data.maintenanceMode);
         message.success(`Maintenance mode ${response.data.maintenanceMode ? 'enabled' : 'disabled'}.`);
@@ -432,5 +433,3 @@ const AdminPanel = () => {
 };
 
 export default AdminPanel;
-
-
