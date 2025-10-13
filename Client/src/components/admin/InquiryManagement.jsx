@@ -188,6 +188,21 @@ const InquiryManagement = () => {
   const [viewDetailsModal, setViewDetailsModal] = useState({ isOpen: false, inquiry: null });
   const [refreshing, setRefreshing] = useState(false);
 
+  const getField = (inquiry, key) => {
+    if (!inquiry || !key) return undefined;
+    if (Object.prototype.hasOwnProperty.call(inquiry, key)) return inquiry[key];
+    const variants = [
+      key.replace(/_/g, ''), 
+      key.replace(/non_divers/g, 'nondivers'),
+      key.replace(/nondivers/g, 'non_divers'),
+      key.replace(/_([a-z])/g, (_, c) => c.toUpperCase()) 
+    ];
+    for (const v of variants) {
+      if (Object.prototype.hasOwnProperty.call(inquiry, v)) return inquiry[v];
+    }
+    return inquiry[key];
+  };
+
   // Auto-clear error and success messages
   useEffect(() => {
     if (error) {
@@ -233,18 +248,20 @@ const InquiryManagement = () => {
       from_date: 'From Date',
       to_date: 'To Date',
       number_of_rooms: 'Number of Rooms',
-      diverse_adults: 'Diverse Adults',
-      diverse_children: 'Diverse Children',
-      nondiverse_adults: 'Nondiverse Adults',
-      nondiverse_children: 'Nondiverse Children',
-      nondiverse_infants: 'Nondiverse Infants',
+      divers_adults: 'Divers Adults',
+      divers_children: 'Divers Children',
+      nondivers_adults: 'Non-Divers Adults',
+      nondivers_children: 'Non-Divers Children',
+      nondivers_infants: 'Non-Divers Infants',
       selectedActivities: 'Selected Activities',
       resortName: 'Resort Name',
       roomName: 'Room Name',
       preferredMonth: 'Preferred Month',
       preferredYear: 'Preferred Year',
-      adventureOption: 'Option',
-      participants: 'Participants',
+  adventureOptions: 'Options',
+  adventureOption: 'Option',
+  participantsByOption: 'Participants by Option',
+  participants: 'Participants',
       bookWholeBoat: 'Book Whole Boat',
       submitted_at: 'Submitted At',
       buttonType: 'Mode of Book',
@@ -257,11 +274,11 @@ const InquiryManagement = () => {
     const fieldsByForm = {
       Accommodation: [
         'name','email','phone_number','country','message','from_date','to_date','number_of_rooms',
-        'diverse_adults','diverse_children','nondiverse_adults','nondiverse_children','nondiverse_infants',
+        'divers_adults','divers_children','non_divers_adults','non_divers_children','non_divers_infants',
         'selectedActivities','resortName','roomName','submitted_at','buttonType','entityType','inquiry_form_type','title','_id'
       ],
       Adventure: [
-        'name','email','phone_number','country','message','preferredMonth','preferredYear','adventureOption',
+        'name','email','phone_number','country','message','preferredMonth','preferredYear','adventureOptions','participantsByOption', 'adventureOption',
         'participants','bookWholeBoat','submitted_at','buttonType','entityType','inquiry_form_type','title','_id'
       ],
       Activity: [
@@ -316,7 +333,56 @@ const InquiryManagement = () => {
               <tbody>
                 {chosenFields.map((key) => {
                   // Render participants specially for Activity inquiries
+                  if (key === 'participantsByOption') {
+                    const groups = Array.isArray(inquiry.participantsByOption) ? inquiry.participantsByOption : [];
+                    if (groups.length === 0) {
+                      return (
+                        <tr key={key} className="border-t">
+                          <td className="py-2 align-top font-semibold text-[#074a5b] w-1/3">{getLabel(key)}</td>
+                          <td className="py-2 align-top whitespace-pre-wrap">N/A</td>
+                        </tr>
+                      );
+                    }
+                    return (
+                      <React.Fragment key={key}>
+                        <tr className="border-t bg-gray-50">
+                          <td className="py-2 font-semibold text-[#074a5b]">{getLabel(key)}</td>
+                          <td className="py-2">{groups.length} group(s)</td>
+                        </tr>
+                        {groups.map((g, gi) => (
+                          <React.Fragment key={`group-${gi}`}>
+                            <tr className="border-t">
+                              <td className="py-2 align-top font-semibold text-[#074a5b] w-1/3">Option</td>
+                              <td className="py-2 align-top whitespace-pre-wrap">{g.option}</td>
+                            </tr>
+                            {(Array.isArray(g.participants) ? g.participants : []).map((p, idx) => (
+                              <tr key={`${key}-${gi}-${idx}`} className="border-t">
+                                <td className="py-2 align-top font-semibold text-[#074a5b] w-1/3">{`Participant ${idx + 1} (${g.option})`}</td>
+                                <td className="py-2 align-top whitespace-pre-wrap">
+                                  <div className="space-y-1">
+                                    {['name','gender','diverStatus','ageCategory'].map((field) => (
+                                      p[field] != null ? (
+                                        <div key={field}><strong className="text-gray-700">{field.charAt(0).toUpperCase() + field.slice(1)}:</strong> <span className="text-gray-900">{String(p[field])}</span></div>
+                                      ) : null
+                                    ))}
+                                    {Object.keys(p).filter(f => !['name','gender','diverStatus','ageCategory','_id'].includes(f)).map(f => (
+                                      <div key={f}><strong className="text-gray-700">{f}:</strong> <span className="text-gray-900">{renderValue(p[f])}</span></div>
+                                    ))}
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </React.Fragment>
+                        ))}
+                      </React.Fragment>
+                    );
+                  }
                   if (key === 'participants') {
+                    const groups = Array.isArray(inquiry.participantsByOption) ? inquiry.participantsByOption : [];
+                    if (groups && groups.length) {
+                      // avoid duplicating
+                      return null;
+                    }
                     const parts = Array.isArray(inquiry.participants) ? inquiry.participants : [];
                     if (parts.length === 0) {
                       return (
@@ -363,7 +429,7 @@ const InquiryManagement = () => {
                   return (
                     <tr key={key} className="border-t">
                       <td className="py-2 align-top font-semibold text-[#074a5b] w-1/3">{getLabel(key)}</td>
-                      <td className="py-2 align-top whitespace-pre-wrap">{renderValue(inquiry[key])}</td>
+                      <td className="py-2 align-top whitespace-pre-wrap">{renderValue(getField(inquiry, key))}</td>
                     </tr>
                   );
                 })}
@@ -487,7 +553,7 @@ const InquiryManagement = () => {
         'Name', 'Email', 'Phone', 'Country', 'Message', 'Activity', 'Submitted At', 'Mode of Book', 'Actions'
       ],
       Accommodation: [
-        'Name', 'Email', 'Phone', 'Country','Message', 'From Date', 'To Date', 'Number of Rooms', 'Diverse Adults', 'Diverse Children', 'Nondiverse Adults', 'Nondiverse Children', 'Nondiverse Infants', 'Selected Activities', 'Resort Name', 'Room Name', 'Submitted At', 'Mode of Book', 'Actions'
+        'Name', 'Email', 'Phone', 'Country','Message', 'From Date', 'To Date', 'Number of Rooms', 'Divers Adults', 'Divers Children', 'Non-Divers Adults', 'Non-Divers Children', 'Non-Divers Infants', 'Selected Activities', 'Resort Name', 'Room Name', 'Submitted At', 'Mode of Book', 'Actions'
       ],
       Adventure: [
         'Name', 'Email', 'Phone', 'Country','Message', 'Preferred Month', 'Preferred Year', 'Option', 'Participants', 'Book Whole Boat', 'Submitted At', 'Mode of Book', 'Actions'
@@ -602,7 +668,7 @@ const InquiryManagement = () => {
                   <td key={rowId+"-title"} className="px-4 py-2 text-gray-600 truncate min-w-[100px] max-w-[150px] font-sans">{(inquiry.entityType === 'Package') ? (inquiry.title || 'N/A') : (inquiry.title || 'N/A')}</td>
                 );
               } else if (effectiveTab === 'Accommodation') {
-                // Accommodation: from/to, number_of_rooms, diverse_*, nondiverse_*, selectedActivities, resortName, roomName
+                // Accommodation: from/to, number_of_rooms, divers_*, non_divers_*, selectedActivities, resortName, roomName
                 const parseDate = (dateVal) => {
                   if (!dateVal) return 'N/A';
                   if (typeof dateVal === 'string') {
@@ -615,39 +681,48 @@ const InquiryManagement = () => {
                   }
                   return 'N/A';
                 };
-                const activities = Array.isArray(inquiry.selectedActivities) ? inquiry.selectedActivities.join(', ') : (inquiry.selectedActivities || 'N/A');
+                const activities = Array.isArray(getField(inquiry, 'selectedActivities')) ? getField(inquiry, 'selectedActivities').join(', ') : (getField(inquiry, 'selectedActivities') || 'N/A');
                 cells.push(
-                  <td key={rowId+"-from"} className="px-4 py-2 text-gray-600 min-w-[100px] max-w-[120px] font-sans">{parseDate(inquiry.from_date)}</td>,
-                  <td key={rowId+"-to"} className="px-4 py-2 text-gray-600 min-w-[100px] max-w-[120px] font-sans">{parseDate(inquiry.to_date)}</td>,
-                  <td key={rowId+"-numrooms"} className="px-4 py-2 text-gray-600 min-w-[80px] max-w-[100px] font-sans">{inquiry.number_of_rooms ?? 'N/A'}</td>,
-                  <td key={rowId+"-diverse_adults"} className="px-4 py-2 text-gray-600 min-w-[80px] font-sans">{inquiry.diverse_adults ?? 'N/A'}</td>,
-                  <td key={rowId+"-diverse_children"} className="px-4 py-2 text-gray-600 min-w-[80px] font-sans">{inquiry.diverse_children ?? 'N/A'}</td>,
-                  <td key={rowId+"-nondiverse_adults"} className="px-4 py-2 text-gray-600 min-w-[80px] font-sans">{inquiry.nondiverse_adults ?? 'N/A'}</td>,
-                  <td key={rowId+"-nondiverse_children"} className="px-4 py-2 text-gray-600 min-w-[80px] font-sans">{inquiry.nondiverse_children ?? 'N/A'}</td>,
-                  <td key={rowId+"-nondiverse_infants"} className="px-4 py-2 text-gray-600 min-w-[80px] font-sans">{inquiry.nondiverse_infants ?? 'N/A'}</td>,
+                  <td key={rowId+"-from"} className="px-4 py-2 text-gray-600 min-w-[100px] max-w-[120px] font-sans">{parseDate(getField(inquiry, 'from_date'))}</td>,
+                  <td key={rowId+"-to"} className="px-4 py-2 text-gray-600 min-w-[100px] max-w-[120px] font-sans">{parseDate(getField(inquiry, 'to_date'))}</td>,
+                  <td key={rowId+"-numrooms"} className="px-4 py-2 text-gray-600 min-w-[80px] max-w-[100px] font-sans">{getField(inquiry, 'number_of_rooms') ?? 'N/A'}</td>,
+                  <td key={rowId+"-divers_adults"} className="px-4 py-2 text-gray-600 min-w-[80px] font-sans">{getField(inquiry, 'divers_adults') ?? 'N/A'}</td>,
+                  <td key={rowId+"-divers_children"} className="px-4 py-2 text-gray-600 min-w-[80px] font-sans">{getField(inquiry, 'divers_children') ?? 'N/A'}</td>,
+                  <td key={rowId+"-non_divers_adults"} className="px-4 py-2 text-gray-600 min-w-[80px] font-sans">{getField(inquiry, 'non_divers_adults') ?? getField(inquiry, 'nondivers_adults') ?? 'N/A'}</td>,
+                  <td key={rowId+"-non_divers_children"} className="px-4 py-2 text-gray-600 min-w-[80px] font-sans">{getField(inquiry, 'non_divers_children') ?? getField(inquiry, 'nondivers_children') ?? 'N/A'}</td>,
+                  <td key={rowId+"-non_divers_infants"} className="px-4 py-2 text-gray-600 min-w-[80px] font-sans">{getField(inquiry, 'non_divers_infants') ?? getField(inquiry, 'nondivers_infants') ?? 'N/A'}</td>,
                   <td key={rowId+"-selacts"} className="px-4 py-2 text-gray-600 truncate min-w-[120px] max-w-[200px] font-sans">{activities}</td>,
-                  <td key={rowId+"-resort"} className="px-4 py-2 text-gray-600 truncate min-w-[100px] max-w-[150px] font-sans">{inquiry.resortName || 'N/A'}</td>,
-                  <td key={rowId+"-room"} className="px-4 py-2 text-gray-600 truncate min-w-[100px] max-w-[150px] font-sans">{(inquiry.entityType === 'Package') ? (inquiry.title || inquiry.roomName || 'N/A') : (inquiry.roomName || 'N/A')}</td>
+                  <td key={rowId+"-resort"} className="px-4 py-2 text-gray-600 truncate min-w-[100px] max-w-[150px] font-sans">{getField(inquiry, 'resortName') || 'N/A'}</td>,
+                  <td key={rowId+"-room"} className="px-4 py-2 text-gray-600 truncate min-w-[100px] max-w-[150px] font-sans">{(inquiry.entityType === 'Package') ? (getField(inquiry, 'title') || getField(inquiry, 'roomName') || 'N/A') : (getField(inquiry, 'roomName') || 'N/A')}</td>
                 );
               } else if (effectiveTab === 'Adventure') {
                 // Adventure: preferredMonth, preferredYear, adventureOption, participants, bookWholeBoat
-                const participants = Array.isArray(inquiry.participants) ? inquiry.participants.map(p => p.name || '').filter(Boolean).join(', ') : (inquiry.participants ? JSON.stringify(inquiry.participants) : 'N/A');
+                const optArr = Array.isArray(getField(inquiry, 'adventureOptions')) ? getField(inquiry, 'adventureOptions') : (getField(inquiry, 'adventureOption') ? [getField(inquiry, 'adventureOption')] : []);
+                const optionsDisplay = optArr.length ? optArr.join(', ') : 'N/A';
+                const pbo = Array.isArray(getField(inquiry, 'participantsByOption')) ? getField(inquiry, 'participantsByOption') : null;
+                let participantsSummary = 'N/A';
+                if (pbo && pbo.length) {
+                  participantsSummary = pbo.map(g => `${g.option}: ${Array.isArray(g.participants) ? g.participants.map(p=>p.name).filter(Boolean).join(', ') || (g.participants.length+' participant(s)') : '0'}`).join(' | ');
+                } else {
+                  const flat = Array.isArray(getField(inquiry, 'participants')) ? getField(inquiry, 'participants').map(p => p.name || '').filter(Boolean) : [];
+                  participantsSummary = flat.length ? flat.join(', ') : 'N/A';
+                }
                 if (tab === 'Package' && packageSubTab === 'Adventure') {
                   cells.push(
                     <td key={rowId+"-pkgname"} className="px-4 py-2 text-gray-600 truncate min-w-[120px] max-w-[180px] font-sans">{inquiry.title || 'N/A'}</td>,
-                    <td key={rowId+"-prefMonth"} className="px-4 py-2 text-gray-600 min-w-[100px] max-w-[140px] font-sans">{inquiry.preferredMonth || 'N/A'}</td>,
-                    <td key={rowId+"-prefYear"} className="px-4 py-2 text-gray-600 min-w-[80px] max-w-[100px] font-sans">{inquiry.preferredYear || 'N/A'}</td>,
-                    <td key={rowId+"-option"} className="px-4 py-2 text-gray-600 min-w-[100px] max-w-[140px] font-sans">{inquiry.adventureOption || 'N/A'}</td>,
-                    <td key={rowId+"-participants"} className="px-4 py-2 text-gray-600 truncate min-w-[140px] max-w-[220px] font-sans">{participants}</td>,
-                    <td key={rowId+"-bookWhole"} className="px-4 py-2 text-gray-600 min-w-[80px] max-w-[100px] font-sans">{inquiry.bookWholeBoat ? 'Yes' : 'No'}</td>
+                    <td key={rowId+"-prefMonth"} className="px-4 py-2 text-gray-600 min-w-[100px] max-w-[140px] font-sans">{getField(inquiry, 'preferredMonth') || 'N/A'}</td>,
+                    <td key={rowId+"-prefYear"} className="px-4 py-2 text-gray-600 min-w-[80px] max-w-[100px] font-sans">{getField(inquiry, 'preferredYear') || 'N/A'}</td>,
+                    <td key={rowId+"-option"} className="px-4 py-2 text-gray-600 min-w-[100px] max-w-[140px] font-sans">{optionsDisplay}</td>,
+                    <td key={rowId+"-participants"} className="px-4 py-2 text-gray-600 truncate min-w-[140px] max-w-[220px] font-sans">{participantsSummary}</td>,
+                    <td key={rowId+"-bookWhole"} className="px-4 py-2 text-gray-600 min-w-[80px] max-w-[100px] font-sans">{getField(inquiry, 'bookWholeBoat') ? 'Yes' : 'No'}</td>
                   );
                 } else {
                   cells.push(
-                    <td key={rowId+"-prefMonth"} className="px-4 py-2 text-gray-600 min-w-[100px] max-w-[140px] font-sans">{inquiry.preferredMonth || 'N/A'}</td>,
-                    <td key={rowId+"-prefYear"} className="px-4 py-2 text-gray-600 min-w-[80px] max-w-[100px] font-sans">{inquiry.preferredYear || 'N/A'}</td>,
-                    <td key={rowId+"-option"} className="px-4 py-2 text-gray-600 min-w-[100px] max-w-[140px] font-sans">{inquiry.adventureOption || 'N/A'}</td>,
-                    <td key={rowId+"-participants"} className="px-4 py-2 text-gray-600 truncate min-w-[140px] max-w-[220px] font-sans">{participants}</td>,
-                    <td key={rowId+"-bookWhole"} className="px-4 py-2 text-gray-600 min-w-[80px] max-w-[100px] font-sans">{inquiry.bookWholeBoat ? 'Yes' : 'No'}</td>
+                    <td key={rowId+"-prefMonth"} className="px-4 py-2 text-gray-600 min-w-[100px] max-w-[140px] font-sans">{getField(inquiry, 'preferredMonth') || 'N/A'}</td>,
+                    <td key={rowId+"-prefYear"} className="px-4 py-2 text-gray-600 min-w-[80px] max-w-[100px] font-sans">{getField(inquiry, 'preferredYear') || 'N/A'}</td>,
+                    <td key={rowId+"-option"} className="px-4 py-2 text-gray-600 min-w-[100px] max-w-[140px] font-sans">{optionsDisplay}</td>,
+                    <td key={rowId+"-participants"} className="px-4 py-2 text-gray-600 truncate min-w-[140px] max-w-[220px] font-sans">{participantsSummary}</td>,
+                    <td key={rowId+"-bookWhole"} className="px-4 py-2 text-gray-600 min-w-[80px] max-w-[100px] font-sans">{getField(inquiry, 'bookWholeBoat') ? 'Yes' : 'No'}</td>
                   );
                 }
               }
@@ -664,8 +739,8 @@ const InquiryManagement = () => {
                 return 'N/A';
               };
               cells.push(
-                <td key={rowId+"-submitted"} className="px-4 py-2 text-gray-600 min-w-[100px] max-w-[120px] font-sans">{parseDate(inquiry.submitted_at)}</td>,
-                <td key={rowId+"-mode"} className="px-4 py-2 text-gray-600 min-w-[100px] max-w-[120px] font-sans">{inquiry.buttonType === 'bookNow' ? 'Email' : inquiry.buttonType === 'whatsapp' ? 'WhatsApp' : 'N/A'}</td>,
+                <td key={rowId+"-submitted"} className="px-4 py-2 text-gray-600 min-w-[100px] max-w-[120px] font-sans">{parseDate(getField(inquiry, 'submitted_at'))}</td>,
+                <td key={rowId+"-mode"} className="px-4 py-2 text-gray-600 min-w-[100px] max-w-[120px] font-sans">{getField(inquiry, 'buttonType') === 'bookNow' ? 'Email' : getField(inquiry, 'buttonType') === 'whatsapp' ? 'WhatsApp' : 'N/A'}</td>,
                 <td key={rowId+"-actions"} className="px-4 py-2 flex gap-2 min-w-[200px]">
                   <button
                     onClick={() => setViewDetailsModal({ isOpen: true, inquiry })}
