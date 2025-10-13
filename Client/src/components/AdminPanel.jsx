@@ -201,7 +201,10 @@ const AdminPanel = () => {
         <span style={{ color: maintenanceMode ? '#e53e3e' : '#38a169', fontWeight: 'bold', fontSize: '1.1rem' }}>
           {maintenanceMode ? 'ON' : 'OFF'}
         </span>
-      </div>
+      </div><br/><br/>
+          <p className="md:text-3xl text-center text-red-600 font-bold mb-4 leading-tight">
+            Please make sure to edit texts in German language.
+          </p>
 
       <div className="flex-grow container mx-auto px-4 py-8 flex justify-center">
         <div className="flex-grow bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100 max-w-7xl w-full">
