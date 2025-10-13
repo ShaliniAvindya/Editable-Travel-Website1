@@ -16,11 +16,11 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
     infants: null,
     number_of_rooms: null,
     // hotel/resort
-    diverse_adults: null,
-    diverse_children: null,
-    nondiverse_adults: null,
-    nondiverse_children: null,
-    nondiverse_infants: null,
+    divers_adults: null,
+    divers_children: null,
+    nondivers_adults: null,
+    nondivers_children: null,
+    nondivers_infants: null,
     selectedActivities: [],
     // adventure
     preferredMonth: '',
@@ -367,12 +367,30 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
         </div>
       </div>
 
+       <div className="flex items-center gap-3">
+        <input id="bookWholeBoat" type="checkbox" checked={!!formData.bookWholeBoat} onChange={(e) => setFormData((p) => ({ ...p, bookWholeBoat: e.target.checked }))} />
+        <label htmlFor="bookWholeBoat" className="text-sm">Need to book whole boat</label>
+      </div>
+
       <div>
-        <label className="block text-sm font-bold text-gray-700 mb-2">Select one option</label>
+        <label className="block text-sm font-bold text-gray-700 mb-2">Select options (you may choose multiple)</label>
         <div className="flex gap-4">
           {['Shared', 'Double', 'Single'].map((opt) => (
             <label key={opt} className="flex items-center gap-2">
-              <input type="radio" name="adventureOption" value={opt} checked={formData.adventureOption === opt} onChange={(e) => setFormData((p) => ({ ...p, adventureOption: e.target.value }))} />
+              <input type="checkbox" name="adventureOptions" value={opt} checked={(formData.adventureOptions || []).includes(opt)} onChange={(e) => {
+                const checked = e.target.checked;
+                setFormData((p) => {
+                  const cur = new Set(p.adventureOptions || []);
+                  if (checked) cur.add(opt); else cur.delete(opt);
+                  const pbo = Array.isArray(p.participantsByOption) ? [...p.participantsByOption] : [];
+                  if (checked && !pbo.find(x => x.option === opt)) pbo.push({ option: opt, participants: [] });
+                  if (!checked) {
+                    const idx = pbo.findIndex(x => x.option === opt);
+                    if (idx !== -1) pbo.splice(idx, 1);
+                  }
+                  return { ...p, adventureOptions: Array.from(cur), participantsByOption: pbo };
+                });
+              }} />
               <span>{opt}</span>
             </label>
           ))}
@@ -380,38 +398,72 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
         {fieldErrors.adventureOption && <div className="mt-1 text-xs text-red-600">{fieldErrors.adventureOption}</div>}
       </div>
 
-      <div className="flex items-center gap-3">
-        <input id="bookWholeBoat" type="checkbox" checked={!!formData.bookWholeBoat} onChange={(e) => setFormData((p) => ({ ...p, bookWholeBoat: e.target.checked }))} />
-        <label htmlFor="bookWholeBoat" className="text-sm">Need to book whole boat</label>
-      </div>
-
       <div>
-        <label className="block text-sm font-bold text-gray-700 mb-2">Participants</label>
-        <div className="space-y-2">
-          {(formData.participants || []).map((pt) => (
-            <div key={pt.id} className="p-3 border-2 rounded-xl flex flex-col gap-2">
-              <div className="flex gap-2">
-                <ParticipantName id={pt.id} value={pt.name} onCommit={updateParticipant} />
-                <select value={pt.gender} onChange={(e) => updateParticipant(pt.id, 'gender', e.target.value)} className="px-3 py-2 border rounded">
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                </select>
+        <label className="block text-sm font-bold text-gray-700 mb-2">Add Participants</label>
+        <div className="space-y-4">
+          {(formData.participantsByOption || []).map((group) => (
+            <div key={group.option} className="p-3 border-2 rounded-xl">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-bold">{group.option}</h4>
+                <button type="button" onClick={() => {
+                  // remove entire group
+                  setFormData((p) => ({ ...p, adventureOptions: (p.adventureOptions||[]).filter(o=>o!==group.option), participantsByOption: (p.participantsByOption||[]).filter(x=>x.option!==group.option) }));
+                }} className="text-sm text-red-500">Remove option</button>
               </div>
-              <div className="flex gap-2">
-                <select value={pt.diverStatus} onChange={(e) => updateParticipant(pt.id, 'diverStatus', e.target.value)} className="px-3 py-2 border rounded">
-                  <option value="diver">Diver</option>
-                  <option value="non-diver">Non-diver</option>
-                </select>
-                <select value={pt.ageCategory} onChange={(e) => updateParticipant(pt.id, 'ageCategory', e.target.value)} className="px-3 py-2 border rounded">
-                  {ageCategories.map((ac) => <option key={ac} value={ac}>{ac}</option>)}
-                </select>
-                <button type="button" onClick={() => removeParticipant(pt.id)} className="px-3 py-2 bg-red-100 rounded">Remove</button>
+              {(group.participants || []).map((pt, idx) => (
+                <div key={pt.id || idx} className="p-3 border rounded mb-2">
+                  <div className="flex gap-2 mb-2">
+                    <ParticipantName id={pt.id} value={pt.name} onCommit={(id, field, value) => {
+                      setFormData((p) => ({
+                        ...p,
+                        participantsByOption: (p.participantsByOption || []).map(g => g.option === group.option ? {
+                          ...g,
+                          participants: (g.participants || []).map(pp => pp.id === id ? { ...pp, [field]: value } : pp)
+                        } : g)
+                      }));
+                    }} />
+                    <select value={pt.gender || 'male'} onChange={(e) => {
+                      const v = e.target.value;
+                      setFormData((p) => ({ ...p, participantsByOption: (p.participantsByOption||[]).map(g => g.option === group.option ? { ...g, participants: g.participants.map((pp, i) => i === idx ? { ...pp, gender: v } : pp) } : g) }));
+                    }} className="px-3 py-2 border rounded">
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                    </select>
+                  </div>
+                  <div className="flex gap-2 items-center">
+                    <select value={pt.diverStatus || 'diver'} onChange={(e) => {
+                      const v = e.target.value;
+                      setFormData((p) => ({ ...p, participantsByOption: (p.participantsByOption||[]).map(g => g.option === group.option ? { ...g, participants: g.participants.map((pp, i) => i === idx ? { ...pp, diverStatus: v } : pp) } : g) }));
+                    }} className="px-3 py-2 border rounded">
+                      <option value="diver">Diver</option>
+                      <option value="non-diver">Non-diver</option>
+                    </select>
+                    <select value={pt.ageCategory || ageCategories[0]} onChange={(e) => {
+                      const v = e.target.value;
+                      setFormData((p) => ({ ...p, participantsByOption: (p.participantsByOption||[]).map(g => g.option === group.option ? { ...g, participants: g.participants.map((pp, i) => i === idx ? { ...pp, ageCategory: v } : pp) } : g) }));
+                    }} className="px-3 py-2 border rounded">
+                      {ageCategories.map((ac) => <option key={ac} value={ac}>{ac}</option>)}
+                    </select>
+                    <button type="button" onClick={() => {
+                      setFormData((p) => ({ ...p, participantsByOption: (p.participantsByOption||[]).map(g => g.option === group.option ? { ...g, participants: g.participants.filter((_, i) => i !== idx) } : g) }));
+                    }} className="px-3 py-2 bg-red-100 rounded">Remove</button>
+                  </div>
+                </div>
+              ))}
+              <div>
+                <button type="button" onClick={() => {
+                  const newPart = { id: `p-${Date.now()}`, name: '', gender: 'male', diverStatus: 'diver', ageCategory: ageCategories[0] };
+                  setFormData((p) => ({ ...p, participantsByOption: (p.participantsByOption||[]).map(g => g.option === group.option ? { ...g, participants: [...(g.participants||[]), newPart] } : g) }));
+                }} className="mt-2 px-4 py-2 bg-green-100 rounded ">Add Participant</button>
               </div>
             </div>
           ))}
-
-          <button type="button" onClick={addParticipant} className=" mt-2 px-4 py-2 bg-green-100 rounded ">Add New Participant</button>
-          {fieldErrors.participants && <div className="mt-1 text-xs text-red-600">{fieldErrors.participants}</div>}
+          {/* If no per-option participants exist, allow adding to a default group */}
+          {(!(formData.participantsByOption || []).length) && (
+            <div className="p-3 border-2 rounded-xl">
+              <div className="text-sm text-gray-500">No options selected yet. Select one or more options above to add participants for each option.</div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -445,43 +497,43 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <p className="font-bold mb-2">Diversee</p>
+          <p className="font-bold mb-2">Taucher</p>
           <label className="block text-sm font-bold text-gray-700 mb-2">Adults (12+)</label>
           <div className="flex items-center border-2 rounded-xl mb-2" style={{ borderColor: '#074a5b' }}>
-            <button type="button" onClick={() => setFormData((p) => ({ ...p, diverse_adults: Math.max(0, (p.diverse_adults ?? 0) - 1) }))} className="p-4 hover:bg-[#1e809b]/10 transition-colors"><Minus size={18} style={{ color: '#074a5b' }} /></button>
-            <span className="flex-1 text-center py-3 text-base font-bold" style={{ color: '#074a5b' }}>{formData.diverse_adults ?? 0}</span>
-            <button type="button" onClick={() => setFormData((p) => ({ ...p, diverse_adults: (p.diverse_adults ?? 0) + 1 }))} className="p-4 hover:bg-[#1e809b]/10 transition-colors"><Plus size={18} style={{ color: '#074a5b' }} /></button>
+            <button type="button" onClick={() => setFormData((p) => ({ ...p, divers_adults: Math.max(0, (p.divers_adults ?? 0) - 1) }))} className="p-4 hover:bg-[#1e809b]/10 transition-colors"><Minus size={18} style={{ color: '#074a5b' }} /></button>
+            <span className="flex-1 text-center py-3 text-base font-bold" style={{ color: '#074a5b' }}>{formData.divers_adults ?? 0}</span>
+            <button type="button" onClick={() => setFormData((p) => ({ ...p, divers_adults: (p.divers_adults ?? 0) + 1 }))} className="p-4 hover:bg-[#1e809b]/10 transition-colors"><Plus size={18} style={{ color: '#074a5b' }} /></button>
           </div>
 
           <label className="block text-sm font-bold text-gray-700 mb-2">Children (2-11)</label>
           <div className="flex items-center border-2 rounded-xl mb-2" style={{ borderColor: '#074a5b' }}>
-            <button type="button" onClick={() => setFormData((p) => ({ ...p, diverse_children: Math.max(0, (p.diverse_children ?? 0) - 1) }))} className="p-4 hover:bg-[#1e809b]/10 transition-colors"><Minus size={18} style={{ color: '#074a5b' }} /></button>
-            <span className="flex-1 text-center py-3 text-base font-bold" style={{ color: '#074a5b' }}>{formData.diverse_children ?? 0}</span>
-            <button type="button" onClick={() => setFormData((p) => ({ ...p, diverse_children: (p.diverse_children ?? 0) + 1 }))} className="p-4 hover:bg-[#1e809b]/10 transition-colors"><Plus size={18} style={{ color: '#074a5b' }} /></button>
+            <button type="button" onClick={() => setFormData((p) => ({ ...p, divers_children: Math.max(0, (p.divers_children ?? 0) - 1) }))} className="p-4 hover:bg-[#1e809b]/10 transition-colors"><Minus size={18} style={{ color: '#074a5b' }} /></button>
+            <span className="flex-1 text-center py-3 text-base font-bold" style={{ color: '#074a5b' }}>{formData.divers_children ?? 0}</span>
+            <button type="button" onClick={() => setFormData((p) => ({ ...p, divers_children: (p.divers_children ?? 0) + 1 }))} className="p-4 hover:bg-[#1e809b]/10 transition-colors"><Plus size={18} style={{ color: '#074a5b' }} /></button>
           </div>
         </div>
 
         <div>
-          <p className="font-bold mb-2">Non-diverse</p>
+          <p className="font-bold mb-2">Nicht-Taucher</p>
           <label className="block text-sm font-bold text-gray-700 mb-2">Adults (12+)</label>
           <div className="flex items-center border-2 rounded-xl mb-2" style={{ borderColor: '#074a5b' }}>
-            <button type="button" onClick={() => setFormData((p) => ({ ...p, nondiverse_adults: Math.max(0, (p.nondiverse_adults ?? 0) - 1) }))} className="p-4 hover:bg-[#1e809b]/10 transition-colors"><Minus size={18} style={{ color: '#074a5b' }} /></button>
-            <span className="flex-1 text-center py-3 text-base font-bold" style={{ color: '#074a5b' }}>{formData.nondiverse_adults ?? 0}</span>
-            <button type="button" onClick={() => setFormData((p) => ({ ...p, nondiverse_adults: (p.nondiverse_adults ?? 0) + 1 }))} className="p-4 hover:bg-[#1e809b]/10 transition-colors"><Plus size={18} style={{ color: '#074a5b' }} /></button>
+            <button type="button" onClick={() => setFormData((p) => ({ ...p, nondivers_adults: Math.max(0, (p.nondivers_adults ?? 0) - 1) }))} className="p-4 hover:bg-[#1e809b]/10 transition-colors"><Minus size={18} style={{ color: '#074a5b' }} /></button>
+            <span className="flex-1 text-center py-3 text-base font-bold" style={{ color: '#074a5b' }}>{formData.nondivers_adults ?? 0}</span>
+            <button type="button" onClick={() => setFormData((p) => ({ ...p, nondivers_adults: (p.nondivers_adults ?? 0) + 1 }))} className="p-4 hover:bg-[#1e809b]/10 transition-colors"><Plus size={18} style={{ color: '#074a5b' }} /></button>
           </div>
 
           <label className="block text-sm font-bold text-gray-700 mb-2">Children (2-11)</label>
           <div className="flex items-center border-2 rounded-xl mb-2" style={{ borderColor: '#074a5b' }}>
-            <button type="button" onClick={() => setFormData((p) => ({ ...p, nondiverse_children: Math.max(0, (p.nondiverse_children ?? 0) - 1) }))} className="p-4 hover:bg-[#1e809b]/10 transition-colors"><Minus size={18} style={{ color: '#074a5b' }} /></button>
-            <span className="flex-1 text-center py-3 text-base font-bold" style={{ color: '#074a5b' }}>{formData.nondiverse_children ?? 0}</span>
-            <button type="button" onClick={() => setFormData((p) => ({ ...p, nondiverse_children: (p.nondiverse_children ?? 0) + 1 }))} className="p-4 hover:bg-[#1e809b]/10 transition-colors"><Plus size={18} style={{ color: '#074a5b' }} /></button>
+            <button type="button" onClick={() => setFormData((p) => ({ ...p, nondivers_children: Math.max(0, (p.nondivers_children ?? 0) - 1) }))} className="p-4 hover:bg-[#1e809b]/10 transition-colors"><Minus size={18} style={{ color: '#074a5b' }} /></button>
+            <span className="flex-1 text-center py-3 text-base font-bold" style={{ color: '#074a5b' }}>{formData.nondivers_children ?? 0}</span>
+            <button type="button" onClick={() => setFormData((p) => ({ ...p, nondivers_children: (p.nondivers_children ?? 0) + 1 }))} className="p-4 hover:bg-[#1e809b]/10 transition-colors"><Plus size={18} style={{ color: '#074a5b' }} /></button>
           </div>
 
           <label className="block text-sm font-bold text-gray-700 mb-2">Infants (Below)</label>
           <div className="flex items-center border-2 rounded-xl" style={{ borderColor: '#074a5b' }}>
-            <button type="button" onClick={() => setFormData((p) => ({ ...p, nondiverse_infants: Math.max(0, (p.nondiverse_infants ?? 0) - 1) }))} className="p-4 hover:bg-[#1e809b]/10 transition-colors"><Minus size={18} style={{ color: '#074a5b' }} /></button>
-            <span className="flex-1 text-center py-3 text-base font-bold" style={{ color: '#074a5b' }}>{formData.nondiverse_infants ?? 0}</span>
-            <button type="button" onClick={() => setFormData((p) => ({ ...p, nondiverse_infants: (p.nondiverse_infants ?? 0) + 1 }))} className="p-4 hover:bg-[#1e809b]/10 transition-colors"><Plus size={18} style={{ color: '#074a5b' }} /></button>
+            <button type="button" onClick={() => setFormData((p) => ({ ...p, nondivers_infants: Math.max(0, (p.nondivers_infants ?? 0) - 1) }))} className="p-4 hover:bg-[#1e809b]/10 transition-colors"><Minus size={18} style={{ color: '#074a5b' }} /></button>
+            <span className="flex-1 text-center py-3 text-base font-bold" style={{ color: '#074a5b' }}>{formData.nondivers_infants ?? 0}</span>
+            <button type="button" onClick={() => setFormData((p) => ({ ...p, nondivers_infants: (p.nondivers_infants ?? 0) + 1 }))} className="p-4 hover:bg-[#1e809b]/10 transition-colors"><Plus size={18} style={{ color: '#074a5b' }} /></button>
           </div>
         </div>
       </div>
@@ -592,7 +644,7 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
     }
     if (!formData.phone_number) errors.phone_number = t.required;
     if (!formData.country) errors.country = t.required;
-  if (!formData.preferred_language) errors.preferred_language = 'Preferred language required';
+  if (formData.subscribe_newsletter && !formData.preferred_language) errors.preferred_language = 'Preferred language required';
     if (!isAdventure() && !isActivity()) {
       if (!formData.from_date) errors.from_date = t.required;
       if (!formData.to_date) errors.to_date = t.required;
@@ -600,8 +652,9 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
       // for adventures require preferred month/year 
       if (!formData.preferredMonth) errors.preferredMonth = 'Preferred month required';
       if (!formData.preferredYear) errors.preferredYear = 'Preferred year required';
-      if (!formData.adventureOption) errors.adventureOption = 'Select an option';
-      if (!Array.isArray(formData.participants) || formData.participants.length === 0) errors.participants = 'Add at least one participant';
+      if (!Array.isArray(formData.adventureOptions) || formData.adventureOptions.length === 0) errors.adventureOption = 'Select at least one option';
+      const totalParticipants = (formData.participantsByOption || []).reduce((s, g) => s + ((g.participants || []).length), 0);
+      if (totalParticipants === 0) errors.participants = 'Add at least one participant';
     }
     if (formData.from_date && formData.to_date && new Date(formData.to_date) <= new Date(formData.from_date)) errors.common = t.invalidDates;
     if (item?.expiryDate) {
@@ -696,18 +749,21 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
           addIf('roomName', roomName);
         }
         addIf('number_of_rooms', formData.number_of_rooms);
-        addIf('diverse_adults', formData.diverse_adults);
-        addIf('diverse_children', formData.diverse_children);
-        addIf('nondiverse_adults', formData.nondiverse_adults);
-        addIf('nondiverse_children', formData.nondiverse_children);
-        addIf('nondiverse_infants', formData.nondiverse_infants);
+        addIf('divers_adults', formData.divers_adults);
+        addIf('divers_children', formData.divers_children);
+        addIf('nondivers_adults', formData.nondivers_adults);
+        addIf('nondivers_children', formData.nondivers_children);
+        addIf('nondivers_infants', formData.nondivers_infants);
         addIf('selectedActivities', formData.selectedActivities && formData.selectedActivities.length ? formData.selectedActivities : undefined);
       } else if (effectiveFormForPayload === 'Adventure') {
-        addIf('preferredMonth', formData.preferredMonth);
-        addIf('preferredYear', formData.preferredYear);
-        addIf('adventureOption', formData.adventureOption);
-        addIf('participants', (formData.participants || []).filter(p => p && (p.name || p.ageCategory || p.gender)));
-        addIf('bookWholeBoat', !!formData.bookWholeBoat);
+          addIf('preferredMonth', formData.preferredMonth);
+          addIf('preferredYear', formData.preferredYear);
+          addIf('adventureOptions', formData.adventureOptions && formData.adventureOptions.length ? formData.adventureOptions : undefined);
+          addIf('adventureOption', Array.isArray(formData.adventureOptions) && formData.adventureOptions.length ? formData.adventureOptions[0] : formData.adventureOption);
+          addIf('participantsByOption', (formData.participantsByOption || []).filter(g => g && g.option && Array.isArray(g.participants) && g.participants.length));
+          const flatParticipants = (formData.participantsByOption || []).flatMap(g => (g.participants||[])).filter(p => p && (p.name || p.ageCategory || p.gender));
+          addIf('participants', flatParticipants.length ? flatParticipants : undefined);
+          addIf('bookWholeBoat', !!formData.bookWholeBoat);
       } else if (effectiveFormForPayload === 'Activity') {
 
       } else {
@@ -729,17 +785,19 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
         children: null,
         infants: null,
         number_of_rooms: null,
-        diverse_adults: null,
-        diverse_children: null,
-        nondiverse_adults: null,
-        nondiverse_children: null,
-        nondiverse_infants: null,
+        divers_adults: null,
+        divers_children: null,
+        nondivers_adults: null,
+        nondivers_children: null,
+        nondivers_infants: null,
         selectedActivities: [],
         // adventure-specific resets
         preferredMonth: '',
         preferredYear: '',
+        adventureOptions: [],
         adventureOption: '',
         participants: [],
+        participantsByOption: [],
         bookWholeBoat: false,
         country: '',
       });
