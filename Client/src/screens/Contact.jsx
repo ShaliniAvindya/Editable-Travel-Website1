@@ -35,11 +35,22 @@ const Contact = () => {
   });
   const [loading, setLoading] = useState(true);
 
+  const languages = [
+  { code: 'de', name: 'German' },
+  { code: 'en', name: 'English' },
+  { code: 'es', name: 'Spanish' },
+  { code: 'it', name: 'Italian' },
+  { code: 'fr', name: 'French' },
+  { code: 'pt', name: 'Portuguese' },
+  { code: 'ru', name: 'Russian' },
+];
+
   // Newsletter state
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [newsletterLoading, setNewsletterLoading] = useState(false);
   const [newsletterMessage, setNewsletterMessage] = useState('');
   const [newsletterMessageType, setNewsletterMessageType] = useState('');
+  const [newsletterLanguage, setNewsletterLanguage] = useState('');
 
   // Fetch content
   useEffect(() => {
@@ -124,8 +135,14 @@ const Contact = () => {
   const handleNewsletterSubscribe = async (e) => {
     e?.preventDefault?.();
     const email = (newsletterEmail || '').trim();
+    const language = (newsletterLanguage || '').trim();
     if (!email || !email.includes('@')) {
       setNewsletterMessage('Bitte geben Sie eine gültige E-Mail-Adresse ein');
+      setNewsletterMessageType('error');
+      return;
+    }
+    if (!language) {
+      setNewsletterMessage('Bitte wählen Sie eine Sprache für das Newsletter-Abonnement');
       setNewsletterMessageType('error');
       return;
     }
@@ -134,7 +151,7 @@ const Contact = () => {
     setNewsletterMessage('');
 
     try {
-      const resp = await axios.post(`${API_BASE_URL}/newsletter/subscribe`, { email });
+  const resp = await axios.post(`${API_BASE_URL}/newsletter/subscribe`, { email, language });
       const data = resp.data || {};
       const status = data.status || data.subscriber?.status;
 
@@ -142,6 +159,7 @@ const Contact = () => {
         setNewsletterMessage(data.message || 'Erfolgreich angemeldet!');
         setNewsletterMessageType('success');
         setNewsletterEmail('');
+        setNewsletterLanguage('');
       } else if (data.error || data.message) {
         setNewsletterMessage(data.error || data.message);
         setNewsletterMessageType('error');
@@ -197,6 +215,7 @@ const Contact = () => {
         setNewsletterMessage(data.message || 'Erfolgreich abgemeldet.');
         setNewsletterMessageType('success');
         setNewsletterEmail('');
+        setNewsletterLanguage('');
       } else if (data.error || data.message) {
         setNewsletterMessage(data.error || data.message);
         setNewsletterMessageType('error');
@@ -295,16 +314,28 @@ const Contact = () => {
                <h3 className="text-2xl font-bold mb-4" style={{ color: '#074a5b' }}>Newsletter</h3>
             <p className="text-sm text-cyan-700 mb-4">Bleiben Sie über die neuesten Angebote und Nachrichten informiert.</p>
 
-            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
-              <input
-                type="email"
-                value={newsletterEmail}
-                onChange={(e) => setNewsletterEmail(e.target.value)}
-                placeholder="Ihre E-Mail-Adresse"
-                className="w-full text-black px-4 sm:px-6 py-3 sm:py-4 text-sm sm:text-base rounded-2xl border-2 border-gray-200 focus:border-[#1e809b] focus:outline-none transition-all duration-300 bg-white/90"
-              />
+            <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-2">
+              <div className="flex items-center gap-2 w-full">
+                <input
+                  type="email"
+                  value={newsletterEmail}
+                  onChange={(e) => setNewsletterEmail(e.target.value)}
+                  placeholder="Ihre E-Mail-Adresse"
+              className="w-full sm:w-52 min-w-0 text-black sm:px-4 py-3 sm:py-4 text-sm sm:text-base rounded-2xl border-2 border-gray-200 focus:border-[#1e809b] focus:outline-none transition-all duration-300 bg-white/90"
+                />
 
-              <div className="flex gap-3 w-full sm:w-auto">
+                <select
+                  value={newsletterLanguage}
+                  onChange={(e) => setNewsletterLanguage(e.target.value)}
+                    className="w-25 sm:w-24 px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e809b] bg-white/90 text-black text-sm"
+                  aria-label="Newsletter language"
+                >
+                  <option value="">Language</option>
+                  {languages.map(l => (<option key={l.code} value={l.code}>{l.name}</option>))}
+                </select>
+              </div>
+
+              <div className="flex gap-2 w-full sm:w-auto items-center">
                 <button
                   onClick={handleNewsletterSubscribe}
                   disabled={newsletterLoading}
