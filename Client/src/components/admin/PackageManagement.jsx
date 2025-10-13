@@ -504,7 +504,7 @@ const PackageManagement = () => {
               >
                 <option value="none">None</option>
                 <option value="Accommodation">Accommodation</option>
-                <option value="Adventure">Adventure</option>
+                <option value="Adventure">Liveaboard</option>
                 <option value="Activity">Activity</option>
               </select>
             </div>
@@ -597,3 +597,4 @@ const PackageManagement = () => {
 };
 
 export default PackageManagement;
+
