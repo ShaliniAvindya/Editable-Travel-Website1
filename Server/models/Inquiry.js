@@ -55,6 +55,7 @@ const InquirySchema = new mongoose.Schema({
   // Adventure specific fields
   preferredMonth: String,
   preferredYear: Number,
+  adventureOptions: [{ type: String }],
   adventureOption: String,
   participants: [
     {
@@ -64,15 +65,28 @@ const InquirySchema = new mongoose.Schema({
       ageCategory: String,
     },
   ],
+  participantsByOption: [
+    {
+      option: String,
+      participants: [
+        {
+          name: String,
+          gender: String,
+          diverStatus: String,
+          ageCategory: String,
+        },
+      ],
+    },
+  ],
   bookWholeBoat: {
     type: Boolean,
     default: false,
   },
-  diverse_adults: { type: Number, min: 0 },
-  diverse_children: { type: Number, min: 0 },
-  nondiverse_adults: { type: Number, min: 0 },
-  nondiverse_children: { type: Number, min: 0 },
-  nondiverse_infants: { type: Number, min: 0 },
+  divers_adults: { type: Number, min: 0 },
+  divers_children: { type: Number, min: 0 },
+  nondivers_adults: { type: Number, min: 0 },
+  nondivers_children: { type: Number, min: 0 },
+  nondivers_infants: { type: Number, min: 0 },
   country: String,
   buttonType: {
     type: String,
