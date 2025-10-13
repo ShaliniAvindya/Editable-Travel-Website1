@@ -80,59 +80,96 @@ const cron = require('node-cron');
 
   router.post('/subscribe', async (req, res, next) => {
     try {
-      const { email, listId, listIds } = req.body;
+      const { email, listId, listIds, language } = req.body;
       if (!isValidEmail(email)) return res.status(400).json({ message: 'Invalid email' });
       const normalized = email.toLowerCase().trim();
+    const addToLists = async (subscriber, ids, language) => {
+      let targetIds = Array.isArray(ids) ? ids.filter(Boolean) : [];
+      try {
+        if (targetIds.length === 0) {
+          if (language) {
+            try {
+              let matched;
+              const noLangQuery = [{ language: { $exists: false } }, { language: '' }];
+              if (language) {
+                matched = await List.find({ is_public: true, $or: [{ language: language }, ...noLangQuery] });
+                if (matched && matched.length > 0) {
+                  targetIds = matched.map(l => String(l._id));
+                } else {
+                  const publicLists = await List.find({ is_public: true });
+                  targetIds = publicLists.map(l => String(l._id));
+                }
+              } else {
+                matched = await List.find({ is_public: true, $or: noLangQuery });
+                if (matched && matched.length > 0) {
+                  targetIds = matched.map(l => String(l._id));
+                } else {
+                  targetIds = [];
+                }
+              }
+            } catch (e) {
+              console.error('Failed resolving lists by language', e.message || e);
+              const publicLists = await List.find({ is_public: true });
+              targetIds = publicLists.map(l => String(l._id));
+            }
+          } else {
+            const publicLists = await List.find({ is_public: true });
+            targetIds = publicLists.map(l => String(l._id));
+          }
+        }
+      } catch (e) {
+        console.error('Failed resolving public lists', e.message);
+      }
+      if (targetIds.length === 0) return;
+      for (const lid of targetIds) {
+        try {
+          const list = await List.findById(lid);
+          if (!list) continue;
+          if (!list.is_public) continue;
+          const sid = String(subscriber._id);
+          if (!list.subscribers) list.subscribers = [];
+          if (!list.subscribers.map(String).includes(sid)) {
+            list.subscribers.push(subscriber._id);
+            await list.save();
+          }
+        } catch (e) {
+          console.error('Failed adding to list', lid, e.message);
+        }
+      }
+    };
+
 // Check existing subscriber
-		const existing = await Newsletter.findOne({ email: normalized });
+    const existing = await Newsletter.findOne({ email: normalized });
 		if (existing) {
 			if (existing.status === 'subscribed') {
-		return res.status(409).json({ message: 'Already subscribed' });
+      return res.status(409).json({ message: 'Already subscribed' });
 			}
 			// If previously unsubscribed, reactivate
 			existing.status = 'subscribed';
 			existing.subscribed_at = new Date();
 			existing.unsubscribed_at = undefined;
-			await existing.save();
-			return res.status(200).json({ message: 'Re-subscribed', subscriber: existing });
+      if (language) existing.language = language;
+      await existing.save();
+      try {
+        if (listId || (Array.isArray(listIds) && listIds.length > 0)) {
+          await addToLists(existing, Array.prototype.concat(listId || [], listIds || []), language);
+        } else {
+          await addToLists(existing, [], language);
+        }
+      } catch (e) {
+        console.error('Failed to assign re-subscribed user to lists:', e.message || e);
+      }
+      return res.status(200).json({ message: 'Re-subscribed', subscriber: existing });
 		}
-		const created = await Newsletter.create({ email: normalized, status: 'subscribed', subscribed_at: new Date() });
+    const created = await Newsletter.create({ email: normalized, status: 'subscribed', subscribed_at: new Date(), language });
 
-		const addToLists = async (subscriber, ids) => {
-			let targetIds = Array.isArray(ids) ? ids.filter(Boolean) : [];
-			try {
-				if (targetIds.length === 0) {
-					const publicLists = await List.find({ is_public: true });
-					targetIds = publicLists.map(l => String(l._id));
-				}
-			} catch (e) {
-				console.error('Failed resolving public lists', e.message);
-			}
-			if (targetIds.length === 0) return;
-			for (const lid of targetIds) {
-				try {
-					const list = await List.findById(lid);
-					if (!list) continue;
-					if (!list.is_public) continue; 
-					const sid = String(subscriber._id);
-					if (!list.subscribers) list.subscribers = [];
-					if (!list.subscribers.map(String).includes(sid)) {
-						list.subscribers.push(subscriber._id);
-						await list.save();
-					}
-				} catch (e) {
-					console.error('Failed adding to list', lid, e.message);
-				}
-			}
-		};
+    if (listId || (Array.isArray(listIds) && listIds.length > 0)) {
+      await addToLists(created, Array.prototype.concat(listId || [], listIds || []), language);
+    } else {
+      await addToLists(created, [], language);
+    }
 
-		if (listId || (Array.isArray(listIds) && listIds.length > 0)) {
-			await addToLists(created, Array.prototype.concat(listId || [], listIds || []));
-		} else {
-			await addToLists(created, []);
-		}
-
-		return res.status(201).json({ message: 'Subscribed', subscriber: created });
+    return res.status(201).json({ message: 'Subscribed', subscriber: created });
 	} catch (err) {
 		if (err.code === 11000) return res.status(409).json({ message: 'Already subscribed' });
 		next(err);
@@ -407,7 +444,7 @@ const cron = require('node-cron');
 										<div style="margin-top:6px; color:#6b7280; font-size:13px; line-height:1.4;">Address or contact info here</div>
 									</td>
                     <td style="vertical-align:middle; text-align:center; width:40%; padding-top:8px;">
-                      <div style="margin-bottom:8px; font-size:13px; color:#9ca3af; text-align:center;">If you no longer wish to receive these emails, click the button.</div>
+                      <div style="margin-bottom:8px; font-size:13px; color:#9ca3af; text-align:center;">If you no longer wish to receive these emails, click below.</div>
                       <a href="${unsubscribeUrl}" style="display:inline-block; padding:12px 18px; background:#ef4444; color:#ffffff; text-decoration:none; border-radius:6px; font-weight:600; font-size:14px;">Unsubscribe</a>
                     </td>
 								</tr>
@@ -767,24 +804,39 @@ router.get('/admin/lists', async (req, res, next) => {
 
 // POST /api/newsletter/admin/lists
 router.post('/admin/lists', async (req, res, next) => {
-	try {
-		const { name, description, is_public } = req.body;
-		if (!name) return res.status(400).json({ message: 'List name required' });
-		const created = await List.create({ name, description, is_public });
-		return res.status(201).json({ message: 'List created', list: created });
-	} catch (err) { next(err); }
+  try {
+    const { name, description, is_public, language } = req.body;
+    if (!name) return res.status(400).json({ message: 'List name required' });
+    const created = await List.create({ name, description, is_public, language });
+    if (created.is_public) {
+      try {
+        const q = { status: 'subscribed' };
+        if (language) q.language = language;
+        const subs = await Newsletter.find(q).select('_id');
+        if (Array.isArray(subs) && subs.length > 0) {
+          created.subscribers = subs.map(s => s._id);
+          await created.save();
+        }
+      } catch (e) {
+        console.error('Failed to auto-populate subscribers for new public list', e.message || e);
+      }
+    }
+
+    return res.status(201).json({ message: 'List created', list: created });
+  } catch (err) { next(err); }
 });
 
 // PUT /api/newsletter/admin/lists/:id
 router.put('/admin/lists/:id', async (req, res, next) => {
 	try {
 		const id = req.params.id;
-		const { name, description, is_public } = req.body;
+    const { name, description, is_public, language } = req.body;
 		const list = await List.findById(id);
 		if (!list) return res.status(404).json({ message: 'List not found' });
 		if (name) list.name = name;
 		if (typeof description !== 'undefined') list.description = description;
-		if (typeof is_public !== 'undefined') list.is_public = !!is_public;
+    if (typeof is_public !== 'undefined') list.is_public = !!is_public;
+    if (typeof language !== 'undefined') list.language = language || '';
 		await list.save();
 		return res.status(200).json({ message: 'List updated', list });
 	} catch (err) { next(err); }
