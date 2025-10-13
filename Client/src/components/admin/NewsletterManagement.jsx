@@ -40,16 +40,6 @@ const NewsletterManagement = () => {
     setTimeout(() => setMessage({ type: '', text: '' }), 4000);
   };
 
-  const languages = [
-  { code: 'de', name: 'German' },
-  { code: 'en', name: 'English' },
-  { code: 'es', name: 'Spanish' },
-  { code: 'it', name: 'Italian' },
-  { code: 'fr', name: 'French' },
-  { code: 'pt', name: 'Portuguese' },
-  { code: 'ru', name: 'Russian' },
-];
-
   const tabs = [
     { id: 'subscribers', label: 'Subscribers', icon: Users },
     { id: 'campaigns', label: 'Campaigns', icon: Mail },
@@ -719,11 +709,8 @@ const SubscribersTab = ({ showMessage, selectedSubscribers, setSelectedSubscribe
                 onChange={(e) => setFormData({ ...formData, language: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e809b]"
               >
-                <option value="en">English</option>
-                <option value="de">German</option>
-                <option value="fr">French</option>
-                <option value="es">Spanish</option>
-                <option value="it">Italian</option>
+                <option value="">(none)</option>
+                {languages.map(l => (<option key={l.code} value={l.code}>{l.name}</option>))}
               </select>
             </div>
             <div className="flex gap-3 pt-4">
@@ -1528,7 +1515,7 @@ const ListsTab = ({ showMessage }) => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showManageModal, setShowManageModal] = useState(false);
   const [currentList, setCurrentList] = useState(null);
-  const [formData, setFormData] = useState({ name: '', description: '', is_public: false });
+  const [formData, setFormData] = useState({ name: '', description: '', is_public: false, language: '' });
   const [allSubscribers, setAllSubscribers] = useState([]);
   const [manageSelectedIds, setManageSelectedIds] = useState([]);
   const [removeSelectedIds, setRemoveSelectedIds] = useState([]);
@@ -1568,9 +1555,11 @@ const ListsTab = ({ showMessage }) => {
         created_at: l.createdAt || l.created_at || new Date().toISOString()
       }));
       setLists(normalized);
+      return normalized;
     } catch (err) {
       console.error('Error fetching lists:', err);
       showMessage('error', 'Failed to load lists');
+      return [];
     } finally { setLoading(false); }
   };
 
@@ -1590,6 +1579,7 @@ const ListsTab = ({ showMessage }) => {
         return { _id: String(id), email, language, status };
       }).filter(Boolean);
       setAllSubscribers(normalized);
+      return normalized;
     } catch (err) {
       console.error('Failed to fetch subscribers', err);
     }
@@ -1601,14 +1591,29 @@ const ListsTab = ({ showMessage }) => {
       const resp = await fetch(`${API_BASE_URL}/newsletter/admin/lists`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData)
       });
+      const data = await resp.json().catch(() => ({}));
       if (!resp.ok) {
-        const { message } = await resp.json();
-        return showMessage('error', message || 'Failed to create list');
+        const message = data && data.message ? data.message : 'Failed to create list';
+        return showMessage('error', message);
       }
       showMessage('success', 'List created');
       setShowCreateModal(false);
-      setFormData({ name: '', description: '', is_public: false });
+      setFormData({ name: '', description: '', is_public: false, language: '' });
+      // refresh lists in background
       fetchLists();
+      const createdList = data && data.list ? data.list : null;
+      if (createdList && Array.isArray(createdList.subscribers) && createdList.subscribers.length > 0) {
+        const subs = await fetchAllSubscribers();
+        const lookup = Array.isArray(subs) ? subs : allSubscribers;
+        const normalized = createdList.subscribers.map(sidRaw => {
+          const sid = (typeof sidRaw === 'string') ? sidRaw : (sidRaw && sidRaw._id ? sidRaw._id : sidRaw);
+          const sidStr = String(sid);
+          const found = lookup.find(a => String(a._id) === sidStr);
+          return { _id: sidStr, email: found ? found.email : '', language: found ? found.language : '' };
+        }).filter(Boolean);
+        setCurrentList({ ...createdList, subscribers: normalized });
+        setShowManageModal(true);
+      }
     } catch (err) {
       console.error('Error creating list', err);
       showMessage('error', 'Failed to create list');
@@ -1626,9 +1631,9 @@ const ListsTab = ({ showMessage }) => {
         return showMessage('error', message || 'Failed to update list');
       }
       showMessage('success', 'List updated');
-      setShowEditModal(false);
-      setCurrentList(null);
-      setFormData({ name: '', description: '', is_public: false });
+  setShowEditModal(false);
+  setCurrentList(null);
+  setFormData({ name: '', description: '', is_public: false, language: '' });
       fetchLists();
     } catch (err) {
       console.error('Error updating list', err);
@@ -1638,7 +1643,7 @@ const ListsTab = ({ showMessage }) => {
 
   const openEditModal = (list) => {
     setCurrentList(list);
-    setFormData({ name: list.name || '', description: list.description || '', is_public: !!list.is_public });
+    setFormData({ name: list.name || '', description: list.description || '', is_public: !!list.is_public, language: list.language || '' });
     setShowEditModal(true);
   };
 
@@ -1660,16 +1665,46 @@ const ListsTab = ({ showMessage }) => {
     setManageSelectedIds([]);
     setRemoveSelectedIds([]);
     console.debug('[Newsletter] openManageModal: list ->', list && list._id);
-    await fetchAllSubscribers();
+    const subsList = await fetchAllSubscribers();
     // normalize current list subscribers now to objects {_id,email}
     try {
+      const lookupSource = Array.isArray(subsList) ? subsList : allSubscribers;
       const normalizedSubs = (list.subscribers || []).map(s => {
         if (!s) return null;
-        if (typeof s === 'string') return { _id: s, email: '' };
-        if (s._id && typeof s._id === 'object' && s._id.$oid) return { _id: s._id.$oid, email: s.email || '' };
-        return { _id: s._id || s.id || s, email: s.email || '' };
+        const sid = (typeof s === 'string') ? s : (s._id && typeof s._id === 'object' && s._id.$oid ? s._id.$oid : (s._id || s.id || s));
+        const sidStr = String(sid);
+        const email = (typeof s === 'object' && s.email) ? s.email : (lookupSource.find(a => String(a._id) === sidStr)?.email || '');
+        const language = lookupSource.find(a => String(a._id) === sidStr)?.language || '';
+        return { _id: String(sidStr), email, language };
       }).filter(Boolean);
       setCurrentList({ ...list, subscribers: normalizedSubs });
+      try {
+        const listLanguage = list.language || '';
+        if (listLanguage) {
+          const existingIds = new Set(normalizedSubs.map(s => String(s._id)));
+          const toAutoAdd = (lookupSource || []).filter(s => s && s.status === 'subscribed' && String(s.language) === String(listLanguage) && !existingIds.has(String(s._id))).map(s => String(s._id));
+          if (toAutoAdd.length > 0) {
+            setCurrentList(prev => {
+              if (!prev) return prev;
+              const merged = [ ...(prev.subscribers || []) ];
+              for (const id of toAutoAdd) {
+                const lookup = (lookupSource || []).find(a => String(a._id) === String(id));
+                if (lookup && !merged.find(m => String(m._id) === String(id))) merged.push({ _id: String(id), email: lookup.email || '', language: lookup.language || '' });
+              }
+              return { ...prev, subscribers: merged };
+            });
+            try {
+              const resp = await fetch(`${API_BASE_URL}/newsletter/admin/lists/${list._id}/add`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ subscriberIds: toAutoAdd }) });
+              if (resp.ok) {
+                await fetchLists();
+                await fetchAllSubscribers();
+              } else {
+                console.warn('Auto-add language subscribers failed', await resp.text().catch(() => '')); 
+              }
+            } catch (e) { console.error('Auto-add API error', e); }
+          }
+        }
+      } catch (e) { console.warn('Auto-add flow failed', e); }
     } catch (e) { console.warn('openManageModal: failed to normalize list subscribers', e); }
     setShowManageModal(true);
   };
@@ -1816,7 +1851,7 @@ const ListsTab = ({ showMessage }) => {
     <div>
       <div className="flex justify-between items-center mb-6">
         <div className="text-lg font-semibold text-gray-900">Subscriber Lists</div>
-        <button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2 px-4 py-2 bg-[#1e809b] text-white rounded-lg hover:bg-[#166a82]">
+        <button onClick={() => { setFormData({ name: '', description: '', is_public: false, language: '' }); setShowCreateModal(true); }} className="flex items-center gap-2 px-4 py-2 bg-[#1e809b] text-white rounded-lg hover:bg-[#166a82]">
           <Plus size={18} />
           Create List
         </button>
@@ -1834,6 +1869,9 @@ const ListsTab = ({ showMessage }) => {
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className="text-lg font-semibold text-gray-900">{list.name}</h3>
+                    {list.language && (
+                      <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full">{(languages.find(l=>l.code===list.language)||{name:list.language}).name}</span>
+                    )}
                     {list.is_public && (<span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">Public</span>)}
                   </div>
                   <p className="text-sm text-gray-600 mb-3">{list.description || 'No description'}</p>
@@ -1871,6 +1909,14 @@ const ListsTab = ({ showMessage }) => {
               <label htmlFor="is_public" className="text-sm text-gray-700">Allow public subscription</label>
             </div>
 
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Language (optional)</label>
+              <select value={formData.language} onChange={(e) => setFormData({ ...formData, language: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e809b]">
+                <option value="">(none)</option>
+                {languages.map(l => (<option key={l.code} value={l.code}>{l.name}</option>))}
+              </select>
+            </div>
+
             <div className="flex gap-3 pt-4">
               <button onClick={createList} className="flex-1 px-4 py-2 bg-[#1e809b] text-white rounded-lg hover:bg-[#166a82]">Create List</button>
               <button onClick={() => setShowCreateModal(false)} className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
@@ -1897,6 +1943,14 @@ const ListsTab = ({ showMessage }) => {
               <label htmlFor="is_public" className="text-sm text-gray-700">Allow public subscription</label>
             </div>
 
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Language (optional)</label>
+              <select value={formData.language} onChange={(e) => setFormData({ ...formData, language: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e809b]">
+                <option value="">(none)</option>
+                {languages.map(l => (<option key={l.code} value={l.code}>{l.name}</option>))}
+              </select>
+            </div>
+
             <div className="flex gap-3 pt-4">
               <button onClick={updateList} className="flex-1 px-4 py-2 bg-[#1e809b] text-white rounded-lg hover:bg-[#166a82]">Update List</button>
               <button onClick={() => setShowEditModal(false)} className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
@@ -1911,21 +1965,26 @@ const ListsTab = ({ showMessage }) => {
             <div>
               <h4 className="font-semibold mb-2">Current members ({(currentList.subscribers || []).length})</h4>
               <div className="max-h-40 overflow-y-auto border border-gray-100 rounded-lg p-3">
-                {currentList.subscribers && currentList.subscribers.length > 0 ? (
+                {(currentList.subscribers && currentList.subscribers.length > 0) && (
                   currentList.subscribers.map(s => {
                     const sid = (typeof s === 'string') ? s : (s._id && typeof s._id === 'object' && s._id.$oid ? s._id.$oid : (s._id || s.id || s));
                     const sidStr = String(sid);
                     const email = (typeof s === 'object' && s.email) ? s.email : (allSubscribers.find(a => String(a._id) === sidStr)?.email || '');
+                    const fallbackLang = allSubscribers.find(a => String(a._id) === sidStr)?.language || '';
+                    const displayLangCode = (typeof s === 'object' && s.language) ? s.language : fallbackLang;
+                    const langObj = languages.find(l => l.code === displayLangCode);
+                    const displayLang = langObj ? langObj.name : (displayLangCode || '');
                     return (
                       <label key={sidStr} className="flex items-center gap-3 py-1">
                         <input type="checkbox" checked={removeSelectedIds.includes(sidStr)} onChange={(e) => {
                           setRemoveSelectedIds(prev => e.target.checked ? [...prev, sidStr] : prev.filter(id => id !== sidStr));
                         }} />
-                        <span className="text-sm">{email || sidStr}</span>
+                        <span className="text-sm">{email || sidStr}{displayLang ? ` (${displayLang})` : ''}</span>
                       </label>
                     );
                   })
-                ) : (
+                )}
+                {(!currentList.subscribers || currentList.subscribers.length === 0) && (
                   <div className="text-sm text-gray-500">No members in this list</div>
                 )}
               </div>
@@ -1948,7 +2007,7 @@ const ListsTab = ({ showMessage }) => {
                         const sid = String(s._id);
                         setManageSelectedIds(prev => e.target.checked ? [...prev, sid] : prev.filter(id => id !== sid));
                       }} />
-                      <span className="text-sm">{s.email}</span>
+                        <span className="text-sm">{s.email}{(() => { const lo = languages.find(l=>l.code===s.language); return lo ? ` (${lo.name})` : (s.language ? ` (${s.language})` : ''); })()}</span>
                     </label>
                   ))
                 )}
