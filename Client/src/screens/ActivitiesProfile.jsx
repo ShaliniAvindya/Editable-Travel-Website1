@@ -286,7 +286,7 @@ const ActivityProfile = () => {
                 disabled={!activity}
               >
                 <MessageCircle size={16} />
-                Anfrage per E-Mail
+                per E-Mail anfragen
               </button>
               <button
                 onClick={handleWhatsAppContact}
@@ -565,3 +565,4 @@ const ActivityProfile = () => {
 };
 
 export default ActivityProfile;
+
