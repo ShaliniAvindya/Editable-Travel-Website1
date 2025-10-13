@@ -74,7 +74,7 @@ function htmlRowIf(label, value) {
 
 // Function to generate admin email template
 const generateAdminEmailTemplate = (data) => {
-  const { entityType, entityTitle, resortName, roomName, name, email, phone_number, message, entity, from_date, to_date, adults, children, infants, country, buttonType, submitted_at, travellers, number_of_rooms, selectedActivities, preferredMonth, preferredYear, adventureOption, participants, bookWholeBoat, diverse_adults, diverse_children, nondiverse_adults, nondiverse_children, nondiverse_infants } = data;
+  const { entityType, entityTitle, resortName, roomName, name, email, phone_number, message, entity, from_date, to_date, adults, children, infants, country, buttonType, submitted_at, travellers, number_of_rooms, selectedActivities, preferredMonth, preferredYear, adventureOption, adventureOptions, participants, participantsByOption, bookWholeBoat, divers_adults, divers_children, nondivers_adults, nondivers_children, nondivers_infants } = data;
   
   const plainText = `
     New Inquiry: ${entityTitle}
@@ -156,14 +156,14 @@ const generateAdminEmailTemplate = (data) => {
                     ${htmlRowIf('Number of rooms', number_of_rooms)}
                     ${isFilled(selectedActivities) ? htmlRowIf('Selected Activities', Array.isArray(selectedActivities) ? selectedActivities : [selectedActivities]) : ''}
                     ${(isFilled(preferredMonth) || isFilled(preferredYear)) ? htmlRowIf('Preferred Month/Year', `${preferredMonth || ''} ${preferredYear || ''}`) : ''}
-                    ${htmlRowIf('Adventure Option', adventureOption)}
-                    ${bookWholeBoat ? htmlRowIf('Book Whole Boat', 'Yes') : ''}
-                    ${isFilled(participants) ? htmlRowIf('Participants', participants.map(p => p.name || '')) : ''}
-                    ${htmlRowIf('Diverse Adults', diverse_adults)}
-                    ${htmlRowIf('Diverse Children', diverse_children)}
-                    ${htmlRowIf('Non-diverse Adults', nondiverse_adults)}
-                    ${htmlRowIf('Non-diverse Children', nondiverse_children)}
-                    ${htmlRowIf('Non-diverse Infants', nondiverse_infants)}
+                                    ${isFilled(adventureOptions) ? htmlRowIf('Adventure Options', Array.isArray(adventureOptions) ? adventureOptions : [adventureOptions]) : ''}
+                                    ${bookWholeBoat ? htmlRowIf('Book Whole Boat', 'Yes') : ''}
+                                    ${isFilled(participantsByOption) ? htmlRowIf('Participants by Option', participantsByOption.map(o => `${o.option}: ${ (o.participants || []).map(p=>p.name||'').join(', ') }`)) : (isFilled(participants) ? htmlRowIf('Participants', participants.map(p => p.name || '')) : '')}
+                    ${htmlRowIf('Divers Adults', divers_adults)}
+                    ${htmlRowIf('Divers Children', divers_children)}
+                    ${htmlRowIf('Non-Divers Adults', nondivers_adults)}
+                    ${htmlRowIf('Non-Divers Children', nondivers_children)}
+                    ${htmlRowIf('Non-Divers Infants', nondivers_infants)}
                   </table>
                 </td>
               </tr>
@@ -211,7 +211,7 @@ const generateAdminEmailTemplate = (data) => {
 
 // Function to generate user confirmation email template
 const generateUserConfirmationTemplate = (data) => {
-  const { entityType, entityTitle, resortName, roomName, name, email, phone_number, message, entity, from_date, to_date, adults, children, infants, country, submitted_at, travellers, number_of_rooms, selectedActivities, preferredMonth, preferredYear, adventureOption, participants, bookWholeBoat, diverse_adults, diverse_children, nondiverse_adults, nondiverse_children, nondiverse_infants } = data;
+  const { entityType, entityTitle, resortName, roomName, name, email, phone_number, message, entity, from_date, to_date, adults, children, infants, country, submitted_at, travellers, number_of_rooms, selectedActivities, preferredMonth, preferredYear, adventureOption, adventureOptions, participants, participantsByOption, bookWholeBoat, divers_adults, divers_children, nondivers_adults, nondivers_children, nondivers_infants } = data;
   let plainText = `Dear ${name},\n\nWe have received your booking details for ${entityTitle}\n\n`;
   if (entityType === 'Accommodation') plainText += `Resort: ${resortName}\n${isFilled(roomName) ? `Room: ${roomName}\n` : ''}`;
     plainText += plainIf('Name', name);
@@ -228,14 +228,19 @@ const generateUserConfirmationTemplate = (data) => {
     plainText += plainIf('Number of rooms', number_of_rooms);
     plainText += isFilled(selectedActivities) ? plainIf('Selected Activities', Array.isArray(selectedActivities) ? selectedActivities.join(', ') : selectedActivities) : '';
     if (isFilled(preferredMonth) || isFilled(preferredYear)) plainText += plainIf('Preferred Month/Year', `${preferredMonth || ''} ${preferredYear || ''}`);
-    plainText += plainIf('Adventure Option', adventureOption);
+    if (isFilled(adventureOptions)) plainText += plainIf('Adventure Options', Array.isArray(adventureOptions) ? adventureOptions.join(', ') : adventureOptions);
     if (bookWholeBoat) plainText += plainIf('Book whole boat', 'Yes');
-    plainText += isFilled(participants) ? plainIf('Participants', participants.map(p=>p.name||'').join(', ')) : '';
-    plainText += plainIf('Diverse Adults', diverse_adults);
-    plainText += plainIf('Diverse Children', diverse_children);
-    plainText += plainIf('Non-diverse Adults', nondiverse_adults);
-    plainText += plainIf('Non-diverse Children', nondiverse_children);
-    plainText += plainIf('Non-diverse Infants', nondiverse_infants);
+    if (isFilled(participantsByOption)) {
+      const lines = participantsByOption.map(o => `${o.option}: ${(o.participants||[]).map(p=>p.name||'').join(', ')}`);
+      plainText += plainIf('Participants by Option', lines.join(' | '));
+    } else {
+      plainText += isFilled(participants) ? plainIf('Participants', participants.map(p=>p.name||'').join(', ')) : '';
+    }
+    plainText += plainIf('Divers Adults', divers_adults);
+    plainText += plainIf('Divers Children', divers_children);
+    plainText += plainIf('Non-Divers Adults', nondivers_adults);
+    plainText += plainIf('Non-Divers Children', nondivers_children);
+    plainText += plainIf('Non-Divers Infants', nondivers_infants);
     plainText += plainIf('Country', country);
     plainText += plainIf('Submitted At', submitted_at ? submitted_at.toISOString() : '');
 
@@ -595,10 +600,10 @@ const generateReplyEmailTemplate = (data) => {
     plainText += plainIf('Adventure Option', inquiry.adventureOption);
     if (inquiry.bookWholeBoat) plainText += plainIf('Book whole boat', 'Yes');
     plainText += isFilled(inquiry.participants) ? plainIf('Participants', inquiry.participants.map(p => p.name || '').join(', ')) : '';
-    plainText += plainIf('Diverse Adults', inquiry.diverse_adults);
-    plainText += plainIf('Diverse Children', inquiry.diverse_children);
-    plainText += plainIf('Non-diverse Adults', inquiry.nondiverse_adults);
-    plainText += plainIf('Non-diverse Children', inquiry.nondiverse_children);
+    plainText += plainIf('Divers Adults', inquiry.divers_adults);
+    plainText += plainIf('Divers Children', inquiry.divers_children);
+    plainText += plainIf('Non-Divers Adults', inquiry.nondivers_adults);
+    plainText += plainIf('Non-Divers Children', inquiry.nondivers_children);
     plainText += isFilled(inquiry.children) ? plainIf('Children Ages', inquiry.children.join(', ')) : '';
     plainText += isFilled(inquiry.from_date) ? plainIf('From Date', new Date(inquiry.from_date).toLocaleDateString()) : '';
     plainText += isFilled(inquiry.to_date) ? plainIf('To Date', new Date(inquiry.to_date).toLocaleDateString()) : '';
@@ -645,10 +650,10 @@ const generateReplyEmailTemplate = (data) => {
               ${htmlRowIf('Adventure Option', inquiry.adventureOption)}
               ${inquiry.bookWholeBoat ? htmlRowIf('Book whole boat', 'Yes') : ''}
               ${isFilled(inquiry.participants) ? htmlRowIf('Participants', inquiry.participants.map(p => p.name || '')) : ''}
-              ${htmlRowIf('Diverse Adults', inquiry.diverse_adults)}
-              ${htmlRowIf('Diverse Children', inquiry.diverse_children)}
-              ${htmlRowIf('Non-diverse Adults', inquiry.nondiverse_adults)}
-              ${htmlRowIf('Non-diverse Children', inquiry.nondiverse_children)}
+              ${htmlRowIf('Divers Adults', inquiry.divers_adults)}
+              ${htmlRowIf('Divers Children', inquiry.divers_children)}
+              ${htmlRowIf('Non-Divers Adults', inquiry.nondivers_adults)}
+              ${htmlRowIf('Non-Divers Children', inquiry.nondivers_children)}
               ${isFilled(inquiry.children) ? htmlRowIf('Children Ages', inquiry.children.join(', ')) : ''}
               ${isFilled(inquiry.from_date) ? htmlRowIf('From Date', new Date(inquiry.from_date).toLocaleDateString()) : ''}
               ${isFilled(inquiry.to_date) ? htmlRowIf('To Date', new Date(inquiry.to_date).toLocaleDateString()) : ''}
@@ -702,14 +707,16 @@ router.post('/', async (req, res) => {
       selectedActivities,
       preferredMonth,
       preferredYear,
-      adventureOption,
-      participants,
+  adventureOption,
+  adventureOptions,
+  participants,
+  participantsByOption,
       bookWholeBoat,
-      diverse_adults,
-      diverse_children,
-      nondiverse_adults,
-      nondiverse_children,
-      nondiverse_infants,
+      divers_adults,
+      divers_children,
+      non_divers_adults,
+      non_divers_children,
+      non_divers_infants,
     } = cleanBody;
     if (entityType !== 'Custom' && entityType !== 'Accommodation' && !mongoose.isValidObjectId(entity.$oid)) {
       return res.status(400).json({ error: 'Invalid entity ID for non-custom/non-accommodation inquiry' });
@@ -751,15 +758,17 @@ router.post('/', async (req, res) => {
       number_of_rooms: number_of_rooms,
       selectedActivities: Array.isArray(selectedActivities) ? selectedActivities : (selectedActivities ? [selectedActivities] : []),
       preferredMonth,
-  preferredYear: preferredYear ? Number(preferredYear) : undefined,
+      preferredYear: preferredYear ? Number(preferredYear) : undefined,
+      adventureOptions: Array.isArray(adventureOptions) ? adventureOptions : (adventureOptions ? [adventureOptions] : (adventureOption ? [adventureOption] : [])),
       adventureOption,
       participants: Array.isArray(participants) ? participants : (participants ? [participants] : []),
+      participantsByOption: Array.isArray(participantsByOption) ? participantsByOption : (participantsByOption ? [participantsByOption] : []),
       bookWholeBoat: !!bookWholeBoat,
-      diverse_adults: diverse_adults,
-      diverse_children: diverse_children,
-      nondiverse_adults: nondiverse_adults,
-      nondiverse_children: nondiverse_children,
-      nondiverse_infants: nondiverse_infants,
+      divers_adults: divers_adults,
+      divers_children: divers_children,
+      non_divers_adults: non_divers_adults,
+      non_divers_children: non_divers_children,
+      non_divers_infants: non_divers_infants,
       country,
       buttonType,
       title,
@@ -776,11 +785,11 @@ router.post('/', async (req, res) => {
         if (typeof cleanBody.roomName !== 'undefined') inquiryData.roomName = cleanBody.roomName;
         if (Array.isArray(cleanBody.selectedActivities)) inquiryData.selectedActivities = cleanBody.selectedActivities;
         else if (typeof cleanBody.selectedActivities !== 'undefined') inquiryData.selectedActivities = [cleanBody.selectedActivities];
-        if (typeof cleanBody.diverse_adults !== 'undefined') inquiryData.diverse_adults = cleanBody.diverse_adults;
-        if (typeof cleanBody.diverse_children !== 'undefined') inquiryData.diverse_children = cleanBody.diverse_children;
-        if (typeof cleanBody.nondiverse_adults !== 'undefined') inquiryData.nondiverse_adults = cleanBody.nondiverse_adults;
-        if (typeof cleanBody.nondiverse_children !== 'undefined') inquiryData.nondiverse_children = cleanBody.nondiverse_children;
-        if (typeof cleanBody.nondiverse_infants !== 'undefined') inquiryData.nondiverse_infants = cleanBody.nondiverse_infants;
+        if (typeof cleanBody.divers_adults !== 'undefined') inquiryData.divers_adults = cleanBody.divers_adults;
+        if (typeof cleanBody.divers_children !== 'undefined') inquiryData.divers_children = cleanBody.divers_children;
+        if (typeof cleanBody.non_divers_adults !== 'undefined') inquiryData.non_divers_adults = cleanBody.non_divers_adults;
+        if (typeof cleanBody.non_divers_children !== 'undefined') inquiryData.non_divers_children = cleanBody.non_divers_children;
+        if (typeof cleanBody.non_divers_infants !== 'undefined') inquiryData.non_divers_infants = cleanBody.non_divers_infants;
         if (typeof cleanBody.number_of_rooms !== 'undefined') inquiryData.number_of_rooms = cleanBody.number_of_rooms;
         if (typeof cleanBody.travellers !== 'undefined') inquiryData.travellers = cleanBody.travellers;
         if (typeof cleanBody.from_date !== 'undefined') inquiryData.from_date = cleanBody.from_date;
@@ -791,7 +800,15 @@ router.post('/', async (req, res) => {
         if (typeof cleanBody.preferredMonth !== 'undefined') inquiryData.preferredMonth = cleanBody.preferredMonth;
         if (typeof cleanBody.preferredYear !== 'undefined') inquiryData.preferredYear = Number(cleanBody.preferredYear);
         if (typeof cleanBody.adventureOption !== 'undefined') inquiryData.adventureOption = cleanBody.adventureOption;
-        inquiryData.participants = Array.isArray(cleanBody.participants) ? cleanBody.participants : (cleanBody.participants ? [cleanBody.participants] : []);
+        if (Array.isArray(cleanBody.participantsByOption)) {
+          inquiryData.participantsByOption = cleanBody.participantsByOption;
+        } else if (Array.isArray(cleanBody.participants) && Array.isArray(cleanBody.adventureOptions) && cleanBody.adventureOptions.length > 0) {
+          inquiryData.participantsByOption = [{ option: cleanBody.adventureOptions[0], participants: cleanBody.participants }];
+        } else if (Array.isArray(cleanBody.participants)) {
+          inquiryData.participants = cleanBody.participants;
+        } else if (cleanBody.participants) {
+          inquiryData.participants = [cleanBody.participants];
+        }
         inquiryData.bookWholeBoat = !!cleanBody.bookWholeBoat;
       }
     }
@@ -812,10 +829,28 @@ router.post('/', async (req, res) => {
           // Add subscriber to all public lists (admin-controlled)
           try {
             if (subscriber && subscriber._id) {
-              const publicLists = await List.find({ is_public: true }).select('_id');
-              for (const l of publicLists) {
+              const lang = cleanBody.language || subscriber.language || undefined;
+              let targetLists = [];
+              try {
+                const noLangQuery = [{ language: { $exists: false } }, { language: '' }];
+                if (lang) {
+                  // include lists that match the language plus global lists with no language
+                  targetLists = await List.find({ is_public: true, $or: [{ language: lang }, ...noLangQuery] });
+                  if (!targetLists || targetLists.length === 0) {
+                    targetLists = await List.find({ is_public: true });
+                  }
+                } else {
+                  // no language: only include public lists that have no language set
+                  targetLists = await List.find({ is_public: true, $or: noLangQuery });
+                }
+              } catch (e) {
+                console.warn('Failed resolving lists by language', e.message || e);
+                targetLists = await List.find({ is_public: true });
+              }
+
+              for (const listDoc of targetLists) {
                 try {
-                  const list = await List.findById(l._id);
+                  const list = await List.findById(listDoc._id);
                   if (!list) continue;
                   const sid = String(subscriber._id);
                   if (!list.subscribers) list.subscribers = [];
@@ -824,7 +859,7 @@ router.post('/', async (req, res) => {
                     await list.save();
                   }
                 } catch (e) {
-                  console.warn('Failed to add subscriber to public list', l._id, e.message || e);
+                  console.warn('Failed to add subscriber to public list', listDoc._id, e.message || e);
                 }
               }
             }
@@ -875,11 +910,11 @@ router.post('/', async (req, res) => {
       adventureOption: inquiry.adventureOption,
       participants: inquiry.participants,
       bookWholeBoat: inquiry.bookWholeBoat,
-      diverse_adults: inquiry.diverse_adults,
-      diverse_children: inquiry.diverse_children,
-      nondiverse_adults: inquiry.nondiverse_adults,
-      nondiverse_children: inquiry.nondiverse_children,
-      nondiverse_infants: inquiry.nondiverse_infants,
+      divers_adults: inquiry.divers_adults,
+      divers_children: inquiry.divers_children,
+      non_divers_adults: inquiry.non_divers_adults,
+      non_divers_children: inquiry.non_divers_children,
+      non_divers_infants: inquiry.non_divers_infants,
       country,
       buttonType,
       submitted_at: inquiry.submitted_at
@@ -906,11 +941,11 @@ router.post('/', async (req, res) => {
       Adventure Option: ${inquiry.adventureOption}
       Book whole boat: ${inquiry.bookWholeBoat ? 'Yes' : 'No'}
       Participants: ${Array.isArray(inquiry.participants) ? inquiry.participants.map(p=>p.name||'').join(', ') : 'N/A'}
-      Diverse Adults: ${inquiry.diverse_adults}
-      Diverse Children: ${inquiry.diverse_children}
-      Non-diverse Adults: ${inquiry.nondiverse_adults}
-      Non-diverse Children: ${inquiry.nondiverse_children}
-      Non-diverse Infants: ${inquiry.nondiverse_infants}
+      Divers Adults: ${inquiry.divers_adults}
+      Divers Children: ${inquiry.divers_children}
+      Non-divers Adults: ${inquiry.nondivers_adults}
+      Non-divers Children: ${inquiry.nondivers_children}
+      Non-divers Infants: ${inquiry.nondivers_infants}
       Country: ${country}
       Inquiry Type: ${buttonType === 'bookNow' ? 'Email' : 'WhatsApp'}
       Submitted At: ${inquiry.submitted_at.toISOString()}
@@ -1115,11 +1150,11 @@ router.post('/reply', async (req, res) => {
         adventureOption: inquiry.adventureOption,
         participants: inquiry.participants,
         bookWholeBoat: inquiry.bookWholeBoat,
-        diverse_adults: inquiry.diverse_adults,
-        diverse_children: inquiry.diverse_children,
-        nondiverse_adults: inquiry.nondiverse_adults,
-        nondiverse_children: inquiry.nondiverse_children,
-        nondiverse_infants: inquiry.nondiverse_infants,
+        divers_adults: inquiry.divers_adults,
+        divers_children: inquiry.divers_children,
+        non_divers_adults: inquiry.non_divers_adults,
+        non_divers_children: inquiry.non_divers_children,
+        non_divers_infants: inquiry.non_divers_infants,
         submitted_at: inquiry.submitted_at
       }
     };
