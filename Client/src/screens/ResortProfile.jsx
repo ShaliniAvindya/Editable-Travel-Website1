@@ -489,7 +489,7 @@ const ResortProfile = () => {
           className="flex-1 bg-[#1e809b] hover:bg-[#074a5b] text-white py-3 px-6 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 flex items-center justify-center mb-2"
         >
           <Mail size={20} className="mr-2" />
-          Anfrage per E-Mail
+          per E-Mail anfragen
         </button>
         <button
           onClick={() => {
@@ -701,7 +701,7 @@ const ResortProfile = () => {
                   >
                     <Mail size={16} className="mr-2 sm:mr-2.5" />
                     <span className="hidden sm:inline">Zimmeranfrage per E-Mail</span>
-                    <span className="sm:hidden">Anfrage per E-Mail</span>
+                    <span className="sm:hidden">per E-Mail anfragen</span>
                   </button>
                   <button
                     onClick={() => {
@@ -764,3 +764,4 @@ const ResortProfile = () => {
 };
 
 export default ResortProfile;
+
