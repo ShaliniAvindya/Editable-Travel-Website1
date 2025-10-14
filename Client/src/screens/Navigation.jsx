@@ -77,6 +77,7 @@ const Header = () => {
     adventures: false,
     activities: false,
     packageoffers: false,
+    admin: false,
   });
   const [hotels, setHotels] = useState([]);
   const [resorts, setResorts] = useState([]);
@@ -284,6 +285,7 @@ const Header = () => {
       adventures: false,
       activities: false,
       packageoffers: false,
+      admin: false,
     });
   };
 
@@ -318,6 +320,9 @@ const Header = () => {
     if (parentPath === '/packageoffers') {
       return currentPath.startsWith('/packageoffers') && currentPath !== '/packageoffers';
     }
+       }
+     if (parentPath === '/admin') {
+      return currentPath.startsWith('/admin') && currentPath !== '/admin';
     return false;
   };
 
@@ -341,6 +346,7 @@ const Header = () => {
     },
     { name: 'Paketangebote', href: '/packageoffers', hasDropdown: false },
     { name: 'Blogs', href: '/blogs', hasDropdown: false },
+    { name: 'Admin', href: '/admin', hasDropdown: false },
   ];
 
   useEffect(() => {
@@ -835,3 +841,4 @@ const Header = () => {
 };
 
 export default Header;
+
