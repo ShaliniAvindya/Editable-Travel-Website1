@@ -6,6 +6,67 @@ import TranslationWidget from '../components/TranslationWidget';
 import AdminTranslationWidget from '../components/AdminTranslationWidget';
 import { API_BASE_URL } from '../components/apiConfig';
 
+// Flag SVG Components
+const FlagDE = () => (
+  <svg className="w-6 h-4 inline-block" viewBox="0 0 5 3" xmlns="http://www.w3.org/2000/svg">
+    <rect width="5" height="3" fill="#000"/>
+    <rect width="5" height="2" y="1" fill="#D00"/>
+    <rect width="5" height="1" y="2" fill="#FFCE00"/>
+  </svg>
+);
+
+const FlagUK = () => (
+  <svg className="w-6 h-4 inline-block" viewBox="0 0 60 30" xmlns="http://www.w3.org/2000/svg">
+    <clipPath id="s"><path d="M0,0 v30 h60 v-30 z"/></clipPath>
+    <clipPath id="t"><path d="M30,15 h30 v15 z v-15 h-30 z h-30 v15 z v-15 h30 z"/></clipPath>
+    <g clipPath="url(#s)">
+      <path d="M0,0 v30 h60 v-30 z" fill="#012169"/>
+      <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" strokeWidth="6"/>
+      <path d="M0,0 L60,30 M60,0 L0,30" clipPath="url(#t)" stroke="#C8102E" strokeWidth="4"/>
+      <path d="M30,0 v30 M0,15 h60" stroke="#fff" strokeWidth="10"/>
+      <path d="M30,0 v30 M0,15 h60" stroke="#C8102E" strokeWidth="6"/>
+    </g>
+  </svg>
+);
+
+const FlagES = () => (
+  <svg className="w-6 h-4 inline-block" viewBox="0 0 750 500" xmlns="http://www.w3.org/2000/svg">
+    <rect width="750" height="500" fill="#c60b1e"/>
+    <rect width="750" height="250" y="125" fill="#ffc400"/>
+  </svg>
+);
+
+const FlagIT = () => (
+  <svg className="w-6 h-4 inline-block" viewBox="0 0 3 2" xmlns="http://www.w3.org/2000/svg">
+    <rect width="1" height="2" fill="#009246"/>
+    <rect width="1" height="2" x="1" fill="#fff"/>
+    <rect width="1" height="2" x="2" fill="#ce2b37"/>
+  </svg>
+);
+
+const FlagFR = () => (
+  <svg className="w-6 h-4 inline-block" viewBox="0 0 900 600" xmlns="http://www.w3.org/2000/svg">
+    <rect width="900" height="600" fill="#ED2939"/>
+    <rect width="600" height="600" fill="#fff"/>
+    <rect width="300" height="600" fill="#002395"/>
+  </svg>
+);
+
+const FlagPT = () => (
+  <svg className="w-6 h-4 inline-block" viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg">
+    <rect width="600" height="400" fill="#FF0000"/>
+    <rect width="240" height="400" fill="#006600"/>
+  </svg>
+);
+
+const FlagRU = () => (
+  <svg className="w-6 h-4 inline-block" viewBox="0 0 9 6" xmlns="http://www.w3.org/2000/svg">
+    <rect width="9" height="3" fill="#fff"/>
+    <rect width="9" height="2" y="2" fill="#0039A6"/>
+    <rect width="9" height="2" y="4" fill="#D52B1E"/>
+  </svg>
+);
+
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -16,7 +77,6 @@ const Header = () => {
     adventures: false,
     activities: false,
     packageoffers: false,
-    admin: false,
   });
   const [hotels, setHotels] = useState([]);
   const [resorts, setResorts] = useState([]);
@@ -25,18 +85,20 @@ const Header = () => {
   const [logoUrl, setLogoUrl] = useState(null);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const [mobileLangDropdownOpen, setMobileLangDropdownOpen] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState('German');
+  const [selectedLanguage, setSelectedLanguage] = useState('DE');
   const [isLangReady, setIsLangReady] = useState(false);
   const langInitialized = useRef(false);
+  
   const languages = [
-    { code: 'de', name: 'German' },
-    { code: 'en', name: 'English' },
-    { code: 'es', name: 'Spanish' },
-    { code: 'it', name: 'Italian' },
-    { code: 'fr', name: 'French' },
-    { code: 'pt', name: 'Portuguese' },
-    { code: 'ru', name: 'Russian' },
+    { code: 'de', name: 'DE', flag: <FlagDE /> },
+    { code: 'en', name: 'UK', flag: <FlagUK /> },
+    { code: 'es', name: 'ES', flag: <FlagES /> },
+    { code: 'it', name: 'IT', flag: <FlagIT /> },
+    { code: 'fr', name: 'FR', flag: <FlagFR /> },
+    { code: 'pt', name: 'PT', flag: <FlagPT /> },
+    { code: 'ru', name: 'RU', flag: <FlagRU /> },
   ];
+  
   const navigate = useNavigate();
   const location = useLocation();
   const isAdminPanel = location.pathname.startsWith('/admin');
@@ -45,7 +107,7 @@ const Header = () => {
     if (isAdminPanel) return;
     document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=' + window.location.hostname;
     document.cookie = `googtrans=/de/de; path=/; domain=${window.location.hostname}`;
-    setSelectedLanguage('German');
+    setSelectedLanguage('DE');
     setTimeout(() => {
       const translateElement = document.querySelector('.goog-te-combo');
       if (translateElement && translateElement.value !== 'de') {
@@ -58,7 +120,7 @@ const Header = () => {
 
   useEffect(() => {
     if (isAdminPanel) return;
-    if (selectedLanguage !== 'German') {
+    if (selectedLanguage !== 'DE') {
       const found = languages.find(l => l.name === selectedLanguage);
       if (found) {
         document.cookie = `googtrans=/de/${found.code}; path=/; domain=${window.location.hostname}`;
@@ -222,7 +284,6 @@ const Header = () => {
       adventures: false,
       activities: false,
       packageoffers: false,
-      admin: false,
     });
   };
 
@@ -257,9 +318,6 @@ const Header = () => {
     if (parentPath === '/packageoffers') {
       return currentPath.startsWith('/packageoffers') && currentPath !== '/packageoffers';
     }
-     if (parentPath === '/admin') {
-      return currentPath.startsWith('/admin') && currentPath !== '/admin';
-    }
     return false;
   };
 
@@ -283,7 +341,6 @@ const Header = () => {
     },
     { name: 'Paketangebote', href: '/packageoffers', hasDropdown: false },
     { name: 'Blogs', href: '/blogs', hasDropdown: false },
-    { name: 'Admin', href: '/admin', hasDropdown: false },
   ];
 
   useEffect(() => {
@@ -311,7 +368,7 @@ const Header = () => {
       } else {
         setIsLangReady(false);
         document.cookie = `googtrans=/de/de; path=/; domain=${window.location.hostname}`;
-        setSelectedLanguage('German');
+        setSelectedLanguage('DE');
       }
     };
 
@@ -326,7 +383,7 @@ const Header = () => {
       );
       langInitialized.current = true;
       document.cookie = `googtrans=/de/de; path=/; domain=${window.location.hostname}`;
-      setSelectedLanguage('German');
+      setSelectedLanguage('DE');
       setTimeout(() => {
         const translateElement = document.querySelector('.goog-te-combo');
         if (translateElement && translateElement.value !== 'de') {
@@ -368,6 +425,10 @@ const Header = () => {
     attemptTranslate(langCode);
   };
 
+  const getCurrentFlag = () => {
+    const currentLang = languages.find(l => l.name === selectedLanguage);
+    return currentLang ? currentLang.flag : <FlagDE />;
+  };
   return (
     <header
       className={`fixed top-0 w-full z-50 transition-all duration-500 ${
@@ -375,7 +436,7 @@ const Header = () => {
       }`}
       style={{
         backgroundColor: scrolled ? 'rgba(7, 74, 91, 0.95)' : 'transparent',
-        fontFamily: 'Comic Sans MS',
+        fontFamily: "'Comic Sans MS', 'Comic Neue'",
       }}
     >
       <style>{`
@@ -422,28 +483,36 @@ const Header = () => {
                 <div>
                   <button
                     onClick={() => setMobileLangDropdownOpen((prev) => !prev)}
-                    className="flex items-center justify-between px-2 py-1 rounded-lg bg-cyan-800 text-white hover:bg-cyan-700 transition-colors duration-200 text-xs focus:outline-none focus:ring-2 focus:ring-cyan-300"
+                    className="flex items-center justify-between gap-1 px-2 py-1 rounded-lg bg-cyan-800 text-white hover:bg-cyan-700 transition-colors duration-200 text-xs focus:outline-none focus:ring-2 focus:ring-cyan-300"
                     aria-expanded={mobileLangDropdownOpen}
                     aria-haspopup="true"
                     aria-label="Toggle language selection"
                     disabled={!isLangReady}
                     style={{ opacity: isLangReady ? 1 : 0.5, cursor: isLangReady ? 'pointer' : 'not-allowed' }}
                   >
-                    <span>{isLangReady ? selectedLanguage : 'Loading...'}</span>
+                    {isLangReady ? (
+                      <>
+                        {getCurrentFlag()}
+                        <span className="ml-1">{selectedLanguage}</span>
+                      </>
+                    ) : (
+                      <span>Loading...</span>
+                    )}
                     <ChevronDown
                       size={12}
                       className={`ml-1 transition-transform duration-200 ${mobileLangDropdownOpen ? 'rotate-180' : ''}`}
                     />
                   </button>
                   {mobileLangDropdownOpen && isLangReady && (
-                    <div className="absolute top-full right-0 mt-1 w-28 bg-white rounded-lg shadow-xl border border-gray-100 py-1 animate-in fade-in-0 zoom-in-95 duration-200 z-50">
+                    <div className="absolute top-full right-0 mt-1 w-32 bg-white rounded-lg shadow-xl border border-gray-100 py-1 animate-in fade-in-0 zoom-in-95 duration-200 z-50">
                       {languages.map((lang) => (
                         <button
                           key={lang.code}
                           onClick={() => handleLanguageSelect(lang.code, lang.name)}
-                          className="block w-full text-left px-3 py-1 text-gray-700 hover:bg-cyan-50 hover:text-cyan-700 transition-colors duration-200 text-xs focus:outline-none focus:bg-cyan-50 focus:text-cyan-700"
+                          className="flex items-center gap-2 w-full text-left px-3 py-2 text-gray-700 hover:bg-cyan-50 hover:text-cyan-700 transition-colors duration-200 text-xs focus:outline-none focus:bg-cyan-50 focus:text-cyan-700"
                         >
-                          {lang.name}
+                          {lang.flag}
+                          <span>{lang.name}</span>
                         </button>
                       ))}
                     </div>
@@ -585,28 +654,36 @@ const Header = () => {
                   <div>
                     <button
                       onClick={() => setLangDropdownOpen((prev) => !prev)}
-                      className="flex items-center justify-between px-3 py-2 rounded-lg bg-cyan-800 text-white hover:bg-cyan-700 transition-colors duration-200 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-300"
+                      className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-cyan-800 text-white hover:bg-cyan-700 transition-colors duration-200 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-300"
                       aria-expanded={langDropdownOpen}
                       aria-haspopup="true"
                       aria-label="Toggle language selection"
                       disabled={!isLangReady}
                       style={{ opacity: isLangReady ? 1 : 0.5, cursor: isLangReady ? 'pointer' : 'not-allowed' }}
                     >
-                      <span>{isLangReady ? selectedLanguage : 'Loading...'}</span>
+                      {isLangReady ? (
+                        <>
+                          {getCurrentFlag()}
+                          <span className="ml-1">{selectedLanguage}</span>
+                        </>
+                      ) : (
+                        <span>Loading...</span>
+                      )}
                       <ChevronDown
                         size={14}
                         className={`ml-2 transition-transform duration-200 ${langDropdownOpen ? 'rotate-180' : ''}`}
                       />
                     </button>
                     {langDropdownOpen && isLangReady && (
-                      <div className="absolute top-full right-0 mt-1 w-32 bg-white rounded-lg shadow-xl border border-gray-100 py-2 animate-in fade-in-0 zoom-in-95 duration-200 z-50">
+                      <div className="absolute top-full right-0 mt-1 w-36 bg-white rounded-lg shadow-xl border border-gray-100 py-2 animate-in fade-in-0 zoom-in-95 duration-200 z-50">
                         {languages.map((lang) => (
                           <button
                             key={lang.code}
                             onClick={() => handleLanguageSelect(lang.code, lang.name)}
-                            className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-cyan-50 hover:text-cyan-700 transition-colors duration-200 text-sm focus:outline-none focus:bg-cyan-50 focus:text-cyan-700"
+                            className="flex items-center gap-2 w-full text-left px-4 py-2 text-gray-700 hover:bg-cyan-50 hover:text-cyan-700 transition-colors duration-200 text-sm focus:outline-none focus:bg-cyan-50 focus:text-cyan-700"
                           >
-                            {lang.name}
+                            {lang.flag}
+                            <span>{lang.name}</span>
                           </button>
                         ))}
                       </div>
@@ -758,4 +835,3 @@ const Header = () => {
 };
 
 export default Header;
-
