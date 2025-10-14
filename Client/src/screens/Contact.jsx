@@ -314,20 +314,20 @@ const Contact = () => {
                <h3 className="text-2xl font-bold mb-4" style={{ color: '#074a5b' }}>Newsletter</h3>
             <p className="text-sm text-cyan-700 mb-4">Bleiben Sie über die neuesten Angebote und Nachrichten informiert.</p>
 
-            <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-2">
-              <div className="flex items-center gap-2 w-full">
+            <div className="hidden xl:flex flex-col sm:flex-row items-center gap-3 sm:gap-2">
+              <div className="flex flex-col sm:flex-row items-center gap-2 w-full">
                 <input
                   type="email"
                   value={newsletterEmail}
                   onChange={(e) => setNewsletterEmail(e.target.value)}
                   placeholder="Ihre E-Mail-Adresse"
-              className="w-full sm:w-52 min-w-0 text-black sm:px-4 py-3 sm:py-4 text-sm sm:text-base rounded-2xl border-2 border-gray-200 focus:border-[#1e809b] focus:outline-none transition-all duration-300 bg-white/90"
+                  className="w-full flex-1 min-w-0 text-black sm:px-4 py-3 sm:py-4 text-sm sm:text-base rounded-2xl border-2 border-gray-200 focus:border-[#1e809b] focus:outline-none transition-all duration-300 bg-white/90"
                 />
 
                 <select
                   value={newsletterLanguage}
                   onChange={(e) => setNewsletterLanguage(e.target.value)}
-                    className="w-25 sm:w-24 px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e809b] bg-white/90 text-black text-sm"
+                    className="w-full sm:w-24 px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e809b] bg-white/90 text-black text-sm"
                   aria-label="Newsletter language"
                 >
                   <option value="">Language</option>
@@ -335,11 +335,11 @@ const Contact = () => {
                 </select>
               </div>
 
-              <div className="flex gap-2 w-full sm:w-auto items-center">
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto items-center justify-center sm:justify-start">
                 <button
                   onClick={handleNewsletterSubscribe}
                   disabled={newsletterLoading}
-                  className={`px-4 py-3 rounded-2xl font-semibold text-white ${newsletterLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                  className={`w-full sm:w-auto px-4 py-3 rounded-2xl font-semibold text-white ${newsletterLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
                   style={{ background: 'linear-gradient(135deg, #1e809b 0%, #074a5b 100%)' }}
                 >
                   Subscribe
@@ -347,13 +347,61 @@ const Contact = () => {
                 <button
                   onClick={handleNewsletterUnsubscribe}
                   disabled={newsletterLoading}
-                  className={`px-4 py-3 rounded-2xl font-semibold text-white ${newsletterLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                  className={`w-full sm:w-auto px-4 py-3 rounded-2xl font-semibold text-white ${newsletterLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
                   style={{ background: 'linear-gradient(135deg, #b03030 0%, #7a1e1e 100%)' }}
                 >
                   Unsubscribe
                 </button>
               </div>
             </div>
+
+            {/* Specific view for 768x1024, 820x1180, 912x1368 */}
+            <div className="block xl:hidden">
+              <div className="mb-3 w-full">
+                <input
+                  type="email"
+                  value={newsletterEmail}
+                  onChange={(e) => setNewsletterEmail(e.target.value)}
+                  placeholder="Ihre E-Mail-Adresse"
+                  className="w-full text-black px-4 py-3 text-sm rounded-2xl border-2 border-gray-200 focus:border-[#1e809b] focus:outline-none transition-all duration-300 bg-white/90"
+                />
+              </div>
+
+              <div className="mb-3 w-full">
+                <select
+                  value={newsletterLanguage}
+                  onChange={(e) => setNewsletterLanguage(e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e809b] bg-white/90 text-black text-sm"
+                  aria-label="Newsletter language"
+                >
+                  <option value="">Language</option>
+                  {languages.map(l => (<option key={l.code} value={l.code}>{l.name}</option>))}
+                </select>
+              </div>
+
+              <div className="mb-3 w-full">
+                <button
+                  onClick={handleNewsletterSubscribe}
+                  disabled={newsletterLoading}
+                  className={`w-full px-4 py-3 rounded-2xl font-semibold text-white transition-all duration-300 ${newsletterLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                  style={{ background: 'linear-gradient(135deg, #1e809b 0%, #074a5b 100%)' }}
+                >
+                  Subscribe
+                </button>
+              </div>
+
+              <div className="mb-3 w-full">
+                <button
+                  onClick={handleNewsletterUnsubscribe}
+                  disabled={newsletterLoading}
+                  className={`w-full px-4 py-3 rounded-2xl font-semibold text-white transition-all duration-300 ${newsletterLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                  style={{ background: 'linear-gradient(135deg, #b03030 0%, #7a1e1e 100%)' }}
+                >
+                  Unsubscribe
+                </button>
+              </div>
+            </div>
+
                 {newsletterMessage && (
                   <div className={`mt-3 p-2 rounded-md ${newsletterMessageType === 'success' ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-700'}`}>
                     {newsletterMessage}
