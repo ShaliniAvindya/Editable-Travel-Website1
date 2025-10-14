@@ -320,7 +320,6 @@ const Header = () => {
     if (parentPath === '/packageoffers') {
       return currentPath.startsWith('/packageoffers') && currentPath !== '/packageoffers';
     }
-       }
      if (parentPath === '/admin') {
       return currentPath.startsWith('/admin') && currentPath !== '/admin';
     return false;
@@ -841,4 +840,5 @@ const Header = () => {
 };
 
 export default Header;
+
 
