@@ -371,17 +371,18 @@ const ResortProfile = () => {
                   )) || <p className="text-gray-600">Keine Annehmlichkeiten aufgeführt.</p>}
                 </div>
               </div>
-              <div className="mb-12">
-                <h3 className="text-2xl font-bold mb-6 text-[#074a5b]">Verfügbare Zimmerkategorien</h3>
-                <div className="overflow-x-auto">
-                  <div className="flex gap-6 px-2 py-4 md:px-4 flex-nowrap">
+              <div className="mb-8 sm:mb-12">
+                <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-[#074a5b]">Verfügbare Zimmerkategorien</h3>
+                {/* Desktop view - horizontal scroll */}
+                <div className="hidden md:block overflow-x-auto">
+                  <div className="flex gap-4 sm:gap-6 px-2 py-4 flex-nowrap snap-x snap-mandatory">
                     {resortData.rooms.map((room) => (
                       <div
                         key={room._id || room.type}
-                        className="min-w-[300px] md:min-w-[400px] border border-gray-200 rounded-2xl p-6 hover:shadow-lg transition-shadow duration-300 flex-shrink-0"
+                        className="min-w-[200px] xs:min-w-[240px] sm:min-w-[300px] md:min-w-[350px] border border-gray-200 rounded-2xl p-3 xs:p-4 sm:p-6 hover:shadow-lg transition-shadow duration-300 flex-shrink-0 snap-center"
                       >
-                        <div className="flex flex-col gap-4">
-                          <div className="h-48 rounded-xl overflow-hidden">
+                        <div className="flex flex-col gap-2 xs:gap-3 sm:gap-4">
+                          <div className="h-32 xs:h-36 sm:h-48 rounded-xl overflow-hidden">
                             <img
                               src={room.images[0] || 'https://via.placeholder.com/400'}
                               alt={room.name}
@@ -389,30 +390,30 @@ const ResortProfile = () => {
                             />
                           </div>
                           <div className="flex justify-between items-start mb-2">
-                            <h4 className="text-lg font-bold text-[#074a5b]">{room.name}</h4>
+                            <h4 className="text-sm xs:text-base sm:text-lg font-bold text-[#074a5b]">{room.name}</h4>
                             <div className="text-right">
                               {room.price && typeof room.price === 'string' && room.price.trim() !== '' && room.price !== 'N/A' && (
-                                <div className="text-xl font-bold text-[#1e809b]">{room.price}</div>
+                                <div className="text-base xs:text-lg sm:text-xl font-bold text-[#1e809b]">{room.price}</div>
                               )}
                             </div>
                           </div>
-                          <div className="flex gap-2 text-sm text-gray-600">
+                          <div className="flex gap-2 text-[10px] xs:text-xs sm:text-sm text-gray-600">
                             <span>{room.size}</span>
                             <span>•</span>
                             <span>{room.capacity}</span>
                           </div>
-                          <p className="text-gray-700 text-sm">{room.description}</p>
-                          <div className="flex flex-wrap gap-2 mb-2">
+                          <p className="text-gray-700 text-[10px] xs:text-xs sm:text-sm">{room.description}</p>
+                          <div className="flex flex-wrap gap-1 xs:gap-2 mb-2">
                             {room.amenities.slice(0, 4).map((amenity, idx) => (
                               <span
                                 key={idx}
-                                className="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-full"
+                                className="px-1.5 xs:px-2 sm:px-3 py-0.5 xs:py-1 bg-gray-100 text-gray-700 text-[10px] xs:text-xs rounded-full"
                               >
                                 {amenity}
                               </span>
                             ))}
                             {room.amenities.length > 4 && (
-                              <span className="px-3 py-1 bg-[#1e809b]/10 text-[#1e809b] text-xs rounded-full">
+                              <span className="px-1.5 xs:px-2 sm:px-3 py-0.5 xs:py-1 bg-[#1e809b]/10 text-[#1e809b] text-[10px] xs:text-xs rounded-full">
                                 +{room.amenities.length - 4} mehr
                               </span>
                             )}
@@ -422,7 +423,7 @@ const ResortProfile = () => {
                               setShowRoomModal(room);
                               setCurrentRoomImageIndex(0);
                             }}
-                            className="bg-[#1e809b] hover:bg-[#074a5b] text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 transform hover:scale-105"
+                            className="bg-[#1e809b] hover:bg-[#074a5b] text-white px-2 xs:px-3 sm:px-4 py-1.5 xs:py-2 rounded-xl text-[10px] xs:text-xs sm:text-sm font-semibold transition-all duration-300 transform hover:scale-105"
                           >
                             Zimmerdetails anzeigen
                           </button>
@@ -430,6 +431,64 @@ const ResortProfile = () => {
                       </div>
                     ))}
                   </div>
+                </div>
+
+                {/* Mobile view - List wise */}
+                <div className="md:hidden space-y-4">
+                  {resortData.rooms.map((room) => (
+                    <div
+                      key={room._id || room.type}
+                      className="border border-gray-200 rounded-2xl p-4 hover:shadow-lg transition-shadow duration-300 bg-white"
+                    >
+                      <div className="flex flex-col gap-3">
+                        <div className="h-48 rounded-xl overflow-hidden">
+                          <img
+                            src={room.images[0] || 'https://via.placeholder.com/400'}
+                            alt={room.name}
+                            className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                          />
+                        </div>
+                        <div className="flex justify-between items-start">
+                          <h4 className="text-base font-bold text-[#074a5b]">{room.name}</h4>
+                          <div className="text-right">
+                            {room.price && typeof room.price === 'string' && room.price.trim() !== '' && room.price !== 'N/A' && (
+                              <div className="text-lg font-bold text-[#1e809b]">{room.price}</div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex gap-2 text-xs text-gray-600">
+                          <span>{room.size}</span>
+                          <span>•</span>
+                          <span>{room.capacity}</span>
+                        </div>
+                        <p className="text-gray-700 text-sm">{room.description}</p>
+                        <div className="flex flex-wrap gap-2">
+                          {room.amenities.slice(0, 4).map((amenity, idx) => (
+                            <span
+                              key={idx}
+                              className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full"
+                            >
+                              {amenity}
+                            </span>
+                          ))}
+                          {room.amenities.length > 4 && (
+                            <span className="px-2 py-1 bg-[#1e809b]/10 text-[#1e809b] text-xs rounded-full">
+                              +{room.amenities.length - 4} mehr
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => {
+                            setShowRoomModal(room);
+                            setCurrentRoomImageIndex(0);
+                          }}
+                          className="w-full bg-[#1e809b] hover:bg-[#074a5b] text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300"
+                        >
+                          Zimmerdetails anzeigen
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -764,4 +823,3 @@ const ResortProfile = () => {
 };
 
 export default ResortProfile;
-
