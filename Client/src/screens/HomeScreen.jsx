@@ -296,29 +296,31 @@ const HomeScreen = () => {
               className="w-full h-full object-cover transition-transform duration-[10000ms] ease-out"
             />
             <div className="absolute inset-0 flex items-center justify-center z-20">
-              <div className="text-center text-white px-2 sm:px-4 max-w-3xl">
-                <div
-                  className={`transition-all duration-1000 ease-out ${
-                    index === currentSlide ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-                  }`}
-                >
-                  <h1
-                    className={`text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 md:mb-10 leading-tight drop-shadow-2xl ${
-                      index === currentSlide ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-                    }`}
-                  >
-                    <span className="text-white drop-shadow-2xl">{slide.title}</span>
-                  </h1>
-                  <p
-                    className={`text-base sm:text-lg md:text-xl lg:text-2xl mb-6 sm:mb-10 md:mb-20 text-white leading-relaxed drop-shadow-xl ${
-                      index === currentSlide ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-                    }`}
-                  >
-                    {slide.description}
-                  </p>
+                  <div className="text-center text-white px-4 sm:px-8 max-w-[92%] sm:max-w-3xl md:max-w-4xl lg:max-w-3xl">
+                    <div
+                      className={`transition-all duration-1000 ease-out ${
+                        index === currentSlide ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                      }`}
+                    >
+                      <h1
+                        className={`text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 sm:mb-6 md:mb-10 leading-tight drop-shadow-2xl break-words text-center px-2 sm:px-0 ${
+                          index === currentSlide ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                        }`}
+                        style={{ wordBreak: 'break-word' }}
+                      >
+                        <span className="text-white drop-shadow-2xl">{slide.title}</span>
+                      </h1>
+                      <p
+                        className={`text-sm sm:text-lg md:text-xl lg:text-2xl mb-4 sm:mb-10 md:mb-20 text-white leading-relaxed drop-shadow-xl break-words px-3 sm:px-0 ${
+                          index === currentSlide ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                        }`}
+                        style={{ wordBreak: 'break-word' }}
+                      >
+                        {slide.description}
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
             <div
               className={`absolute inset-0 pointer-events-none transition-opacity duration-1000 ${
                 index === currentSlide ? 'opacity-100' : 'opacity-0'
@@ -364,18 +366,7 @@ const HomeScreen = () => {
             </div>
           </div>
         </div>
-        <button
-          onClick={prevSlide}
-          className="absolute left-2 sm:left-4 md:left-6 top-1/2 transform -translate-y-1/2 z-30 group bg-white/10 backdrop-blur-md hover:bg-white/20 p-2 sm:p-3 md:p-4 rounded-full transition-all duration-300 border border-white/20 hover:border-white/40"
-        >
-          <ChevronLeft className="text-white group-hover:scale-110 transition-transform duration-300 w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
-        </button>
-        <button
-          onClick={nextSlide}
-          className="absolute right-2 sm:right-4 md:right-6 top-1/2 transform -translate-y-1/2 z-30 group bg-white/10 backdrop-blur-md hover:bg-white/20 p-2 sm:p-3 md:p-4 rounded-full transition-all duration-300 border border-white/20 hover:border-white/40"
-        >
-          <ChevronRight className="text-white group-hover:scale-110 transition-transform duration-300 w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
-        </button>
+       
         <div className="absolute bottom-4 sm:bottom-6 md:bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-2 sm:space-x-3 md:space-x-4 z-30">
           {heroSection.map((_, index) => (
             <button
