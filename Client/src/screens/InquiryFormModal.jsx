@@ -156,23 +156,34 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
     const [isEditing, setIsEditing] = useState(false);
 
     useEffect(() => {
-      if (!isEditing) setLocalName(value || '');
-    }, [value, isEditing]);
+      if (!isEditing && (value || '') !== localName) setLocalName(value || '');
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [value]);
 
-    const commit = useCallback(() => {
-      if (typeof onCommit === 'function') onCommit(id, 'name', localName);
-      setIsEditing(false);
-    }, [id, localName, onCommit]);
+    const commit = useCallback((val) => {
+      if (typeof onCommit === 'function') onCommit(id, 'name', val);
+    }, [id, onCommit]);
+
+    const debounceRef = useRef(null);
+    const handleChange = (e) => {
+      const v = e.target.value;
+      setLocalName(v);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => {
+        commit(v);
+        debounceRef.current = null;
+      }, 300);
+    };
 
     return (
       <input
         type="text"
         placeholder="Name"
         value={localName}
-        onChange={(e) => setLocalName(e.target.value)}
+        onChange={handleChange}
         onFocus={() => setIsEditing(true)}
-        onBlur={commit}
-        className="flex-1 px-3 py-2 border rounded"
+        onBlur={() => { setIsEditing(false); if (debounceRef.current) { clearTimeout(debounceRef.current); debounceRef.current = null; } commit(localName); }}
+        className="flex-1 px-3 py-2 border rounded w-full"
       />
     );
   });
@@ -302,7 +313,7 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
     const expiry = item?.expiryDate ? new Date(item.expiryDate) : null;
 
     for (let i = 0; i < firstDay; i++) {
-      days.push(<div key={`empty-${i}`} className="h-9"></div>);
+      days.push(<div key={`empty-${i}`} className="h-8 sm:h-9"></div>);
     }
 
     for (let day = 1; day <= daysInMonth; day++) {
@@ -317,7 +328,7 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
       days.push(
         <div
           key={day}
-          className={`h-9 w-9 flex items-center justify-center text-sm cursor-pointer rounded-lg transition-all ${
+          className={`h-8 w-8 sm:h-9 sm:w-9 flex items-center justify-center text-xs sm:text-sm cursor-pointer rounded-lg transition-all ${
             isPast || isExpired
               ? 'text-gray-300 cursor-not-allowed'
               : isSelected
@@ -342,10 +353,10 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
   // --- Section components ---
   const AdventureSection = () => (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-bold text-gray-700 mb-2">Preferred Month</label>
-          <select name="preferredMonth" value={formData.preferredMonth} onChange={handleChange} className="w-full px-4 py-3 border-2 rounded-xl">
+          <select name="preferredMonth" value={formData.preferredMonth} onChange={handleChange} className="w-full px-3 py-2 sm:px-4 sm:py-3 border-2 rounded-xl">
             <option value="">Select month</option>
             {Array.from({ length: 12 }).map((_, i) => {
                 const monthName = new Date(0, i).toLocaleString('default', { month: 'long' });
@@ -356,7 +367,7 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
         </div>
         <div>
           <label className="block text-sm font-bold text-gray-700 mb-2">Preferred Year</label>
-          <select name="preferredYear" value={formData.preferredYear} onChange={handleChange} className="w-full px-4 py-3 border-2 rounded-xl">
+          <select name="preferredYear" value={formData.preferredYear} onChange={handleChange} className="w-full px-3 py-2 sm:px-4 sm:py-3 border-2 rounded-xl">
             <option value="">Select year</option>
             {Array.from({ length: yearRange + 1 }).map((_, i) => {
                 const y = currentYear + i;
@@ -374,8 +385,8 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
 
       <div>
         <label className="block text-sm font-bold text-gray-700 mb-2">Select options (you may choose multiple)</label>
-        <div className="flex gap-4">
-          {['Shared', 'Double', 'Single'].map((opt) => (
+        <div className="flex flex-wrap gap-4">
+          {['Quadruple', 'Triple', 'Double', 'Single'].map((opt) => (
             <label key={opt} className="flex items-center gap-2">
               <input type="checkbox" name="adventureOptions" value={opt} checked={(formData.adventureOptions || []).includes(opt)} onChange={(e) => {
                 const checked = e.target.checked;
@@ -403,16 +414,16 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
         <div className="space-y-4">
           {(formData.participantsByOption || []).map((group) => (
             <div key={group.option} className="p-3 border-2 rounded-xl">
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3">
                 <h4 className="font-bold">{group.option}</h4>
                 <button type="button" onClick={() => {
                   // remove entire group
                   setFormData((p) => ({ ...p, adventureOptions: (p.adventureOptions||[]).filter(o=>o!==group.option), participantsByOption: (p.participantsByOption||[]).filter(x=>x.option!==group.option) }));
-                }} className="text-sm text-red-500">Remove option</button>
+                }} className="text-sm text-red-500 mt-2 sm:mt-0">Remove option</button>
               </div>
               {(group.participants || []).map((pt, idx) => (
                 <div key={pt.id || idx} className="p-3 border rounded mb-2">
-                  <div className="flex gap-2 mb-2">
+                  <div className="flex flex-col sm:flex-row gap-2 mb-2">
                     <ParticipantName id={pt.id} value={pt.name} onCommit={(id, field, value) => {
                       setFormData((p) => ({
                         ...p,
@@ -425,28 +436,28 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
                     <select value={pt.gender || 'male'} onChange={(e) => {
                       const v = e.target.value;
                       setFormData((p) => ({ ...p, participantsByOption: (p.participantsByOption||[]).map(g => g.option === group.option ? { ...g, participants: g.participants.map((pp, i) => i === idx ? { ...pp, gender: v } : pp) } : g) }));
-                    }} className="px-3 py-2 border rounded">
+                    }} className="px-3 py-2 border rounded w-full sm:w-auto">
                       <option value="male">Male</option>
                       <option value="female">Female</option>
                     </select>
                   </div>
-                  <div className="flex gap-2 items-center">
+                  <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
                     <select value={pt.diverStatus || 'diver'} onChange={(e) => {
                       const v = e.target.value;
                       setFormData((p) => ({ ...p, participantsByOption: (p.participantsByOption||[]).map(g => g.option === group.option ? { ...g, participants: g.participants.map((pp, i) => i === idx ? { ...pp, diverStatus: v } : pp) } : g) }));
-                    }} className="px-3 py-2 border rounded">
+                    }} className="px-3 py-2 border rounded w-full sm:w-auto">
                       <option value="diver">Diver</option>
                       <option value="non-diver">Non-diver</option>
                     </select>
                     <select value={pt.ageCategory || ageCategories[0]} onChange={(e) => {
                       const v = e.target.value;
                       setFormData((p) => ({ ...p, participantsByOption: (p.participantsByOption||[]).map(g => g.option === group.option ? { ...g, participants: g.participants.map((pp, i) => i === idx ? { ...pp, ageCategory: v } : pp) } : g) }));
-                    }} className="px-3 py-2 border rounded">
+                    }} className="px-3 py-2 border rounded w-full sm:w-auto">
                       {ageCategories.map((ac) => <option key={ac} value={ac}>{ac}</option>)}
                     </select>
                     <button type="button" onClick={() => {
                       setFormData((p) => ({ ...p, participantsByOption: (p.participantsByOption||[]).map(g => g.option === group.option ? { ...g, participants: g.participants.filter((_, i) => i !== idx) } : g) }));
-                    }} className="px-3 py-2 bg-red-100 rounded">Remove</button>
+                    }} className="px-3 py-2 bg-red-100 rounded w-full sm:w-auto mt-2 sm:mt-0">Remove</button>
                   </div>
                 </div>
               ))}
@@ -454,7 +465,7 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
                 <button type="button" onClick={() => {
                   const newPart = { id: `p-${Date.now()}`, name: '', gender: 'male', diverStatus: 'diver', ageCategory: ageCategories[0] };
                   setFormData((p) => ({ ...p, participantsByOption: (p.participantsByOption||[]).map(g => g.option === group.option ? { ...g, participants: [...(g.participants||[]), newPart] } : g) }));
-                }} className="mt-2 px-4 py-2 bg-green-100 rounded ">Add Participant</button>
+                }} className="mt-2 px-4 py-2 bg-green-100 rounded w-full sm:w-auto">Add Participant</button>
               </div>
             </div>
           ))}
@@ -472,75 +483,75 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
   const HotelResortSection = () => (
     <div>
       <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center">
-        <Users size={18} className="mr-2" style={{ color: '#1e809b' }} />
+        <Users size={16} className="mr-2" style={{ color: '#1e809b' }} />
         Number of rooms
       </label>
       <div className="flex items-center border-2 rounded-xl mb-4" style={{ borderColor: '#074a5b' }}>
         <button
           type="button"
           onClick={() => setFormData((p) => ({ ...p, number_of_rooms: Math.max(0, (p.number_of_rooms ?? 0) - 1) }))}
-          className="p-4 hover:bg-[#1e809b]/10 transition-colors"
+          className="p-3 sm:p-4 hover:bg-[#1e809b]/10 transition-colors"
         >
-          <Minus size={18} style={{ color: '#074a5b' }} />
+          <Minus size={16} style={{ color: '#074a5b' }} />
         </button>
-        <span className="flex-1 text-center py-3 text-base font-bold" style={{ color: '#074a5b' }}>
+        <span className="flex-1 text-center py-2 sm:py-3 text-sm sm:text-base font-bold" style={{ color: '#074a5b' }}>
           {formData.number_of_rooms ?? 0}
         </span>
         <button
           type="button"
           onClick={() => setFormData((p) => ({ ...p, number_of_rooms: (p.number_of_rooms ?? 0) + 1 }))}
-          className="p-4 hover:bg-[#1e809b]/10 transition-colors"
+          className="p-3 sm:p-4 hover:bg-[#1e809b]/10 transition-colors"
         >
-          <Plus size={18} style={{ color: '#074a5b' }} />
+          <Plus size={16} style={{ color: '#074a5b' }} />
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <p className="font-bold mb-2">Taucher</p>
+          <p className="font-bold mb-2 text-sm sm:text-base">Divers</p>
           <label className="block text-sm font-bold text-gray-700 mb-2">Adults (12+)</label>
           <div className="flex items-center border-2 rounded-xl mb-2" style={{ borderColor: '#074a5b' }}>
-            <button type="button" onClick={() => setFormData((p) => ({ ...p, divers_adults: Math.max(0, (p.divers_adults ?? 0) - 1) }))} className="p-4 hover:bg-[#1e809b]/10 transition-colors"><Minus size={18} style={{ color: '#074a5b' }} /></button>
-            <span className="flex-1 text-center py-3 text-base font-bold" style={{ color: '#074a5b' }}>{formData.divers_adults ?? 0}</span>
-            <button type="button" onClick={() => setFormData((p) => ({ ...p, divers_adults: (p.divers_adults ?? 0) + 1 }))} className="p-4 hover:bg-[#1e809b]/10 transition-colors"><Plus size={18} style={{ color: '#074a5b' }} /></button>
+            <button type="button" onClick={() => setFormData((p) => ({ ...p, divers_adults: Math.max(0, (p.divers_adults ?? 0) - 1) }))} className="p-3 sm:p-4 hover:bg-[#1e809b]/10 transition-colors"><Minus size={16} style={{ color: '#074a5b' }} /></button>
+            <span className="flex-1 text-center py-2 sm:py-3 text-sm sm:text-base font-bold" style={{ color: '#074a5b' }}>{formData.divers_adults ?? 0}</span>
+            <button type="button" onClick={() => setFormData((p) => ({ ...p, divers_adults: (p.divers_adults ?? 0) + 1 }))} className="p-3 sm:p-4 hover:bg-[#1e809b]/10 transition-colors"><Plus size={16} style={{ color: '#074a5b' }} /></button>
           </div>
 
           <label className="block text-sm font-bold text-gray-700 mb-2">Children (2-11)</label>
           <div className="flex items-center border-2 rounded-xl mb-2" style={{ borderColor: '#074a5b' }}>
-            <button type="button" onClick={() => setFormData((p) => ({ ...p, divers_children: Math.max(0, (p.divers_children ?? 0) - 1) }))} className="p-4 hover:bg-[#1e809b]/10 transition-colors"><Minus size={18} style={{ color: '#074a5b' }} /></button>
-            <span className="flex-1 text-center py-3 text-base font-bold" style={{ color: '#074a5b' }}>{formData.divers_children ?? 0}</span>
-            <button type="button" onClick={() => setFormData((p) => ({ ...p, divers_children: (p.divers_children ?? 0) + 1 }))} className="p-4 hover:bg-[#1e809b]/10 transition-colors"><Plus size={18} style={{ color: '#074a5b' }} /></button>
+            <button type="button" onClick={() => setFormData((p) => ({ ...p, divers_children: Math.max(0, (p.divers_children ?? 0) - 1) }))} className="p-3 sm:p-4 hover:bg-[#1e809b]/10 transition-colors"><Minus size={16} style={{ color: '#074a5b' }} /></button>
+            <span className="flex-1 text-center py-2 sm:py-3 text-sm sm:text-base font-bold" style={{ color: '#074a5b' }}>{formData.divers_children ?? 0}</span>
+            <button type="button" onClick={() => setFormData((p) => ({ ...p, divers_children: (p.divers_children ?? 0) + 1 }))} className="p-3 sm:p-4 hover:bg-[#1e809b]/10 transition-colors"><Plus size={16} style={{ color: '#074a5b' }} /></button>
           </div>
         </div>
 
         <div>
-          <p className="font-bold mb-2">Nicht-Taucher</p>
+          <p className="font-bold mb-2 text-sm sm:text-base">Non-Divers</p>
           <label className="block text-sm font-bold text-gray-700 mb-2">Adults (12+)</label>
           <div className="flex items-center border-2 rounded-xl mb-2" style={{ borderColor: '#074a5b' }}>
-            <button type="button" onClick={() => setFormData((p) => ({ ...p, nondivers_adults: Math.max(0, (p.nondivers_adults ?? 0) - 1) }))} className="p-4 hover:bg-[#1e809b]/10 transition-colors"><Minus size={18} style={{ color: '#074a5b' }} /></button>
-            <span className="flex-1 text-center py-3 text-base font-bold" style={{ color: '#074a5b' }}>{formData.nondivers_adults ?? 0}</span>
-            <button type="button" onClick={() => setFormData((p) => ({ ...p, nondivers_adults: (p.nondivers_adults ?? 0) + 1 }))} className="p-4 hover:bg-[#1e809b]/10 transition-colors"><Plus size={18} style={{ color: '#074a5b' }} /></button>
+            <button type="button" onClick={() => setFormData((p) => ({ ...p, nondivers_adults: Math.max(0, (p.nondivers_adults ?? 0) - 1) }))} className="p-3 sm:p-4 hover:bg-[#1e809b]/10 transition-colors"><Minus size={16} style={{ color: '#074a5b' }} /></button>
+            <span className="flex-1 text-center py-2 sm:py-3 text-sm sm:text-base font-bold" style={{ color: '#074a5b' }}>{formData.nondivers_adults ?? 0}</span>
+            <button type="button" onClick={() => setFormData((p) => ({ ...p, nondivers_adults: (p.nondivers_adults ?? 0) + 1 }))} className="p-3 sm:p-4 hover:bg-[#1e809b]/10 transition-colors"><Plus size={16} style={{ color: '#074a5b' }} /></button>
           </div>
 
           <label className="block text-sm font-bold text-gray-700 mb-2">Children (2-11)</label>
           <div className="flex items-center border-2 rounded-xl mb-2" style={{ borderColor: '#074a5b' }}>
-            <button type="button" onClick={() => setFormData((p) => ({ ...p, nondivers_children: Math.max(0, (p.nondivers_children ?? 0) - 1) }))} className="p-4 hover:bg-[#1e809b]/10 transition-colors"><Minus size={18} style={{ color: '#074a5b' }} /></button>
-            <span className="flex-1 text-center py-3 text-base font-bold" style={{ color: '#074a5b' }}>{formData.nondivers_children ?? 0}</span>
-            <button type="button" onClick={() => setFormData((p) => ({ ...p, nondivers_children: (p.nondivers_children ?? 0) + 1 }))} className="p-4 hover:bg-[#1e809b]/10 transition-colors"><Plus size={18} style={{ color: '#074a5b' }} /></button>
+            <button type="button" onClick={() => setFormData((p) => ({ ...p, nondivers_children: Math.max(0, (p.nondivers_children ?? 0) - 1) }))} className="p-3 sm:p-4 hover:bg-[#1e809b]/10 transition-colors"><Minus size={16} style={{ color: '#074a5b' }} /></button>
+            <span className="flex-1 text-center py-2 sm:py-3 text-sm sm:text-base font-bold" style={{ color: '#074a5b' }}>{formData.nondivers_children ?? 0}</span>
+            <button type="button" onClick={() => setFormData((p) => ({ ...p, nondivers_children: (p.nondivers_children ?? 0) + 1 }))} className="p-3 sm:p-4 hover:bg-[#1e809b]/10 transition-colors"><Plus size={16} style={{ color: '#074a5b' }} /></button>
           </div>
 
-          <label className="block text-sm font-bold text-gray-700 mb-2">Infants (Below)</label>
+          <label className="block text-sm font-bold text-gray-700 mb-2">Infants (Below 2)</label>
           <div className="flex items-center border-2 rounded-xl" style={{ borderColor: '#074a5b' }}>
-            <button type="button" onClick={() => setFormData((p) => ({ ...p, nondivers_infants: Math.max(0, (p.nondivers_infants ?? 0) - 1) }))} className="p-4 hover:bg-[#1e809b]/10 transition-colors"><Minus size={18} style={{ color: '#074a5b' }} /></button>
-            <span className="flex-1 text-center py-3 text-base font-bold" style={{ color: '#074a5b' }}>{formData.nondivers_infants ?? 0}</span>
-            <button type="button" onClick={() => setFormData((p) => ({ ...p, nondivers_infants: (p.nondivers_infants ?? 0) + 1 }))} className="p-4 hover:bg-[#1e809b]/10 transition-colors"><Plus size={18} style={{ color: '#074a5b' }} /></button>
+            <button type="button" onClick={() => setFormData((p) => ({ ...p, nondivers_infants: Math.max(0, (p.nondivers_infants ?? 0) - 1) }))} className="p-3 sm:p-4 hover:bg-[#1e809b]/10 transition-colors"><Minus size={16} style={{ color: '#074a5b' }} /></button>
+            <span className="flex-1 text-center py-2 sm:py-3 text-sm sm:text-base font-bold" style={{ color: '#074a5b' }}>{formData.nondivers_infants ?? 0}</span>
+            <button type="button" onClick={() => setFormData((p) => ({ ...p, nondivers_infants: (p.nondivers_infants ?? 0) + 1 }))} className="p-3 sm:p-4 hover:bg-[#1e809b]/10 transition-colors"><Plus size={16} style={{ color: '#074a5b' }} /></button>
           </div>
         </div>
       </div>
 
       <div className="mt-4">
         <label className="block text-sm font-bold text-gray-700 mb-2">Select Activities</label>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-40 overflow-y-auto border-2 rounded-xl p-2" style={{ borderColor: '#074a5b' }}>
+        <div className="grid grid-cols-1 gap-2 max-h-32 sm:max-h-40 overflow-y-auto border-2 rounded-xl p-2" style={{ borderColor: '#074a5b' }}>
           {activities.length === 0 && <div className="text-sm text-gray-500">No activities available</div>}
           {activities.map((a) => (
             <label key={a._id || a.id} className="flex items-center gap-2 p-2 rounded hover:bg-[#1e809b]/10 cursor-pointer">
@@ -556,72 +567,72 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
   const DefaultTravellersSection = () => (
     <div>
       <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center">
-        <Users size={18} className="mr-2" style={{ color: '#1e809b' }} />
+        <Users size={16} className="mr-2" style={{ color: '#1e809b' }} />
         Number of adults (12+)
       </label>
       <div className="flex items-center border-2 rounded-xl mb-2" style={{ borderColor: '#074a5b' }}>
         <button
           type="button"
           onClick={() => handleCountChange('adults', -1)}
-          className="p-4 hover:bg-[#1e809b]/10 transition-colors"
+          className="p-3 sm:p-4 hover:bg-[#1e809b]/10 transition-colors"
         >
-          <Minus size={18} style={{ color: '#074a5b' }} />
+          <Minus size={16} style={{ color: '#074a5b' }} />
         </button>
-        <span className="flex-1 text-center py-3 text-base font-bold" style={{ color: '#074a5b' }}>
+        <span className="flex-1 text-center py-2 sm:py-3 text-sm sm:text-base font-bold" style={{ color: '#074a5b' }}>
           {formData.adults ?? 0}
         </span>
         <button
           type="button"
           onClick={() => handleCountChange('adults', 1)}
-          className="p-4 hover:bg-[#1e809b]/10 transition-colors"
+          className="p-3 sm:p-4 hover:bg-[#1e809b]/10 transition-colors"
         >
-          <Plus size={18} style={{ color: '#074a5b' }} />
+          <Plus size={16} style={{ color: '#074a5b' }} />
         </button>
       </div>
       <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center mt-4">
-        <Users size={18} className="mr-2" style={{ color: '#1e809b' }} />
+        <Users size={16} className="mr-2" style={{ color: '#1e809b' }} />
         Number of children (2-11)
       </label>
       <div className="flex items-center border-2 rounded-xl mb-2" style={{ borderColor: '#074a5b' }}>
         <button
           type="button"
           onClick={() => handleCountChange('children', -1)}
-          className="p-4 hover:bg-[#1e809b]/10 transition-colors"
+          className="p-3 sm:p-4 hover:bg-[#1e809b]/10 transition-colors"
         >
-          <Minus size={18} style={{ color: '#074a5b' }} />
+          <Minus size={16} style={{ color: '#074a5b' }} />
         </button>
-        <span className="flex-1 text-center py-3 text-base font-bold" style={{ color: '#074a5b' }}>
+        <span className="flex-1 text-center py-2 sm:py-3 text-sm sm:text-base font-bold" style={{ color: '#074a5b' }}>
           {formData.children ?? 0}
         </span>
         <button
           type="button"
           onClick={() => handleCountChange('children', 1)}
-          className="p-4 hover:bg-[#1e809b]/10 transition-colors"
+          className="p-3 sm:p-4 hover:bg-[#1e809b]/10 transition-colors"
         >
-          <Plus size={18} style={{ color: '#074a5b' }} />
+          <Plus size={16} style={{ color: '#074a5b' }} />
         </button>
       </div>
       <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center mt-4">
-        <Users size={18} className="mr-2" style={{ color: '#1e809b' }} />
+        <Users size={16} className="mr-2" style={{ color: '#074a5b' }} />
         Number of infants (below 2)
       </label>
       <div className="flex items-center border-2 rounded-xl" style={{ borderColor: '#074a5b' }}>
         <button
           type="button"
           onClick={() => handleCountChange('infants', -1)}
-          className="p-4 hover:bg-[#1e809b]/10 transition-colors"
+          className="p-3 sm:p-4 hover:bg-[#1e809b]/10 transition-colors"
         >
-          <Minus size={18} style={{ color: '#074a5b' }} />
+          <Minus size={16} style={{ color: '#074a5b' }} />
         </button>
-        <span className="flex-1 text-center py-3 text-base font-bold" style={{ color: '#074a5b' }}>
+        <span className="flex-1 text-center py-2 sm:py-3 text-sm sm:text-base font-bold" style={{ color: '#074a5b' }}>
           {formData.infants ?? 0}
         </span>
         <button
           type="button"
           onClick={() => handleCountChange('infants', 1)}
-          className="p-4 hover:bg-[#1e809b]/10 transition-colors"
+          className="p-3 sm:p-4 hover:bg-[#1e809b]/10 transition-colors"
         >
-          <Plus size={18} style={{ color: '#074a5b' }} />
+          <Plus size={16} style={{ color: '#074a5b' }} />
         </button>
       </div>
     </div>
@@ -644,12 +655,11 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
     }
     if (!formData.phone_number) errors.phone_number = t.required;
     if (!formData.country) errors.country = t.required;
-  if (formData.subscribe_newsletter && !formData.preferred_language) errors.preferred_language = 'Preferred language required';
+    if (formData.subscribe_newsletter && !formData.preferred_language) errors.preferred_language = 'Preferred language required';
     if (!isAdventure() && !isActivity()) {
       if (!formData.from_date) errors.from_date = t.required;
       if (!formData.to_date) errors.to_date = t.required;
     } else if (isAdventure()) {
-      // for adventures require preferred month/year 
       if (!formData.preferredMonth) errors.preferredMonth = 'Preferred month required';
       if (!formData.preferredYear) errors.preferredYear = 'Preferred year required';
       if (!Array.isArray(formData.adventureOptions) || formData.adventureOptions.length === 0) errors.adventureOption = 'Select at least one option';
@@ -680,11 +690,10 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
     setError('');
     setLoading(true);
     try {
-  let entityType = (item.entityType || (item.type || '')).toString();
-  const isPackageOrigin = !!isPackage || (!!item?._id && (item.type === 'Package' || item.type === 'package' || item.type === 'packages') );
-  const packageFormType = packageInquiryFormType || item?.inquiry_form_type || undefined;
+      let entityType = (item.entityType || (item.type || '')).toString();
+      const isPackageOrigin = !!isPackage || (!!item?._id && (item.type === 'Package' || item.type === 'package' || item.type === 'packages'));
+      const packageFormType = packageInquiryFormType || item?.inquiry_form_type || undefined;
       if (isPackageOrigin) {
-        // Force Package entityType when modal was opened from a package listing
         entityType = 'Package';
       } else if (entityType) {
         const t = entityType.toString().toLowerCase();
@@ -698,7 +707,6 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
         entityType = item.title && resortName && roomName ? 'Accommodation' : (item.title ? 'Package' : 'Activity');
       }
       const title = item.title || item.name || 'Inquiry';
-      // Build payload selectively per entity type and remove empty/default values
       const base = {
         name: formData.name || undefined,
         email: formData.email || undefined,
@@ -707,7 +715,7 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
         subscribe_newsletter: typeof formData.subscribe_newsletter !== 'undefined' ? !!formData.subscribe_newsletter : undefined,
         language: formData.preferred_language || undefined,
         country: formData.country || undefined,
-  entity: item._id ? { $oid: item._id } : undefined,
+        entity: item._id ? { $oid: item._id } : undefined,
         entityType,
         title,
         buttonType: buttonType || 'bookNow',
@@ -717,7 +725,6 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
       if (isPackageOrigin) {
         const chosenForm = (typeof packageInquiryFormType !== 'undefined' && packageInquiryFormType) || item?.inquiry_form_type || packageFormType || '';
         if (chosenForm) payload.inquiry_form_type = chosenForm;
-        // If package maps to the Accommodation form, include the package's resort name in the payload
         const effectiveResortNameForPackage = resortName || item?.resort || item?.resortName || undefined;
         if (chosenForm === 'Accommodation' && effectiveResortNameForPackage) {
           payload.resortName = effectiveResortNameForPackage;
@@ -727,7 +734,7 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
       const addIf = (key, value) => {
         if (value === undefined || value === null) return;
         if (Array.isArray(value) && value.length === 0) return;
-        if (typeof value === 'number' && value === 0) return; // drop default zeros
+        if (typeof value === 'number' && value === 0) return;
         if (typeof value === 'boolean') {
           if (value) payload[key] = value;
           return;
@@ -744,7 +751,6 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
         addIf('from_date', formData.from_date);
         addIf('to_date', formData.to_date);
         addIf('resortName', effectiveResortName);
-        // Only include roomName when it's a non-empt
         if (typeof roomName === 'string' && roomName.trim() !== '') {
           addIf('roomName', roomName);
         }
@@ -756,18 +762,17 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
         addIf('nondivers_infants', formData.nondivers_infants);
         addIf('selectedActivities', formData.selectedActivities && formData.selectedActivities.length ? formData.selectedActivities : undefined);
       } else if (effectiveFormForPayload === 'Adventure') {
-          addIf('preferredMonth', formData.preferredMonth);
-          addIf('preferredYear', formData.preferredYear);
-          addIf('adventureOptions', formData.adventureOptions && formData.adventureOptions.length ? formData.adventureOptions : undefined);
-          addIf('adventureOption', Array.isArray(formData.adventureOptions) && formData.adventureOptions.length ? formData.adventureOptions[0] : formData.adventureOption);
-          addIf('participantsByOption', (formData.participantsByOption || []).filter(g => g && g.option && Array.isArray(g.participants) && g.participants.length));
-          const flatParticipants = (formData.participantsByOption || []).flatMap(g => (g.participants||[])).filter(p => p && (p.name || p.ageCategory || p.gender));
-          addIf('participants', flatParticipants.length ? flatParticipants : undefined);
-          addIf('bookWholeBoat', !!formData.bookWholeBoat);
+        addIf('preferredMonth', formData.preferredMonth);
+        addIf('preferredYear', formData.preferredYear);
+        addIf('adventureOptions', formData.adventureOptions && formData.adventureOptions.length ? formData.adventureOptions : undefined);
+        addIf('adventureOption', Array.isArray(formData.adventureOptions) && formData.adventureOptions.length ? formData.adventureOptions[0] : formData.adventureOption);
+        addIf('participantsByOption', (formData.participantsByOption || []).filter(g => g && g.option && Array.isArray(g.participants) && g.participants.length));
+        const flatParticipants = (formData.participantsByOption || []).flatMap(g => (g.participants || [])).filter(p => p && (p.name || p.ageCategory || p.gender));
+        addIf('participants', flatParticipants.length ? flatParticipants : undefined);
+        addIf('bookWholeBoat', !!formData.bookWholeBoat);
       } else if (effectiveFormForPayload === 'Activity') {
-
+        // No specific fields for Activity
       } else {
-        // Generic: include any dates or counts if present
         addIf('from_date', formData.from_date);
         addIf('to_date', formData.to_date);
       }
@@ -791,7 +796,6 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
         nondivers_children: null,
         nondivers_infants: null,
         selectedActivities: [],
-        // adventure-specific resets
         preferredMonth: '',
         preferredYear: '',
         adventureOptions: [],
@@ -822,240 +826,274 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
   const effectiveButtonType = buttonType || 'bookNow';
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-6">
-      <div ref={modalRef} className="bg-white rounded-3xl shadow-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
-        <div className="p-8">
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="text-2xl font-bold" style={{ color: '#074a5b' }}>{t.inquiryForm}</h3>
-            <button onClick={onClose} className="p-3 hover:bg-gray-100 rounded-full transition-colors">
-              <X size={24} className="text-gray-600" />
-            </button>
-          </div>
-          <div className="mb-7 p-5 rounded-2xl border-2" style={{ backgroundColor: '#074a5b0a', borderColor: '#074a5b' }}>
-            <p className="text-base font-bold mb-2" style={{ color: '#074a5b' }}>{item.title || item.name || 'Custom Inquiry'}</p>
-            <p className="text-base text-gray-600 font-medium">{item.shortDescription || item.description || 'No description available'}</p>
-          </div>
-          {/* Common error popup */}
-          {error && (
-            <div className="mb-6 p-3 bg-red-100 text-red-700 rounded-lg text-sm border border-red-300 shadow">
-              {error}
-            </div>
-          )}
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center">
-                  <Mail size={18} className="mr-2" style={{ color: '#1e809b' }} />
-                  {t.name}
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all ${fieldErrors.name ? 'border-red-500' : ''}`}
-                  style={{ borderColor: fieldErrors.name ? '#ef4444' : '#074a5b' }}
-                  placeholder="Enter your name"
-                />
-                {fieldErrors.name && <div className="mt-1 text-xs text-red-600">{fieldErrors.name}</div>}
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center">
-                  <Mail size={18} className="mr-2" style={{ color: '#1e809b' }} />
-                  {t.email}
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all ${fieldErrors.email ? 'border-red-500' : ''}`}
-                  style={{ borderColor: fieldErrors.email ? '#ef4444' : '#074a5b' }}
-                  placeholder="Enter your email"
-                />
-                {fieldErrors.email && <div className="mt-1 text-xs text-red-600">{fieldErrors.email}</div>}
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center">
-                  <Phone size={18} className="mr-2" style={{ color: '#1e809b' }} />
-                  {t.phone}
-                </label>
-                <input
-                  type="tel"
-                  name="phone_number"
-                  value={formData.phone_number}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all ${fieldErrors.phone_number ? 'border-red-500' : ''}`}
-                  style={{ borderColor: fieldErrors.phone_number ? '#ef4444' : '#074a5b' }}
-                  placeholder="Enter your phone number"
-                />
-                {fieldErrors.phone_number && <div className="mt-1 text-xs text-red-600">{fieldErrors.phone_number}</div>}
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center">
-                  <MapPin size={18} className="mr-2" style={{ color: '#1e809b' }} />
-                  {t.country}
-                </label>
-                <input
-                  type="text"
-                  name="country"
-                  value={formData.country}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all ${fieldErrors.country ? 'border-red-500' : ''}`}
-                  style={{ borderColor: fieldErrors.country ? '#ef4444' : '#074a5b' }}
-                  placeholder="Enter your country"
-                />
-                {fieldErrors.country && <div className="mt-1 text-xs text-red-600">{fieldErrors.country}</div>}
-              </div>
-            </div>
-            {isAdventure() ? (
-              <AdventureSection />
-            ) : isActivity() ? <ActivitySection /> : (
-              <div className="grid grid-cols-2 gap-4">
-                <div onClick={handleCheckInClick} className="cursor-pointer relative">
-                  <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center">
-                    <Calendar size={18} className="mr-2" style={{ color: '#1e809b' }} />
-                    {t.fromDate}
-                  </label>
-                  <div className={`w-full px-4 py-3 border-2 rounded-xl flex items-center ${fieldErrors.from_date ? 'border-red-500' : ''}`}
-                    style={{ borderColor: fieldErrors.from_date ? '#ef4444' : '#074a5b' }}>
-                    <Calendar size={18} className="mr-2 text-gray-400" />
-                    <span className={formData.from_date ? 'text-gray-700' : 'text-gray-400'}>
-                      {formData.from_date ? formatDateForDisplay(new Date(formData.from_date)) : t.datePlaceholder}
-                    </span>
-                  </div>
-                  {fieldErrors.from_date && <div className="mt-1 text-xs text-red-600">{fieldErrors.from_date}</div>}
-                </div>
-                <div
-                  onClick={() => formData.from_date && setShowCalendar(true)}
-                  className={`relative ${formData.from_date ? 'cursor-pointer' : 'cursor-not-allowed'}`}
-                >
-                  <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center">
-                    <Calendar size={18} className="mr-2" style={{ color: '#1e809b' }} />
-                    {t.toDate}
-                  </label>
-                  <div className={`w-full px-4 py-3 border-2 rounded-xl flex items-center ${fieldErrors.to_date ? 'border-red-500' : ''}`}
-                    style={{ borderColor: fieldErrors.to_date ? '#ef4444' : '#074a5b' }}>
-                    <Calendar size={18} className="mr-2 text-gray-400" />
-                    <span className={formData.to_date ? 'text-gray-700' : 'text-gray-400'}>
-                      {formData.to_date ? formatDateForDisplay(new Date(formData.to_date)) : t.datePlaceholder}
-                    </span>
-                  </div>
-                  {fieldErrors.to_date && <div className="mt-1 text-xs text-red-600">{fieldErrors.to_date}</div>}
-                </div>
-              </div>
-            )}
-            {showCalendar && (
-              <div ref={calendarRef} className="mt-6 p-5 border-2 rounded-xl max-w-[320px] mx-auto" style={{ borderColor: '#074a5b', backgroundColor: '#074a5b0a' }}>
-                <div className="flex items-center justify-between mb-5">
-                  <button
-                    type="button"
-                    onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}
-                    className="p-3 hover:bg-[#1e809b]/10 rounded-lg transition-colors"
-                  >
-                    <ChevronLeft size={18} style={{ color: '#074a5b' }} />
-                  </button>
-                  <h5 className="font-bold text-base" style={{ color: '#074a5b' }}>
-                    {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                  </h5>
-                  <button
-                    type="button"
-                    onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
-                    className="p-3 hover:bg-[#1e809b]/10 rounded-lg transition-colors"
-                  >
-                    <ChevronRight size={18} style={{ color: '#074a5b' }} />
-                  </button>
-                </div>
-                <div className="grid grid-cols-7 gap-2 mb-5">
-                  {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day) => (
-                    <div key={day} className="h-9 flex items-center justify-center text-sm font-bold" style={{ color: '#074a5b' }}>
-                      {day}
-                    </div>
-                  ))}
-                </div>
-                <div className="grid grid-cols-7 gap-2">{renderCalendar()}</div>
-                {isSelecting && dragStart && (
-                  <div className="text-center mt-5 p-3 rounded-lg" style={{ backgroundColor: '#1e809b0a' }}>
-                    <p className="text-sm font-medium" style={{ color: '#074a5b' }}>
-                      ✓ Einchecken: {formatDateForDisplay(dragStart)}
-                    </p>
-                    <p className="text-sm" style={{ color: '#1e809b' }}>
-                      Klicken Sie auf das Check-out-Datum, um die Auswahl abzuschließen
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-            {!isAdventure() && !isActivity() && (isHotelOrResort() ? (
-              <HotelResortSection />
-            ) : (
-              <DefaultTravellersSection />
-            ))}
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center">
-                <MessageSquare size={18} className="mr-2" style={{ color: '#1e809b' }} />
-                {t.message}
-              </label>
-              <textarea
-                name="message"
-                value={formData.message}
-                onChange={handleChange}
-                rows={5}
-                className="w-full px-4 py-2 border-2 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all resize-none"
-                style={{ borderColor: '#074a5b' }}
-                placeholder="Erzählen Sie uns von Ihren Reiseplänen..."
-              />
-            </div>
-            <div className="">
-              <label className="block text-sm font-bold text-gray-700 mb-2">Preferred language</label>
-              <div className="max-w-48">
-                <select
-                  name="preferred_language"
-                  value={formData.preferred_language}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-3 border-2 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all ${fieldErrors.preferred_language ? 'border-red-500' : ''}`}
-                  style={{ borderColor: fieldErrors.preferred_language ? '#ef4444' : '#074a5b' }}
-                >
-                  <option value="">Select language</option>
-                  {languages.map((l) => (
-                    <option key={l.code} value={l.code}>
-                      {l.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {fieldErrors.preferred_language && <div className="mt-1 text-xs text-red-600">{fieldErrors.preferred_language}</div>}
-            </div>
-            <div className="flex items-center gap-3">
-              <input
-                id="subscribe_newsletter"
-                type="checkbox"
-                name="subscribe_newsletter"
-                checked={!!formData.subscribe_newsletter}
-                onChange={(e) => setFormData((p) => ({ ...p, subscribe_newsletter: e.target.checked }))}
-              />
-              <label htmlFor="subscribe_newsletter" className="text-md">Subscribe to Newsletter</label>
-            </div>
-            <div className="border-t-2 pt-6" style={{ borderColor: '#074a5b' }}>
-              {console.log('Rendering submit button for effectiveButtonType:', effectiveButtonType)}
-              <button
-                type="submit"
-                disabled={loading}
-                className={`w-full px-6 py-4 text-white rounded-xl font-semibold text-lg transition-all duration-300 transform hover:scale-[1.02] shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center ${
-                  effectiveButtonType === 'whatsapp' ? 'bg-green-600 hover:bg-green-700' : 'bg-gradient-to-r from-[#074a5b] to-[#1e809b] hover:from-[#1e809b] hover:to-[#074a5b]'
-                }`}
-              >
-                {effectiveButtonType === 'bookNow' && <MessageCircle size={20} className="mr-2" />}
-                {effectiveButtonType === 'whatsapp' && <Phone size={20} className="mr-2" />}
-                {loading ? 'Submitting...' : effectiveButtonType === 'whatsapp' ? t.sendWhatsApp : t.bookNow}
+    <>
+      <style jsx>{`
+        @media (max-width: 640px) {
+          .modal-container {
+            padding: 1rem;
+          }
+          .modal-content {
+            max-width: 100%;
+            margin: 0;
+          }
+          .calendar-container {
+            max-width: 100%;
+            padding: 0.5rem;
+          }
+          .calendar-container .grid-cols-7 > div {
+            width: 2rem;
+            height: 2rem;
+            font-size: 0.75rem;
+          }
+          .input-field {
+            font-size: 0.875rem;
+            padding: 0.5rem;
+          }
+          .textarea-field {
+            font-size: 0.875rem;
+            padding: 0.5rem;
+          }
+          .button-field {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+          }
+        }
+      `}</style>
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 sm:p-6 modal-container">
+        <div ref={modalRef} className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto modal-content" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
+          <div className="p-4 sm:p-8">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-xl sm:text-2xl font-bold" style={{ color: '#074a5b' }}>{t.inquiryForm}</h3>
+              <button onClick={onClose} className="p-2 sm:p-3 hover:bg-gray-100 rounded-full transition-colors">
+                <X size={20} className="text-gray-600" />
               </button>
             </div>
-          </form>
+            <div className="mb-4 sm:mb-7 p-4 sm:p-5 rounded-xl sm:rounded-2xl border-2" style={{ backgroundColor: '#074a5b0a', borderColor: '#074a5b' }}>
+              <p className="text-sm sm:text-base font-bold mb-2" style={{ color: '#074a5b' }}>{item.title || item.name || 'Custom Inquiry'}</p>
+              <p className="text-sm sm:text-base text-gray-600 font-medium">{item.shortDescription || item.description || 'No description available'}</p>
+            </div>
+            {error && (
+              <div className="mb-4 sm:mb-6 p-3 bg-red-100 text-red-700 rounded-lg text-xs sm:text-sm border border-red-300 shadow">
+                {error}
+              </div>
+            )}
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-2 flex items-center">
+                    <Mail size={16} className="mr-2" style={{ color: '#1e809b' }} />
+                    {t.name}
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    className={`w-full px-3 sm:px-4 py-2 sm:py-3 border-2 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all input-field ${fieldErrors.name ? 'border-red-500' : ''}`}
+                    style={{ borderColor: fieldErrors.name ? '#ef4444' : '#074a5b' }}
+                    placeholder="Enter your name"
+                  />
+                  {fieldErrors.name && <div className="mt-1 text-xs text-red-600">{fieldErrors.name}</div>}
+                </div>
+                <div>
+                  <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-2 flex items-center">
+                    <Mail size={16} className="mr-2" style={{ color: '#1e809b' }} />
+                    {t.email}
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className={`w-full px-3 sm:px-4 py-2 sm:py-3 border-2 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all input-field ${fieldErrors.email ? 'border-red-500' : ''}`}
+                    style={{ borderColor: fieldErrors.email ? '#ef4444' : '#074a5b' }}
+                    placeholder="Enter your email"
+                  />
+                  {fieldErrors.email && <div className="mt-1 text-xs text-red-600">{fieldErrors.email}</div>}
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-2 flex items-center">
+                    <Phone size={16} className="mr-2" style={{ color: '#1e809b' }} />
+                    {t.phone}
+                  </label>
+                  <input
+                    type="tel"
+                    name="phone_number"
+                    value={formData.phone_number}
+                    onChange={handleChange}
+                    className={`w-full px-3 sm:px-4 py-2 sm:py-3 border-2 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all input-field ${fieldErrors.phone_number ? 'border-red-500' : ''}`}
+                    style={{ borderColor: fieldErrors.phone_number ? '#ef4444' : '#074a5b' }}
+                    placeholder="Enter your phone number"
+                  />
+                  {fieldErrors.phone_number && <div className="mt-1 text-xs text-red-600">{fieldErrors.phone_number}</div>}
+                </div>
+                <div>
+                  <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-2 flex items-center">
+                    <MapPin size={16} className="mr-2" style={{ color: '#1e809b' }} />
+                    {t.country}
+                  </label>
+                  <input
+                    type="text"
+                    name="country"
+                    value={formData.country}
+                    onChange={handleChange}
+                    className={`w-full px-3 sm:px-4 py-2 sm:py-3 border-2 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all input-field ${fieldErrors.country ? 'border-red-500' : ''}`}
+                    style={{ borderColor: fieldErrors.country ? '#ef4444' : '#074a5b' }}
+                    placeholder="Enter your country"
+                  />
+                  {fieldErrors.country && <div className="mt-1 text-xs text-red-600">{fieldErrors.country}</div>}
+                </div>
+              </div>
+              {isAdventure() ? (
+                <AdventureSection />
+              ) : isActivity() ? (
+                <ActivitySection />
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div onClick={handleCheckInClick} className="cursor-pointer relative">
+                    <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-2 flex items-center">
+                      <Calendar size={16} className="mr-2" style={{ color: '#1e809b' }} />
+                      {t.fromDate}
+                    </label>
+                    <div className={`w-full px-3 sm:px-4 py-2 sm:py-3 border-2 rounded-xl flex items-center ${fieldErrors.from_date ? 'border-red-500' : ''}`}
+                      style={{ borderColor: fieldErrors.from_date ? '#ef4444' : '#074a5b' }}>
+                      <Calendar size={16} className="mr-2 text-gray-400" />
+                      <span className={formData.from_date ? 'text-gray-700' : 'text-gray-400 text-xs sm:text-sm'}>
+                        {formData.from_date ? formatDateForDisplay(new Date(formData.from_date)) : t.datePlaceholder}
+                      </span>
+                    </div>
+                    {fieldErrors.from_date && <div className="mt-1 text-xs text-red-600">{fieldErrors.from_date}</div>}
+                  </div>
+                  <div
+                    onClick={() => formData.from_date && setShowCalendar(true)}
+                    className={`relative ${formData.from_date ? 'cursor-pointer' : 'cursor-not-allowed'}`}
+                  >
+                    <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-2 flex items-center">
+                      <Calendar size={16} className="mr-2" style={{ color: '#1e809b' }} />
+                      {t.toDate}
+                    </label>
+                    <div className={`w-full px-3 sm:px-4 py-2 sm:py-3 border-2 rounded-xl flex items-center ${fieldErrors.to_date ? 'border-red-500' : ''}`}
+                      style={{ borderColor: fieldErrors.to_date ? '#ef4444' : '#074a5b' }}>
+                      <Calendar size={16} className="mr-2 text-gray-400" />
+                      <span className={formData.to_date ? 'text-gray-700' : 'text-gray-400 text-xs sm:text-sm'}>
+                        {formData.to_date ? formatDateForDisplay(new Date(formData.to_date)) : t.datePlaceholder}
+                      </span>
+                    </div>
+                    {fieldErrors.to_date && <div className="mt-1 text-xs text-red-600">{fieldErrors.to_date}</div>}
+                  </div>
+                </div>
+              )}
+              {showCalendar && (
+                <div ref={calendarRef} className="mt-4 sm:mt-6 p-3 sm:p-5 border-2 rounded-xl max-w-[280px] sm:max-w-[320px] mx-auto calendar-container" style={{ borderColor: '#074a5b', backgroundColor: '#074a5b0a' }}>
+                  <div className="flex items-center justify-between mb-3 sm:mb-5">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}
+                      className="p-2 sm:p-3 hover:bg-[#1e809b]/10 rounded-lg transition-colors"
+                    >
+                      <ChevronLeft size={16} style={{ color: '#074a5b' }} />
+                    </button>
+                    <h5 className="font-bold text-sm sm:text-base" style={{ color: '#074a5b' }}>
+                      {currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                    </h5>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
+                      className="p-2 sm:p-3 hover:bg-[#1e809b]/10 rounded-lg transition-colors"
+                    >
+                      <ChevronRight size={16} style={{ color: '#074a5b' }} />
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-3 sm:mb-5">
+                    {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day) => (
+                      <div key={day} className="h-8 sm:h-9 flex items-center justify-center text-xs sm:text-sm font-bold" style={{ color: '#074a5b' }}>
+                        {day}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-7 gap-1 sm:gap-2">{renderCalendar()}</div>
+                  {isSelecting && dragStart && (
+                    <div className="text-center mt-3 sm:mt-5 p-2 sm:p-3 rounded-lg" style={{ backgroundColor: '#1e809b0a' }}>
+                      <p className="text-xs sm:text-sm font-medium" style={{ color: '#074a5b' }}>
+                        ✓ Check-in: {formatDateForDisplay(dragStart)}
+                      </p>
+                      <p className="text-xs sm:text-sm" style={{ color: '#1e809b' }}>
+                        Click the check-out date to complete
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+              {!isAdventure() && !isActivity() && (isHotelOrResort() ? (
+                <HotelResortSection />
+              ) : (
+                <DefaultTravellersSection />
+              ))}
+              <div>
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-2 flex items-center">
+                  <MessageSquare size={16} className="mr-2" style={{ color: '#1e809b' }} />
+                  {t.message}
+                </label>
+                <textarea
+                  name="message"
+                  value={formData.message}
+                  onChange={handleChange}
+                  rows={4}
+                  className="w-full px-3 sm:px-4 py-2 sm:py-2 border-2 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all resize-none textarea-field"
+                  style={{ borderColor: '#074a5b' }}
+                  placeholder="Tell us about your travel plans..."
+                />
+              </div>
+              <div>
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-2">Preferred language</label>
+                <div className="max-w-48">
+                  <select
+                    name="preferred_language"
+                    value={formData.preferred_language}
+                    onChange={handleChange}
+                    className={`w-full px-3 sm:px-4 py-2 sm:py-3 border-2 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all input-field ${fieldErrors.preferred_language ? 'border-red-500' : ''}`}
+                    style={{ borderColor: fieldErrors.preferred_language ? '#ef4444' : '#074a5b' }}
+                  >
+                    <option value="">Select language</option>
+                    {languages.map((l) => (
+                      <option key={l.code} value={l.code}>
+                        {l.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {fieldErrors.preferred_language && <div className="mt-1 text-xs text-red-600">{fieldErrors.preferred_language}</div>}
+              </div>
+              <div className="flex items-center gap-3">
+                <input
+                  id="subscribe_newsletter"
+                  type="checkbox"
+                  name="subscribe_newsletter"
+                  checked={!!formData.subscribe_newsletter}
+                  onChange={(e) => setFormData((p) => ({ ...p, subscribe_newsletter: e.target.checked }))}
+                />
+                <label htmlFor="subscribe_newsletter" className="text-sm sm:text-md">Subscribe to Newsletter</label>
+              </div>
+              <div className="border-t-2 pt-4 sm:pt-6" style={{ borderColor: '#074a5b' }}>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className={`w-full px-4 sm:px-6 py-3 sm:py-4 text-white rounded-xl font-semibold text-sm sm:text-lg transition-all duration-300 transform hover:scale-[1.02] shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center button-field ${
+                    effectiveButtonType === 'whatsapp' ? 'bg-green-600 hover:bg-green-700' : 'bg-gradient-to-r from-[#074a5b] to-[#1e809b] hover:from-[#1e809b] hover:to-[#074a5b]'
+                  }`}
+                >
+                  {effectiveButtonType === 'bookNow' && <MessageCircle size={16} className="mr-2" />}
+                  {effectiveButtonType === 'whatsapp' && <Phone size={16} className="mr-2" />}
+                  {loading ? 'Submitting...' : effectiveButtonType === 'whatsapp' ? t.sendWhatsApp : t.bookNow}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
