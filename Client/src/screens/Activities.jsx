@@ -228,15 +228,6 @@ const Activities = () => {
                         e.target.style.display = 'none';
                       }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
-                    <div className="absolute top-4 right-4 flex gap-2">
-                      <button className="bg-white/95 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white transition-colors duration-300">
-                        <Heart className="w-4 h-4 text-gray-600" />
-                      </button>
-                      <button className="bg-white/95 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white transition-colors duration-300">
-                        <Share2 className="w-4 h-4 text-gray-600" />
-                      </button>
-                    </div>
                     {activity.price && typeof activity.price === 'string' && activity.price.trim() !== '' && activity.price !== 'N/A' && (
                       <div className="absolute bottom-4 right-4 bg-[#1e809b] text-white px-4 py-2 rounded-full shadow-lg">
                         <span className="font-bold text-lg">{activity.price}</span>
