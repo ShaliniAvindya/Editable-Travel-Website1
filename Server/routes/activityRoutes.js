@@ -42,7 +42,7 @@ router.get('/', async (req, res) => {
 
     const transformedActivities = activities.map(activity => ({
       ...activity.toObject(),
-      atolls: activity.available_in_all_atolls ? 'All Islands' :
+      atolls: activity.available_in_all_atolls ? 'Allen Inseln' :
         activity.available_atoll_ids.map(atoll => atoll.name).join(', ')
     }));
 
@@ -114,7 +114,7 @@ router.get('/byAtoll/:atollId', async (req, res) => {
       return {
         ...activity.toObject(),
         activity_sites: validSites,
-        atolls: activity.available_in_all_atolls ? 'All Islands' :
+        atolls: activity.available_in_all_atolls ? 'Allen Inseln' :
           activity.available_atoll_ids.map(atoll => atoll.name).join(', ')
       };
     });
@@ -187,3 +187,4 @@ router.delete('/:id', auth, async (req, res) => {
 });
 
 module.exports = router;
+
