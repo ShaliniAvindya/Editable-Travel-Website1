@@ -717,7 +717,7 @@ const ActivityManagement = () => {
                   </h3>
                   <p className="text-gray-600 mb-3 flex items-center">
                     <MapPin size={16} className="mr-2 text-[#074a5b]" />
-                    {activity.available_in_all_atolls ? 'All Islands' : 
+                    {activity.available_in_all_atolls ? 'Allen Inseln' : 
                       (activity.available_atoll_ids || []).map(id => 
                         atolls.find(a => a._id === (id._id || id))?.name || 'Unknown'
                       ).filter(name => name !== 'Unknown').join(', ') || 'None'}
@@ -917,3 +917,4 @@ const ActivityManagement = () => {
 };
 
 export default ActivityManagement;
+
