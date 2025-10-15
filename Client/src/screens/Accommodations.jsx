@@ -333,7 +333,7 @@ const Accommodations = () => {
                       onClick={() => handleViewDetails(item)}
                       className="flex-1 bg-[#1e809b] hover:bg-[#074a5b] text-white px-4 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg"
                     >
-                     Details Anzegen
+                     Details Anzeigen
                     </button>
                   </div>
                 </div>
@@ -364,3 +364,4 @@ const Accommodations = () => {
 };
 
 export default Accommodations;
+
