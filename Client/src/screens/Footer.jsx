@@ -71,7 +71,7 @@ const Footer = () => {
               Traveliccted
             </h3>
             <p className="text-gray-300 leading-relaxed">
-              Ihr Tor zum schönsten tropischen Paradies der Erde.
+              Ihr tor zum schönsten tropischen Paradies der Erde.
               <span className="block text-cyan-300 text-sm mt-2 italic">
                 Entdecken • Erforschen • Erfahrung
               </span>
@@ -211,4 +211,5 @@ const Footer = () => {
 };
 
 export default Footer;
+
 
