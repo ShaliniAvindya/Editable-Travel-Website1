@@ -92,7 +92,7 @@ const Header = () => {
   
   const languages = [
     { code: 'de', name: 'DE', flag: <FlagDE /> },
-    { code: 'en', name: 'UK', flag: <FlagUK /> },
+    { code: 'en', name: 'EN', flag: <FlagUK /> },
     { code: 'es', name: 'ES', flag: <FlagES /> },
     { code: 'it', name: 'IT', flag: <FlagIT /> },
     { code: 'fr', name: 'FR', flag: <FlagFR /> },
@@ -841,6 +841,7 @@ const Header = () => {
 };
 
 export default Header;
+
 
 
 
