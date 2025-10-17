@@ -65,7 +65,7 @@ const AppContent = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-cyan-50 to-blue-100">
         <div className="text-center">
-          <p className="text-lg text-gray-600 font-medium">Loading...</p>
+          <p className="text-lg text-gray-600 font-medium">Laden...</p>
         </div>
       </div>
     );
@@ -117,6 +117,7 @@ const App = () => (
 );
 
 export default App;
+
 
 
 
