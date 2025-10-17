@@ -212,7 +212,7 @@ const PromotionPopup = ({ promotion: propPromotion, onClose }) => {
                   </div>
                   <div className="flex items-center justify-center text-sm sm:text-sm text-gray-600">
                     <MapPin className="w-3.5 h-3.5 xs:w-4 xs:h-4 mr-2 text-[#1e809b]" />
-                    Valid until: {new Date(promotion.validUntil).toLocaleDateString('de-DE', {
+                    Gültig bis: {new Date(promotion.validUntil).toLocaleDateString('de-DE', {
                       weekday: 'short',
                       year: 'numeric',
                       month: 'short',
@@ -254,3 +254,4 @@ const PromotionPopup = ({ promotion: propPromotion, onClose }) => {
 };
 
 export default PromotionPopup;
+
