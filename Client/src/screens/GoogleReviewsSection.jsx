@@ -13,11 +13,11 @@ const GoogleReviewsSection = () => {
       try {
         const res = await axios.get(`${API_BASE_URL}/ui-content/home`);
         const section = res.data.sections?.find(s => s.sectionId === 'googleReviews');
-        setTitle(section?.content?.title || 'What Our Guests Say');
-        setDescription(section?.content?.description || 'Hear from our valued customers about their experiences');
+        setTitle(section?.content?.title || 'Was unsere Gäste sagen');
+        setDescription(section?.content?.description || 'Hören Sie von unseren geschätzten Kunden über ihre Erfahrungen');
       } catch (err) {
-        setTitle('What Our Guests Say');
-        setDescription('Hear from our valued customers about their experiences');
+        setTitle('Was unsere Gäste sagen');
+        setDescription('Hören Sie von unseren geschätzten Kunden über ihre Erfahrungen');
       }
     };
     fetchSection();
@@ -49,7 +49,7 @@ const GoogleReviewsSection = () => {
   if (!scriptLoaded) {
     return (
       <div className="text-center py-12" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
-        <p className="text-lg text-[#074a5b]">Loading reviews...</p>
+        <p className="text-lg text-[#074a5b]">Bewertungen werden geladen...</p>
       </div>
     );
   }
