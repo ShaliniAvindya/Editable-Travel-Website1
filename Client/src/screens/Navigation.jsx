@@ -77,6 +77,7 @@ const Header = () => {
     adventures: false,
     activities: false,
     packageoffers: false,
+     admin: false,
   });
   const [hotels, setHotels] = useState([]);
   const [resorts, setResorts] = useState([]);
@@ -284,6 +285,7 @@ const Header = () => {
       adventures: false,
       activities: false,
       packageoffers: false,
+       admin: false,
     });
   };
 
@@ -309,17 +311,20 @@ const Header = () => {
   };
 
   const isParentActive = (parentPath, currentPath) => {
-    if (parentPath === '/accommodations') {
-      return currentPath.startsWith('/resort/') || currentPath === '/accommodations';
-    }
-    if (parentPath === '/activities') {
-      return currentPath.startsWith('/activity/') || currentPath === '/activities';
-    }
-    if (parentPath === '/packageoffers') {
-      return currentPath.startsWith('/packageoffers') && currentPath !== '/packageoffers';
-    }
-    return false;
-  };
+  if (parentPath === '/accommodations') {
+    return currentPath.startsWith('/resort/') || currentPath === '/accommodations';
+  }
+  if (parentPath === '/activities') {
+    return currentPath.startsWith('/activity/') || currentPath === '/activities';
+  }
+  if (parentPath === '/packageoffers') {
+    return currentPath.startsWith('/packageoffers') && currentPath !== '/packageoffers';
+  }
+  if (parentPath === '/admin') {
+    return currentPath.startsWith('/admin') && currentPath !== '/admin';
+  }
+  return false;
+};
 
   const navigationItems = [
     { name: '', href: '/', hasDropdown: false, icon: <Home className="w-6 h-6" aria-label="Home" /> },
@@ -341,6 +346,7 @@ const Header = () => {
     },
     { name: 'Paketangebote', href: '/packageoffers', hasDropdown: false },
     { name: 'Blogs', href: '/blogs', hasDropdown: false },
+   { name: 'Admin', href: '/admin', hasDropdown: false },
   ];
 
   useEffect(() => {
@@ -835,3 +841,4 @@ const Header = () => {
 };
 
 export default Header;
+
