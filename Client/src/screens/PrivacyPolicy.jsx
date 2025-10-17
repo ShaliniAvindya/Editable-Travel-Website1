@@ -79,11 +79,11 @@ const PrivacyPolicy = ({ isOpen, onClose }) => {
 
     doc.setFontSize(24);
     doc.setFont('helvetica', 'bold');
-    const titleLines = doc.splitTextToSize('Privacy Policy', textWidth);
+    const titleLines = doc.splitTextToSize('Datenschutzrichtlinie', textWidth);
     doc.text(titleLines, marginLeft, y);
     y += titleLines.length * 24 * 0.5 + 10;
 
-    const contentArray = parseHtmlToPdf(content || '<p>No content available.</p>');
+    const contentArray = parseHtmlToPdf(content || '<p>No content available.Kein Inhalt verfügbar.</p>');
 
     contentArray.forEach((item) => {
       if (y > 270) {
@@ -128,11 +128,11 @@ const PrivacyPolicy = ({ isOpen, onClose }) => {
         try {
           const response = await axios.get(`${API_BASE_URL}/ui-content/legal`);
           const ppSection = response.data.sections?.find((s) => s.sectionId === 'privacy-policy');
-          setContent(ppSection?.content.description || '<p>No content available.</p>');
+          setContent(ppSection?.content.description || '<p>Kein Inhalt verfügbar.</p>');
         } catch (err) {
           console.error('Error fetching Privacy Policy:', err);
-          setError('Failed to load Privacy Policy content.');
-          setContent('<p>No content available.</p>');
+          setError('Inhalt der Datenschutzrichtlinie konnte nicht geladen werden.');
+          setContent('<p>Kein Inhalt verfügbar.</p>');
         }
       };
       fetchPrivacyPolicy();
@@ -170,7 +170,7 @@ const PrivacyPolicy = ({ isOpen, onClose }) => {
       >
         <div className="flex justify-between items-center mb-6">
           <h3 id="privacy-policy-title" className="text-3xl font-semibold text-[#074a5b]">
-            Privacy Policy
+            Datenschutzrichtlinie
           </h3>
           <div className="flex items-center gap-4">
             <button
@@ -180,7 +180,7 @@ const PrivacyPolicy = ({ isOpen, onClose }) => {
               aria-label="Download Privacy Policy as PDF"
             >
               <Download size={16} className="mr-2" />
-              Download PDF
+              PDF herunterladen
             </button>
             <button
               onClick={onClose}
