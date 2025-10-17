@@ -37,15 +37,15 @@ const Register = () => {
   const validateForm = () => {
     const newErrors = {};
     if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
+      newErrors.name = 'Name ist erforderlich';
     }
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = 'E-Mail ist erforderlich';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'E-Mail ist ungültig';
     }
     if (!formData.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = 'Passwort ist erforderlich';
     } else if (formData.password.length < 6) {
       newErrors.password = 'Das Passwort muss mindestens 6 Zeichen lang sein';
     }
