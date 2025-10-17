@@ -77,7 +77,6 @@ const Header = () => {
     adventures: false,
     activities: false,
     packageoffers: false,
-    admin: false,
   });
   const [hotels, setHotels] = useState([]);
   const [resorts, setResorts] = useState([]);
@@ -285,7 +284,6 @@ const Header = () => {
       adventures: false,
       activities: false,
       packageoffers: false,
-      admin: false,
     });
   };
 
@@ -311,20 +309,17 @@ const Header = () => {
   };
 
   const isParentActive = (parentPath, currentPath) => {
-  if (parentPath === '/accommodations') {
-    return currentPath.startsWith('/resort/') || currentPath === '/accommodations';
-  }
-  if (parentPath === '/activities') {
-    return currentPath.startsWith('/activity/') || currentPath === '/activities';
-  }
-  if (parentPath === '/packageoffers') {
-    return currentPath.startsWith('/packageoffers') && currentPath !== '/packageoffers';
-  }
-  if (parentPath === '/admin') {
-    return currentPath.startsWith('/admin') && currentPath !== '/admin';
-  }
-  return false;
-};
+    if (parentPath === '/accommodations') {
+      return currentPath.startsWith('/resort/') || currentPath === '/accommodations';
+    }
+    if (parentPath === '/activities') {
+      return currentPath.startsWith('/activity/') || currentPath === '/activities';
+    }
+    if (parentPath === '/packageoffers') {
+      return currentPath.startsWith('/packageoffers') && currentPath !== '/packageoffers';
+    }
+    return false;
+  };
 
   const navigationItems = [
     { name: '', href: '/', hasDropdown: false, icon: <Home className="w-6 h-6" aria-label="Home" /> },
@@ -346,7 +341,6 @@ const Header = () => {
     },
     { name: 'Paketangebote', href: '/packageoffers', hasDropdown: false },
     { name: 'Blogs', href: '/blogs', hasDropdown: false },
-    { name: 'Admin', href: '/admin', hasDropdown: false },
   ];
 
   useEffect(() => {
@@ -502,7 +496,7 @@ const Header = () => {
                         <span className="ml-1">{selectedLanguage}</span>
                       </>
                     ) : (
-                      <span>Loading...</span>
+                      <span>Laden...</span>
                     )}
                     <ChevronDown
                       size={12}
@@ -624,7 +618,7 @@ const Header = () => {
                                 ))
                               ) : (
                                 <div className="px-3 sm:px-4 py-2 text-gray-500 text-sm italic">
-                                  No {sub.name.toLowerCase()} available
+                                 Nein {sub.name.toLowerCase()} verfügbar
                                 </div>
                               )}
                             </div>
@@ -648,7 +642,7 @@ const Header = () => {
                         ))
                       ) : (
                         <div className="px-3 sm:px-4 py-2 text-gray-500 text-sm italic">
-                          No activities available
+                          Keine Aktivitäten verfügbar
                         </div>
                       )}
                     </div>
@@ -673,7 +667,7 @@ const Header = () => {
                           <span className="ml-1">{selectedLanguage}</span>
                         </>
                       ) : (
-                        <span>Loading...</span>
+                        <span>Laden...</span>
                       )}
                       <ChevronDown
                         size={14}
@@ -800,7 +794,7 @@ const Header = () => {
                                 ))
                               ) : (
                                 <div className="px-3 sm:px-4 py-2 text-cyan-200 text-sm italic opacity-75">
-                                  No {sub.name.toLowerCase()} available
+                                  Nein {sub.name.toLowerCase()} verfügbar
                                 </div>
                               )}
                             </div>
@@ -824,7 +818,7 @@ const Header = () => {
                         ))
                       ) : (
                         <div className="px-3 sm:px-4 py-2 text-cyan-200 text-sm italic opacity-75">
-                          No activities available
+                          Keine Aktivitäten verfügbar
                         </div>
                       )}
                     </div>
@@ -841,7 +835,3 @@ const Header = () => {
 };
 
 export default Header;
-
-
-
-
