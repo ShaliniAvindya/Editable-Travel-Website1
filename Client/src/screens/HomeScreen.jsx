@@ -349,7 +349,7 @@ const HomeScreen = () => {
                   className="group relative px-4 py-3 sm:px-6 sm:py-3 md:px-8 md:py-4 text-sm sm:text-base md:text-lg font-semibold rounded-full overflow-hidden transition-all duration-500 hover:scale-105 hover:shadow-2xl bg-gradient-to-r from-[#1e809b] to-[#074a5b] text-white border-2 border-transparent hover:border-white/30 drop-shadow-xl"
                 >
                   <span className="relative z-10 flex items-center">
-                    {heroSection[currentSlide]?.buttonText || 'Explore Paradise'}
+                    {heroSection[currentSlide]?.buttonText || 'Entdecken Sie das Paradies'}
                     <svg
                       className="ml-1 sm:ml-2 w-4 h-4 sm:w-5 sm:h-5 transition-transform duration-300 group-hover:translate-x-1"
                       fill="none"
@@ -406,7 +406,7 @@ const HomeScreen = () => {
             }`}
             style={{ color: '#074a5b' }}
           >
-            {welcomeSection.title || 'Welcome to Paradise'}
+            {welcomeSection.title || 'Willkommen im Paradies'}
           </h2>
           <div className="relative">
             <p
@@ -415,7 +415,7 @@ const HomeScreen = () => {
               }`}
               style={{ color: '#1e809b', transitionDelay: '300ms' }}
             >
-              {welcomeSection.description || 'Discover the ultimate tropical escape in the Maldives.'}
+              {welcomeSection.description || 'Entdecken Sie den ultimativen tropischen Rückzugsort auf den Malediven.'}
             </p>
           </div>
           <div
@@ -448,7 +448,7 @@ const HomeScreen = () => {
               className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-2 sm:mb-3 md:mb-4"
               style={{ color: '#074a5b' }}
             >
-              {offeringsSection.title || 'Explore Our Offerings'}
+              {offeringsSection.title || 'Entdecken Sie unser Angebot'}
             </h2>
             <p className="text-base sm:text-lg md:text-xl" style={{ color: '#1e809b' }}>
               {offeringsSection.description || 'Indulge in luxury designed to make your Maldives escape unforgettable.'}
@@ -517,7 +517,7 @@ const HomeScreen = () => {
                                 ))}
                                 {item.tags?.length > 3 && (
                                   <span className="px-3 py-1 bg-[#1e809b]/10 text-[#1e809b] text-xs rounded-full font-medium">
-                                    +{item.tags.length - 3} more
+                                    +{item.tags.length - 3} mehr
                                   </span>
                                 )}
                               </div>
@@ -601,10 +601,10 @@ const HomeScreen = () => {
               className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-2 sm:mb-3 md:mb-4"
               style={{ color: '#074a5b' }}
             >
-              {blogSection.title || 'Latest from Our Blog'}
+              {blogSection.title || 'Neuestes aus unserem Blog'}
             </h2>
             <p className="text-base sm:text-lg md:text-xl" style={{ color: '#1e809b' }}>
-              {blogSection.description || 'Tips, guides, and inspiration for your Maldives adventure'}
+              {blogSection.description || 'Tipps, Anleitungen und Inspiration für Ihr Malediven-Abenteuer'}
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
@@ -636,7 +636,7 @@ const HomeScreen = () => {
                     {post.title}
                   </h3>
                   <div className="text-gray-600 mb-2 sm:mb-4 text-sm sm:text-base">
-                    {post.excerpt || <span style={{ color: '#bbb' }}>No excerpt available</span>}
+                    {post.excerpt || <span style={{ color: '#bbb' }}>Kein Auszug verfügbar</span>}
                   </div>
                   <button
                     onClick={() => handleBlogClick(post.id)}
