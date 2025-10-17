@@ -355,9 +355,9 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
     <div className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2">Preferred Month</label>
+          <label className="block text-sm font-bold text-gray-700 mb-2">Bevorzugter Monat</label>
           <select name="preferredMonth" value={formData.preferredMonth} onChange={handleChange} className="w-full px-3 py-2 sm:px-4 sm:py-3 border-2 rounded-xl">
-            <option value="">Select month</option>
+            <option value="">Monat auswählen</option>
             {Array.from({ length: 12 }).map((_, i) => {
                 const monthName = new Date(0, i).toLocaleString('default', { month: 'long' });
                 return <option key={i} value={monthName}>{monthName}</option>;
@@ -366,9 +366,9 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
           {fieldErrors.preferredMonth && <div className="mt-1 text-xs text-red-600">{fieldErrors.preferredMonth}</div>}
         </div>
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2">Preferred Year</label>
+          <label className="block text-sm font-bold text-gray-700 mb-2">Bevorzugtes Jahr</label>
           <select name="preferredYear" value={formData.preferredYear} onChange={handleChange} className="w-full px-3 py-2 sm:px-4 sm:py-3 border-2 rounded-xl">
-            <option value="">Select year</option>
+            <option value="">Jahr auswählen</option>
             {Array.from({ length: yearRange + 1 }).map((_, i) => {
                 const y = currentYear + i;
                 return <option key={y} value={y}>{y}</option>;
@@ -380,11 +380,11 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
 
        <div className="flex items-center gap-3">
         <input id="bookWholeBoat" type="checkbox" checked={!!formData.bookWholeBoat} onChange={(e) => setFormData((p) => ({ ...p, bookWholeBoat: e.target.checked }))} />
-        <label htmlFor="bookWholeBoat" className="text-sm">Need to book whole boat</label>
+        <label htmlFor="bookWholeBoat" className="text-sm">Sie müssen das ganze Boot buchen</label>
       </div>
 
       <div>
-        <label className="block text-sm font-bold text-gray-700 mb-2">Select options (you may choose multiple)</label>
+        <label className="block text-sm font-bold text-gray-700 mb-2">Optionen auswählen (Sie können mehrere auswählen)</label>
         <div className="flex flex-wrap gap-4">
           {['Quadruple', 'Triple', 'Double', 'Single'].map((opt) => (
             <label key={opt} className="flex items-center gap-2">
@@ -410,7 +410,7 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
       </div>
 
       <div>
-        <label className="block text-sm font-bold text-gray-700 mb-2">Add Participants</label>
+        <label className="block text-sm font-bold text-gray-700 mb-2">Teilnehmer hinzufügen</label>
         <div className="space-y-4">
           {(formData.participantsByOption || []).map((group) => (
             <div key={group.option} className="p-3 border-2 rounded-xl">
@@ -419,7 +419,7 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
                 <button type="button" onClick={() => {
                   // remove entire group
                   setFormData((p) => ({ ...p, adventureOptions: (p.adventureOptions||[]).filter(o=>o!==group.option), participantsByOption: (p.participantsByOption||[]).filter(x=>x.option!==group.option) }));
-                }} className="text-sm text-red-500 mt-2 sm:mt-0">Remove option</button>
+                }} className="text-sm text-red-500 mt-2 sm:mt-0">Option entfernen</button>
               </div>
               {(group.participants || []).map((pt, idx) => (
                 <div key={pt.id || idx} className="p-3 border rounded mb-2">
@@ -437,8 +437,8 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
                       const v = e.target.value;
                       setFormData((p) => ({ ...p, participantsByOption: (p.participantsByOption||[]).map(g => g.option === group.option ? { ...g, participants: g.participants.map((pp, i) => i === idx ? { ...pp, gender: v } : pp) } : g) }));
                     }} className="px-3 py-2 border rounded w-full sm:w-auto">
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
+                      <option value="male">Männlich</option>
+                      <option value="female">Weiblich</option>
                     </select>
                   </div>
                   <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
@@ -446,8 +446,8 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
                       const v = e.target.value;
                       setFormData((p) => ({ ...p, participantsByOption: (p.participantsByOption||[]).map(g => g.option === group.option ? { ...g, participants: g.participants.map((pp, i) => i === idx ? { ...pp, diverStatus: v } : pp) } : g) }));
                     }} className="px-3 py-2 border rounded w-full sm:w-auto">
-                      <option value="diver">Diver</option>
-                      <option value="non-diver">Non-diver</option>
+                      <option value="diver">Taucher</option>
+                      <option value="non-diver">Nicht-Taucher</option>
                     </select>
                     <select value={pt.ageCategory || ageCategories[0]} onChange={(e) => {
                       const v = e.target.value;
@@ -457,7 +457,7 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
                     </select>
                     <button type="button" onClick={() => {
                       setFormData((p) => ({ ...p, participantsByOption: (p.participantsByOption||[]).map(g => g.option === group.option ? { ...g, participants: g.participants.filter((_, i) => i !== idx) } : g) }));
-                    }} className="px-3 py-2 bg-red-100 rounded w-full sm:w-auto mt-2 sm:mt-0">Remove</button>
+                    }} className="px-3 py-2 bg-red-100 rounded w-full sm:w-auto mt-2 sm:mt-0">Entfernen</button>
                   </div>
                 </div>
               ))}
@@ -465,14 +465,14 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
                 <button type="button" onClick={() => {
                   const newPart = { id: `p-${Date.now()}`, name: '', gender: 'male', diverStatus: 'diver', ageCategory: ageCategories[0] };
                   setFormData((p) => ({ ...p, participantsByOption: (p.participantsByOption||[]).map(g => g.option === group.option ? { ...g, participants: [...(g.participants||[]), newPart] } : g) }));
-                }} className="mt-2 px-4 py-2 bg-green-100 rounded w-full sm:w-auto">Add Participant</button>
+                }} className="mt-2 px-4 py-2 bg-green-100 rounded w-full sm:w-auto">Teilnehmer hinzufügen</button>
               </div>
             </div>
           ))}
           {/* If no per-option participants exist, allow adding to a default group */}
           {(!(formData.participantsByOption || []).length) && (
             <div className="p-3 border-2 rounded-xl">
-              <div className="text-sm text-gray-500">No options selected yet. Select one or more options above to add participants for each option.</div>
+              <div className="text-sm text-gray-500">Noch keine Optionen ausgewählt. Wählen Sie oben eine oder mehrere Optionen aus, um Teilnehmer für jede Option hinzuzufügen.</div>
             </div>
           )}
         </div>
@@ -484,7 +484,7 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
     <div>
       <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center">
         <Users size={16} className="mr-2" style={{ color: '#1e809b' }} />
-        Number of rooms
+        Anzahl der Zimmer
       </label>
       <div className="flex items-center border-2 rounded-xl mb-4" style={{ borderColor: '#074a5b' }}>
         <button
@@ -508,15 +508,15 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <p className="font-bold mb-2 text-sm sm:text-base">Divers</p>
-          <label className="block text-sm font-bold text-gray-700 mb-2">Adults (12+)</label>
+          <p className="font-bold mb-2 text-sm sm:text-base">Taucher</p>
+          <label className="block text-sm font-bold text-gray-700 mb-2">Erwachsene (12+)</label>
           <div className="flex items-center border-2 rounded-xl mb-2" style={{ borderColor: '#074a5b' }}>
             <button type="button" onClick={() => setFormData((p) => ({ ...p, divers_adults: Math.max(0, (p.divers_adults ?? 0) - 1) }))} className="p-3 sm:p-4 hover:bg-[#1e809b]/10 transition-colors"><Minus size={16} style={{ color: '#074a5b' }} /></button>
             <span className="flex-1 text-center py-2 sm:py-3 text-sm sm:text-base font-bold" style={{ color: '#074a5b' }}>{formData.divers_adults ?? 0}</span>
             <button type="button" onClick={() => setFormData((p) => ({ ...p, divers_adults: (p.divers_adults ?? 0) + 1 }))} className="p-3 sm:p-4 hover:bg-[#1e809b]/10 transition-colors"><Plus size={16} style={{ color: '#074a5b' }} /></button>
           </div>
 
-          <label className="block text-sm font-bold text-gray-700 mb-2">Children (2-11)</label>
+          <label className="block text-sm font-bold text-gray-700 mb-2">Kinder (2-11)</label>
           <div className="flex items-center border-2 rounded-xl mb-2" style={{ borderColor: '#074a5b' }}>
             <button type="button" onClick={() => setFormData((p) => ({ ...p, divers_children: Math.max(0, (p.divers_children ?? 0) - 1) }))} className="p-3 sm:p-4 hover:bg-[#1e809b]/10 transition-colors"><Minus size={16} style={{ color: '#074a5b' }} /></button>
             <span className="flex-1 text-center py-2 sm:py-3 text-sm sm:text-base font-bold" style={{ color: '#074a5b' }}>{formData.divers_children ?? 0}</span>
@@ -525,22 +525,22 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
         </div>
 
         <div>
-          <p className="font-bold mb-2 text-sm sm:text-base">Non-Divers</p>
-          <label className="block text-sm font-bold text-gray-700 mb-2">Adults (12+)</label>
+          <p className="font-bold mb-2 text-sm sm:text-base">Nicht-Taucher</p>
+          <label className="block text-sm font-bold text-gray-700 mb-2">Erwachsene (12+)</label>
           <div className="flex items-center border-2 rounded-xl mb-2" style={{ borderColor: '#074a5b' }}>
             <button type="button" onClick={() => setFormData((p) => ({ ...p, nondivers_adults: Math.max(0, (p.nondivers_adults ?? 0) - 1) }))} className="p-3 sm:p-4 hover:bg-[#1e809b]/10 transition-colors"><Minus size={16} style={{ color: '#074a5b' }} /></button>
             <span className="flex-1 text-center py-2 sm:py-3 text-sm sm:text-base font-bold" style={{ color: '#074a5b' }}>{formData.nondivers_adults ?? 0}</span>
             <button type="button" onClick={() => setFormData((p) => ({ ...p, nondivers_adults: (p.nondivers_adults ?? 0) + 1 }))} className="p-3 sm:p-4 hover:bg-[#1e809b]/10 transition-colors"><Plus size={16} style={{ color: '#074a5b' }} /></button>
           </div>
 
-          <label className="block text-sm font-bold text-gray-700 mb-2">Children (2-11)</label>
+          <label className="block text-sm font-bold text-gray-700 mb-2">Kinder (2-11)</label>
           <div className="flex items-center border-2 rounded-xl mb-2" style={{ borderColor: '#074a5b' }}>
             <button type="button" onClick={() => setFormData((p) => ({ ...p, nondivers_children: Math.max(0, (p.nondivers_children ?? 0) - 1) }))} className="p-3 sm:p-4 hover:bg-[#1e809b]/10 transition-colors"><Minus size={16} style={{ color: '#074a5b' }} /></button>
             <span className="flex-1 text-center py-2 sm:py-3 text-sm sm:text-base font-bold" style={{ color: '#074a5b' }}>{formData.nondivers_children ?? 0}</span>
             <button type="button" onClick={() => setFormData((p) => ({ ...p, nondivers_children: (p.nondivers_children ?? 0) + 1 }))} className="p-3 sm:p-4 hover:bg-[#1e809b]/10 transition-colors"><Plus size={16} style={{ color: '#074a5b' }} /></button>
           </div>
 
-          <label className="block text-sm font-bold text-gray-700 mb-2">Infants (Below 2)</label>
+          <label className="block text-sm font-bold text-gray-700 mb-2">Kleinkinder (Unten 2)</label>
           <div className="flex items-center border-2 rounded-xl" style={{ borderColor: '#074a5b' }}>
             <button type="button" onClick={() => setFormData((p) => ({ ...p, nondivers_infants: Math.max(0, (p.nondivers_infants ?? 0) - 1) }))} className="p-3 sm:p-4 hover:bg-[#1e809b]/10 transition-colors"><Minus size={16} style={{ color: '#074a5b' }} /></button>
             <span className="flex-1 text-center py-2 sm:py-3 text-sm sm:text-base font-bold" style={{ color: '#074a5b' }}>{formData.nondivers_infants ?? 0}</span>
@@ -550,9 +550,9 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
       </div>
 
       <div className="mt-4">
-        <label className="block text-sm font-bold text-gray-700 mb-2">Select Activities</label>
+        <label className="block text-sm font-bold text-gray-700 mb-2">Wählen Sie Aktivitäten aus</label>
         <div className="grid grid-cols-1 gap-2 max-h-32 sm:max-h-40 overflow-y-auto border-2 rounded-xl p-2" style={{ borderColor: '#074a5b' }}>
-          {activities.length === 0 && <div className="text-sm text-gray-500">No activities available</div>}
+          {activities.length === 0 && <div className="text-sm text-gray-500">Keine Aktivitäten verfügbar</div>}
           {activities.map((a) => (
             <label key={a._id || a.id} className="flex items-center gap-2 p-2 rounded hover:bg-[#1e809b]/10 cursor-pointer">
               <input type="checkbox" checked={(formData.selectedActivities || []).includes(a.title || a.name)} onChange={() => toggleActivitySelection(a.title || a.name)} />
@@ -568,7 +568,7 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
     <div>
       <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center">
         <Users size={16} className="mr-2" style={{ color: '#1e809b' }} />
-        Number of adults (12+)
+        Anzahl Erwachsene (12+)
       </label>
       <div className="flex items-center border-2 rounded-xl mb-2" style={{ borderColor: '#074a5b' }}>
         <button
@@ -591,7 +591,7 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
       </div>
       <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center mt-4">
         <Users size={16} className="mr-2" style={{ color: '#1e809b' }} />
-        Number of children (2-11)
+        Anzahl der Kinder (2-11)
       </label>
       <div className="flex items-center border-2 rounded-xl mb-2" style={{ borderColor: '#074a5b' }}>
         <button
@@ -614,7 +614,7 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
       </div>
       <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center mt-4">
         <Users size={16} className="mr-2" style={{ color: '#074a5b' }} />
-        Number of infants (below 2)
+        Anzahl der Kleinkinder (unter 2)
       </label>
       <div className="flex items-center border-2 rounded-xl" style={{ borderColor: '#074a5b' }}>
         <button
@@ -655,16 +655,16 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
     }
     if (!formData.phone_number) errors.phone_number = t.required;
     if (!formData.country) errors.country = t.required;
-    if (formData.subscribe_newsletter && !formData.preferred_language) errors.preferred_language = 'Preferred language required';
+    if (formData.subscribe_newsletter && !formData.preferred_language) errors.preferred_language = 'Bevorzugte Sprache erforderlich';
     if (!isAdventure() && !isActivity()) {
       if (!formData.from_date) errors.from_date = t.required;
       if (!formData.to_date) errors.to_date = t.required;
     } else if (isAdventure()) {
-      if (!formData.preferredMonth) errors.preferredMonth = 'Preferred month required';
-      if (!formData.preferredYear) errors.preferredYear = 'Preferred year required';
-      if (!Array.isArray(formData.adventureOptions) || formData.adventureOptions.length === 0) errors.adventureOption = 'Select at least one option';
+      if (!formData.preferredMonth) errors.preferredMonth = 'Bevorzugter Monat erforderlich';
+      if (!formData.preferredYear) errors.preferredYear = 'Wunschjahr erforderlich';
+      if (!Array.isArray(formData.adventureOptions) || formData.adventureOptions.length === 0) errors.adventureOption = 'Wählen Sie mindestens eine Option aus';
       const totalParticipants = (formData.participantsByOption || []).reduce((s, g) => s + ((g.participants || []).length), 0);
-      if (totalParticipants === 0) errors.participants = 'Add at least one participant';
+      if (totalParticipants === 0) errors.participants = 'Fügen Sie mindestens einen Teilnehmer hinzu';
     }
     if (formData.from_date && formData.to_date && new Date(formData.to_date) <= new Date(formData.from_date)) errors.common = t.invalidDates;
     if (item?.expiryDate) {
@@ -706,16 +706,16 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
       } else {
         entityType = item.title && resortName && roomName ? 'Accommodation' : (item.title ? 'Package' : 'Activity');
       }
-      const title = item.title || item.name || 'Inquiry';
+      const title = item.title || item.name || 'Anfrage';
       const base = {
-        name: formData.name || undefined,
-        email: formData.email || undefined,
-        phone_number: formData.phone_number || undefined,
-        message: formData.message || undefined,
-        subscribe_newsletter: typeof formData.subscribe_newsletter !== 'undefined' ? !!formData.subscribe_newsletter : undefined,
-        language: formData.preferred_language || undefined,
-        country: formData.country || undefined,
-        entity: item._id ? { $oid: item._id } : undefined,
+        name: formData.name || undefiniert,
+        email: formData.email || undefiniert,
+        phone_number: formData.phone_number || undefiniert,
+        message: formData.message || undefiniert,
+        subscribe_newsletter: typeof formData.subscribe_newsletter !== 'undefined' ? !!formData.subscribe_newsletter : undefiniert,
+        language: formData.preferred_language || undefiniert,
+        country: formData.country || undefiniert,
+        entity: item._id ? { $oid: item._id } : undefiniert,
         entityType,
         title,
         buttonType: buttonType || 'bookNow',
@@ -869,8 +869,8 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
               </button>
             </div>
             <div className="mb-4 sm:mb-7 p-4 sm:p-5 rounded-xl sm:rounded-2xl border-2" style={{ backgroundColor: '#074a5b0a', borderColor: '#074a5b' }}>
-              <p className="text-sm sm:text-base font-bold mb-2" style={{ color: '#074a5b' }}>{item.title || item.name || 'Custom Inquiry'}</p>
-              <p className="text-sm sm:text-base text-gray-600 font-medium">{item.shortDescription || item.description || 'No description available'}</p>
+              <p className="text-sm sm:text-base font-bold mb-2" style={{ color: '#074a5b' }}>{item.title || item.name || 'Individuelle Anfrage'}</p>
+              <p className="text-sm sm:text-base text-gray-600 font-medium">{item.shortDescription || item.description || 'Keine Beschreibung verfügbar'}</p>
             </div>
             {error && (
               <div className="mb-4 sm:mb-6 p-3 bg-red-100 text-red-700 rounded-lg text-xs sm:text-sm border border-red-300 shadow">
@@ -891,7 +891,7 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
                     onChange={handleChange}
                     className={`w-full px-3 sm:px-4 py-2 sm:py-3 border-2 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all input-field ${fieldErrors.name ? 'border-red-500' : ''}`}
                     style={{ borderColor: fieldErrors.name ? '#ef4444' : '#074a5b' }}
-                    placeholder="Enter your name"
+                    placeholder="Enter your nameGeben Sie Ihren Namen ein"
                   />
                   {fieldErrors.name && <div className="mt-1 text-xs text-red-600">{fieldErrors.name}</div>}
                 </div>
@@ -907,7 +907,7 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
                     onChange={handleChange}
                     className={`w-full px-3 sm:px-4 py-2 sm:py-3 border-2 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all input-field ${fieldErrors.email ? 'border-red-500' : ''}`}
                     style={{ borderColor: fieldErrors.email ? '#ef4444' : '#074a5b' }}
-                    placeholder="Enter your email"
+                    placeholder="Geben Sie Ihre E-Mail-Adresse ein"
                   />
                   {fieldErrors.email && <div className="mt-1 text-xs text-red-600">{fieldErrors.email}</div>}
                 </div>
@@ -925,7 +925,7 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
                     onChange={handleChange}
                     className={`w-full px-3 sm:px-4 py-2 sm:py-3 border-2 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all input-field ${fieldErrors.phone_number ? 'border-red-500' : ''}`}
                     style={{ borderColor: fieldErrors.phone_number ? '#ef4444' : '#074a5b' }}
-                    placeholder="Enter your phone number"
+                    placeholder="Geben Sie Ihre Telefonnummer ein"
                   />
                   {fieldErrors.phone_number && <div className="mt-1 text-xs text-red-600">{fieldErrors.phone_number}</div>}
                 </div>
@@ -941,7 +941,7 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
                     onChange={handleChange}
                     className={`w-full px-3 sm:px-4 py-2 sm:py-3 border-2 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all input-field ${fieldErrors.country ? 'border-red-500' : ''}`}
                     style={{ borderColor: fieldErrors.country ? '#ef4444' : '#074a5b' }}
-                    placeholder="Enter your country"
+                    placeholder="Geben Sie Ihr Land ein"
                   />
                   {fieldErrors.country && <div className="mt-1 text-xs text-red-600">{fieldErrors.country}</div>}
                 </div>
@@ -1017,10 +1017,10 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
                   {isSelecting && dragStart && (
                     <div className="text-center mt-3 sm:mt-5 p-2 sm:p-3 rounded-lg" style={{ backgroundColor: '#1e809b0a' }}>
                       <p className="text-xs sm:text-sm font-medium" style={{ color: '#074a5b' }}>
-                        ✓ Check-in: {formatDateForDisplay(dragStart)}
+                        ✓ Einchecken: {formatDateForDisplay(dragStart)}
                       </p>
                       <p className="text-xs sm:text-sm" style={{ color: '#1e809b' }}>
-                        Click the check-out date to complete
+                        Klicken Sie auf das Check-out-Datum, um den Vorgang abzuschließen
                       </p>
                     </div>
                   )}
@@ -1043,11 +1043,11 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
                   rows={4}
                   className="w-full px-3 sm:px-4 py-2 sm:py-2 border-2 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all resize-none textarea-field"
                   style={{ borderColor: '#074a5b' }}
-                  placeholder="Tell us about your travel plans..."
+                  placeholder="Erzählen Sie uns von Ihren Reiseplänen..."
                 />
               </div>
               <div>
-                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-2">Preferred language</label>
+                <label className="block text-xs sm:text-sm font-bold text-gray-700 mb-2">Bevorzugte Sprache</label>
                 <div className="max-w-48">
                   <select
                     name="preferred_language"
@@ -1056,7 +1056,7 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
                     className={`w-full px-3 sm:px-4 py-2 sm:py-3 border-2 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all input-field ${fieldErrors.preferred_language ? 'border-red-500' : ''}`}
                     style={{ borderColor: fieldErrors.preferred_language ? '#ef4444' : '#074a5b' }}
                   >
-                    <option value="">Select language</option>
+                    <option value="">Sprache auswählen</option>
                     {languages.map((l) => (
                       <option key={l.code} value={l.code}>
                         {l.name}
@@ -1074,7 +1074,7 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
                   checked={!!formData.subscribe_newsletter}
                   onChange={(e) => setFormData((p) => ({ ...p, subscribe_newsletter: e.target.checked }))}
                 />
-                <label htmlFor="subscribe_newsletter" className="text-sm sm:text-md">Subscribe to Newsletter</label>
+                <label htmlFor="subscribe_newsletter" className="text-sm sm:text-md">Abonnieren Sie den Newsletter</label>
               </div>
               <div className="border-t-2 pt-4 sm:pt-6" style={{ borderColor: '#074a5b' }}>
                 <button
