@@ -634,7 +634,7 @@ const BlogPage = () => {
   if (error || !blog) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
-        <p className="text-xl sm:text-2xl text-[#074a5b]">{error || 'Blog not found'}</p>
+        <p className="text-xl sm:text-2xl text-[#074a5b]">{error || 'Blog nicht gefunden'}</p>
       </div>
     );
   }
@@ -700,7 +700,7 @@ const BlogPage = () => {
             </div>
             {blog.content.length === 0 && (
               <div className="text-center py-12 sm:py-16 text-gray-500">
-                <p className="text-lg sm:text-xl mb-2">No content available</p>
+                <p className="text-lg sm:text-xl mb-2">Kein Inhalt verfügbar</p>
               </div>
             )}
           </article>
@@ -783,7 +783,7 @@ const BlogPage = () => {
         <aside className="w-full lg:w-72 flex-shrink-0 lg:mr-10 group/sidebar">
           <div className="sticky top-20 sm:top-28">
             <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6" style={{ color: '#074a5b' }}>
-              Recent Blogs
+              Aktuelle Blogs
             </h2>
             <div className="space-y-4 sm:space-y-6">
               {recentBlogs.length === 0 && (
