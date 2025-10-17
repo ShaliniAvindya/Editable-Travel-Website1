@@ -111,7 +111,7 @@ const Contact = () => {
 
     try {
       if (!formData.name || !formData.email || !formData.message) {
-        throw new Error('Please fill in all fields.');
+        throw new Error('Bitte füllen Sie alle Felder aus.');
       }
 
       const response = await axios.post(`${API_BASE_URL}/inquiries/contact`, {
@@ -121,11 +121,11 @@ const Contact = () => {
       });
 
       console.log('Contact inquiry submitted:', response.data);
-      setSuccess('Message sent! We will contact you soon.');
+      setSuccess('Nachricht gesendet! Wir werden in Kürze mit Ihnen Kontakt aufnehmen.');
       setFormData({ name: '', email: '', message: '' });
     } catch (err) {
       console.error('Error submitting contact inquiry:', err);
-      const errorMessage = err.response?.data?.error || err.message || 'Failed to send message. Please try again.';
+      const errorMessage = err.response?.data?.error || err.message || 'Senden der Nachricht fehlgeschlagen. Bitte versuchen Sie es erneut.';
       setError(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -330,7 +330,7 @@ const Contact = () => {
                     className="w-full sm:w-24 px-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e809b] bg-white/90 text-black text-sm"
                   aria-label="Newsletter language"
                 >
-                  <option value="">Language</option>
+                  <option value="">Sprache</option>
                   {languages.map(l => (<option key={l.code} value={l.code}>{l.name}</option>))}
                 </select>
               </div>
@@ -342,7 +342,7 @@ const Contact = () => {
                   className={`w-full sm:w-auto px-4 py-3 rounded-2xl font-semibold text-white ${newsletterLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
                   style={{ background: 'linear-gradient(135deg, #1e809b 0%, #074a5b 100%)' }}
                 >
-                  Subscribe
+                  Abonnieren
                 </button>
                 <button
                   onClick={handleNewsletterUnsubscribe}
@@ -350,7 +350,7 @@ const Contact = () => {
                   className={`w-full sm:w-auto px-4 py-3 rounded-2xl font-semibold text-white ${newsletterLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
                   style={{ background: 'linear-gradient(135deg, #b03030 0%, #7a1e1e 100%)' }}
                 >
-                  Unsubscribe
+                  Abbestellen
                 </button>
               </div>
             </div>
@@ -374,7 +374,7 @@ const Contact = () => {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1e809b] bg-white/90 text-black text-sm"
                   aria-label="Newsletter language"
                 >
-                  <option value="">Language</option>
+                  <option value="">Sprache</option>
                   {languages.map(l => (<option key={l.code} value={l.code}>{l.name}</option>))}
                 </select>
               </div>
@@ -386,7 +386,7 @@ const Contact = () => {
                   className={`w-full px-4 py-3 rounded-2xl font-semibold text-white transition-all duration-300 ${newsletterLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
                   style={{ background: 'linear-gradient(135deg, #1e809b 0%, #074a5b 100%)' }}
                 >
-                  Subscribe
+                  Abonnieren
                 </button>
               </div>
 
@@ -397,7 +397,7 @@ const Contact = () => {
                   className={`w-full px-4 py-3 rounded-2xl font-semibold text-white transition-all duration-300 ${newsletterLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
                   style={{ background: 'linear-gradient(135deg, #b03030 0%, #7a1e1e 100%)' }}
                 >
-                  Unsubscribe
+                  Abbestellen
                 </button>
               </div>
             </div>
