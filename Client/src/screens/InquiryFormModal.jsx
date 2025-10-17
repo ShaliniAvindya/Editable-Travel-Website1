@@ -386,7 +386,7 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
       <div>
         <label className="block text-sm font-bold text-gray-700 mb-2">Optionen auswählen (Sie können mehrere auswählen)</label>
         <div className="flex flex-wrap gap-4">
-          {['Quadruple', 'Triple', 'Double', 'Single'].map((opt) => (
+          {['Vervierfachen', 'Verdreifachen', 'Doppelt', 'Einzel'].map((opt) => (
             <label key={opt} className="flex items-center gap-2">
               <input type="checkbox" name="adventureOptions" value={opt} checked={(formData.adventureOptions || []).includes(opt)} onChange={(e) => {
                 const checked = e.target.checked;
@@ -1098,3 +1098,4 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
 };
 
 export default React.memo(InquiryFormModal);
+
