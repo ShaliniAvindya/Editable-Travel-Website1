@@ -81,7 +81,7 @@ const ResortProfile = () => {
         setLoading(false);
       } catch (err) {
         console.error('Error fetching resort:', err);
-        setError(`Failed to load accommodation: ${err.response?.data?.msg || err.message}`);
+        setError(`Unterkunft konnte nicht geladen werden: ${err.response?.data?.msg || err.message}`);
         setLoading(false);
       }
     };
@@ -233,7 +233,7 @@ const ResortProfile = () => {
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-2xl">No Image</div>
+            <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500 text-2xl">Kein Bild</div>
           )}
         </div>
         <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/50 to-[#074a5b]/90"></div>
