@@ -56,12 +56,12 @@ const Login = () => {
   const validateForm = () => {
     const newErrors = {};
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = 'E-Mail ist erforderlich';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
+      newErrors.email = 'E-Mail ist ungültig';
     }
     if (!formData.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = 'Passwort ist erforderlich';
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
