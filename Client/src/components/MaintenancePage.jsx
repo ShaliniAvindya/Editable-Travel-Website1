@@ -19,24 +19,24 @@ const MaintenancePage = () => {
 
         {/* Title */}
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-[#074a5b] mb-6 leading-tight">
-          Website Under
-          <span className="block text-[#1e809b]">Maintenance</span>
+          Website unten
+          <span className="block text-[#1e809b]">Wartung</span>
         </h1>
 
         {/* Description */}
         <div className="bg-white/60 backdrop-blur-md rounded-2xl p-6 md:p-8 shadow-xl border border-white/20 mb-8">
           <p className="text-lg md:text-xl text-gray-700 leading-relaxed mb-4">
-            We're currently performing scheduled maintenance to improve your experience.
+            Wir führen derzeit geplante Wartungsarbeiten durch, um Ihr Erlebnis zu verbessern.
           </p>
           <p className="text-base md:text-lg text-gray-600">
-            Please check back in a few moments. Thank you for your patience!
+          Bitte schauen Sie in wenigen Augenblicken noch einmal vorbei. Vielen Dank für Ihre Geduld!
           </p>
         </div>
 
         {/* Progress indicator */}
         <div className="mb-8">
           <div className="flex items-center justify-center space-x-2 mb-3">
-            <span className="text-[#1e809b] font-semibold">Working on it</span>
+            <span className="text-[#1e809b] font-semibold">Ich arbeite daran</span>
             <div className="flex space-x-1">
               <div className="w-2 h-2 bg-[#1e809b] rounded-full animate-bounce"></div>
               <div 
@@ -63,7 +63,7 @@ const MaintenancePage = () => {
         >
           <span className="relative z-10 flex items-center">
             <RefreshCw className="mr-2 w-5 h-5 transition-transform duration-300 group-hover:rotate-180" />
-            Refresh Page
+            Seite aktualisieren
           </span>
           <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
         </button>
