@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import {
@@ -115,7 +115,7 @@ const quillModules = {
 
 const quillFormats = [
   'header', 'font', 'size', 'bold', 'italic', 'underline', 'strike', 'blockquote',
-  'list', 'bullet', 'indent', 'link', 'color', 'background', 'align'
+  'list', 'bullet', 'indent', 'link', 'color', 'background', 'align', 'image'
 ];
 
 const transformQuillAlignToInline = (html) => {
@@ -808,6 +808,8 @@ const CampaignsTab = ({ showMessage, selectedSubscribers }) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [body, setBody] = useState('');
   const [footerPreview, setFooterPreview] = useState('');
+  const [uploadedImages, setUploadedImages] = useState([]);
+  const [uploadingImages, setUploadingImages] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingCampaign, setEditingCampaign] = useState(null);
   const [updating, setUpdating] = useState(false);
@@ -854,6 +856,54 @@ const CampaignsTab = ({ showMessage, selectedSubscribers }) => {
     } catch (err) {
       console.error('Footer preview fetch failed', err);
     }
+  };
+
+  const uploadImageToImgbb = async (file) => {
+    const key = '4e08e03047ee0d48610586ad270e2b39';
+    const url = `https://api.imgbb.com/1/upload?key=${key}`;
+    try {
+      const fd = new FormData();
+      fd.append('image', file);
+      const resp = await fetch(url, { method: 'POST', body: fd });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error((data && data.error && data.error.message) || 'Upload failed');
+      const hosted = (data && data.data && (data.data.url || data.data.display_url)) || null;
+      if (!hosted) throw new Error('No URL returned from imgbb');
+      return hosted;
+    } catch (err) {
+      console.error('imgbb upload error', err);
+      throw err;
+    }
+  };
+
+  const handleImageFilesSelected = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    setUploadingImages(true);
+    try {
+      for (const f of files) {
+        try {
+          const hosted = await uploadImageToImgbb(f);
+          setUploadedImages(prev => [...prev, hosted]);
+          setBody(prev => `${prev || ''}<p><img src="${hosted}" alt="" style="max-width:100%;height:auto"/></p>`);
+        } catch (err) {
+          showMessage && showMessage('error', 'One or more images failed to upload');
+        }
+      }
+    } finally {
+      setUploadingImages(false);
+      if (e && e.target) e.target.value = '';
+    }
+  };
+
+  const removeUploadedImage = (url) => {
+    setUploadedImages(prev => prev.filter(u => u !== url));
+    setBody(prev => {
+      if (!prev) return prev;
+      const imgTag = `<p><img src="${url}" alt="" style="max-width:100%;height:auto"/></p>`;
+      if (prev.includes(imgTag)) return prev.replace(imgTag, '');
+      return prev.replace(new RegExp(`<img[^>]*src=\"${url}\"[^>]*>`, 'g'), '');
+    });
   };
 
   const fetchLists = async () => {
@@ -923,7 +973,7 @@ const CampaignsTab = ({ showMessage, selectedSubscribers }) => {
     }
     setLoading(true);
     try {
-  const payload = { ...formData, body, recipients: { type: recipientsType }, titleAlign };
+  const payload = { ...formData, body, recipients: { type: recipientsType }, titleAlign, images: uploadedImages };
   if (recipientsType === 'lists') payload.recipients.listIds = selectedListIds;
   if (recipientsType === 'custom') payload.recipients.customEmails = customEmails.split(/[,\n\s]+/).filter(Boolean);
 
@@ -938,6 +988,7 @@ const CampaignsTab = ({ showMessage, selectedSubscribers }) => {
       }
     showMessage('success', 'Campaign created successfully');
     setShowCreateModal(false);
+  setUploadedImages([]);
   setTitleAlign('left');
       setFormData({ title: '', subject: '', scheduled_at: '' });
       setBody('');
@@ -977,7 +1028,7 @@ const CampaignsTab = ({ showMessage, selectedSubscribers }) => {
     }
     setUpdating(true);
     try {
-  const payload = { ...formData, body, recipients: { type: recipientsType }, titleAlign };
+  const payload = { ...formData, body, recipients: { type: recipientsType }, titleAlign, images: uploadedImages };
   if (recipientsType === 'lists') payload.recipients.listIds = selectedListIds;
   if (recipientsType === 'custom') payload.recipients.customEmails = customEmails.split(/[,\n\s]+/).filter(Boolean);
 
@@ -993,6 +1044,7 @@ const CampaignsTab = ({ showMessage, selectedSubscribers }) => {
       showMessage('success', 'Campaign updated successfully');
       setShowEditModal(false);
       setEditingCampaign(null);
+  setUploadedImages([]);
       setFormData({ title: '', subject: '', scheduled_at: '' });
       setBody('');
       setRecipientsType('all'); setSelectedListIds([]); setCustomEmails('');
@@ -1262,6 +1314,25 @@ const CampaignsTab = ({ showMessage, selectedSubscribers }) => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Email Body *</label>
+
+              <div className="mb-3">
+                <label className="block text-sm text-gray-600 mb-1">Add images (optional)</label>
+                <input type="file" accept="image/*" multiple onChange={handleImageFilesSelected} />
+                {uploadingImages && <div className="text-sm text-gray-500 mt-2">Uploading images...</div>}
+                {uploadedImages && uploadedImages.length > 0 && (
+                  <div className="flex gap-2 mt-3 overflow-x-auto">
+                    {uploadedImages.map((u) => (
+                      <div key={u} className="relative inline-block">
+                        <img src={u} alt="preview" className="h-20 rounded border" />
+                        <button type="button" onClick={() => removeUploadedImage(u)} className="absolute -top-2 -right-2 bg-white rounded-full p-1 text-red-600 shadow">
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div style={{ height: '400px' }}>
                 <ReactQuill theme="snow" value={body} onChange={setBody} modules={quillModules} formats={quillFormats} style={{ height: '350px' }} />
               </div>
@@ -1378,6 +1449,25 @@ const CampaignsTab = ({ showMessage, selectedSubscribers }) => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Email Body *</label>
+
+              <div className="mb-3">
+                <label className="block text-sm text-gray-600 mb-1">Add images (optional)</label>
+                <input type="file" accept="image/*" multiple onChange={handleImageFilesSelected} />
+                {uploadingImages && <div className="text-sm text-gray-500 mt-2">Uploading images...</div>}
+                {uploadedImages && uploadedImages.length > 0 && (
+                  <div className="flex gap-2 mt-3 overflow-x-auto">
+                    {uploadedImages.map((u) => (
+                      <div key={u} className="relative inline-block">
+                        <img src={u} alt="preview" className="h-20 rounded border" />
+                        <button type="button" onClick={() => removeUploadedImage(u)} className="absolute -top-2 -right-2 bg-white rounded-full p-1 text-red-600 shadow">
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div style={{ height: '400px' }}>
                 <ReactQuill theme="snow" value={body} onChange={setBody} modules={quillModules} formats={quillFormats} style={{ height: '350px' }} />
               </div>
