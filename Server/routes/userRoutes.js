@@ -33,6 +33,23 @@ router.post('/register', async (req, res) => {
   }
 });
 
+router.post('/create', auth, async (req, res) => {
+  try {
+    if (!req.user.isAdmin) return res.status(403).json({ message: 'Admin access required' });
+    const { name, email, password, isAdmin } = req.body;
+    if (!name || !email || !password) return res.status(400).json({ message: 'Name, email and password are required' });
+    let existing = await User.findOne({ email });
+    if (existing) return res.status(400).json({ message: 'User already exists' });
+    const user = new User({ name, email, password, isAdmin: !!isAdmin, provider: 'local' });
+    await user.save();
+    const userResp = { _id: user._id, name: user.name, email: user.email, isAdmin: user.isAdmin };
+    res.status(201).json({ message: 'User created', user: userResp });
+  } catch (error) {
+    console.error('Create user error:', error);
+    res.status(500).json({ message: 'Error creating user' });
+  }
+});
+
 // Login Route
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
