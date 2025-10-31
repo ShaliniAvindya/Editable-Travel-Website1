@@ -11,6 +11,8 @@ const UserManagement = () => {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(true);
   const [confirmModal, setConfirmModal] = useState({ open: false, action: null, message: '', userId: null });
+  const [newUser, setNewUser] = useState({ name: '', email: '', password: '', confirmPassword: '', isAdmin: false });
+  const [newUserModalOpen, setNewUserModalOpen] = useState(false);
 
   // Authentication check
   useEffect(() => {
@@ -52,6 +54,41 @@ const UserManagement = () => {
       setError(`Failed to fetch users: ${err.response?.data?.message || err.message}`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCreateUser = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    const { name, email, password, confirmPassword, isAdmin } = newUser;
+    if (!name || !email || !password) {
+      setError('Name, email and password are required');
+      return;
+    }
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+    try {
+      const response = await api.post(`${API_BASE_URL}/users/create`, { name, email, password, isAdmin });
+      const created = response.data.user;
+      if (created) {
+        setUsers((prev) => [created, ...prev]);
+        setSuccess('User created successfully');
+        setNewUser({ name: '', email: '', password: '', confirmPassword: '', isAdmin: false });
+        setNewUserModalOpen(false);
+      } else {
+        setSuccess(response.data.message || 'User created');
+        await fetchUsers();
+      }
+    } catch (err) {
+      console.error('Create user error:', err);
+      setError(`Failed to create user: ${err.response?.data?.message || err.message}`);
     }
   };
 
@@ -119,10 +156,22 @@ const UserManagement = () => {
   return (
     <div className="min-h-screen bg-white">
       <div className="container mx-auto p-6">
-        <h1 className="text-4xl font-bold mb-8 text-[#34495e]">User Management</h1>
-
         {error && <div className="bg-red-100 text-red-700 p-4 mb-6 rounded-lg">{error}</div>}
         {success && <div className="bg-green-100 text-green-700 p-4 mb-6 rounded-lg">{success}</div>}
+
+        <div className="mb-6 flex items-start justify-between">
+          <h1 className="text-4xl font-bold text-[#34495e]">User Management</h1>
+          <div>
+            <button
+              type="button"
+              onClick={() => setNewUserModalOpen(true)}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl"
+            >
+              Add New User
+            </button>
+          </div>
+        </div>
+
 
         {/* User List */}
         <div className="mb-12">
@@ -202,10 +251,48 @@ Cancel</button>
             </div>
           </div>
         )}
+
+        {/* Create User Modal */}
+        {newUserModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl p-6 max-w-lg w-full" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
+              <h3 className="text-xl font-semibold text-[#34495e] mb-4">Add New User</h3>
+              <form onSubmit={handleCreateUser} className="grid grid-cols-1 gap-4">
+                <div>
+                  <label className="block text-sm text-gray-700">Name</label>
+                  <input type="text" value={newUser.name} onChange={(e) => setNewUser({ ...newUser, name: e.target.value })} className="w-full p-2 border rounded-xl" />
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-700">Email</label>
+                  <input type="email" value={newUser.email} onChange={(e) => setNewUser({ ...newUser, email: e.target.value })} className="w-full p-2 border rounded-xl" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-gray-700">Password</label>
+                    <input type="password" value={newUser.password} onChange={(e) => setNewUser({ ...newUser, password: e.target.value })} className="w-full p-2 border rounded-xl" />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-700">Confirm Password</label>
+                    <input type="password" value={newUser.confirmPassword} onChange={(e) => setNewUser({ ...newUser, confirmPassword: e.target.value })} className="w-full p-2 border rounded-xl" />
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-2">
+                    <input type="checkbox" checked={newUser.isAdmin} onChange={(e) => setNewUser({ ...newUser, isAdmin: e.target.checked })} />
+                    <span className="text-sm text-gray-700">Make Admin</span>
+                  </label>
+                </div>
+                <div className="flex justify-end gap-4">
+                  <button type="button" onClick={() => { setNewUserModalOpen(false); setNewUser({ name: '', email: '', password: '', confirmPassword: '', isAdmin: false }); }} className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-xl">Cancel</button>
+                  <button type="submit" className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl">Create User</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 };
 
 export default UserManagement;
-
