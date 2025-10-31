@@ -565,7 +565,7 @@ const ResortManagement = () => {
             className="text-2xl font-semibold mb-6 text-[#074a5b]"
             style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
           >
-            {selectedResort ? 'Edit Resort' : 'Add New Resort'}
+            {selectedResort ? 'Edit Accommodation' : 'Add New Accommodation'}
           </h2>
           <form onSubmit={handleResortSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
