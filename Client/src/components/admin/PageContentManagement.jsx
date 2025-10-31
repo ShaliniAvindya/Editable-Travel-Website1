@@ -639,7 +639,7 @@ ${htmlToLatex(content.description || 'No content available.')}
         : sectionId === 'resort'
         ? 'Resort Section'
         : sectionId === 'adventure'
-        ? 'Adventure Section'
+        ? 'Liveaboard Section'
         : sectionId.charAt(0).toUpperCase() + sectionId.slice(1);
     }
     return sectionId === 'hero'
