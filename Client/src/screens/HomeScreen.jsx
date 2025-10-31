@@ -16,6 +16,9 @@ const HomeScreen = () => {
   const [accommodations, setAccommodations] = useState([]);
   const [activities, setActivities] = useState([]);
   const [packages, setPackages] = useState([]);
+  const [rawAccommodations, setRawAccommodations] = useState([]);
+  const [rawActivities, setRawActivities] = useState([]);
+  const [rawPackages, setRawPackages] = useState([]);
   const [blogs, setBlogs] = useState([]);
   const [uiContent, setUIContent] = useState(null);
   const navigate = useNavigate();
@@ -34,8 +37,11 @@ const HomeScreen = () => {
         ]);
 
         setUIContent(uiContentRes.data);
+        setRawAccommodations(accommodationsRes.data || []);
+        setRawActivities(activitiesRes.data || []);
+        setRawPackages(packagesRes.data || []);
 
-        const transformedAccommodations = accommodationsRes.data
+        const transformedAccommodations = (accommodationsRes.data || [])
           .map(item => {
             let price = null;
             if (item.rooms?.length > 0) {
@@ -57,7 +63,7 @@ const HomeScreen = () => {
             };
           });
 
-        const transformedActivities = activitiesRes.data
+        const transformedActivities = (activitiesRes.data || [])
           .map(item => {
             let price = null;
             if (
@@ -81,7 +87,7 @@ const HomeScreen = () => {
             };
           });
 
-        const transformedPackages = packagesRes.data
+        const transformedPackages = (packagesRes.data || [])
           .map(item => ({
             id: item._id,
             name: item.title,
@@ -110,9 +116,38 @@ const HomeScreen = () => {
             author: blog.author || 'Unknown Author'
           }));
 
-        setAccommodations(transformedAccommodations);
-        setActivities(transformedActivities);
-        setPackages(transformedPackages);
+        try {
+          const offerings = uiContentRes.data?.sections?.find(s => s.sectionId === 'offerings')?.content?.offerings || {};
+
+          if (offerings.accommodations && offerings.accommodations.length > 0) {
+            const byId = Object.fromEntries(transformedAccommodations.map(a => [a.id, a]));
+            const ordered = offerings.accommodations.map(id => byId[id]).filter(Boolean);
+            setAccommodations(ordered);
+          } else {
+            setAccommodations([]);
+          }
+
+          if (offerings.activities && offerings.activities.length > 0) {
+            const byId = Object.fromEntries(transformedActivities.map(a => [a.id, a]));
+            const ordered = offerings.activities.map(id => byId[id]).filter(Boolean);
+            setActivities(ordered);
+          } else {
+            setActivities([]);
+          }
+
+          if (offerings.packages && offerings.packages.length > 0) {
+            const byId = Object.fromEntries(transformedPackages.map(p => [p.id, p]));
+            const ordered = offerings.packages.map(id => byId[id]).filter(Boolean);
+            setPackages(ordered);
+          } else {
+            setPackages([]);
+          }
+        } catch (err) {
+          console.warn('Error applying offerings filter:', err);
+          setAccommodations([]);
+          setActivities([]);
+          setPackages([]);
+        }
         setBlogs(transformedBlogs);
         setLoading(false);
       } catch (err) {
@@ -195,10 +230,22 @@ const HomeScreen = () => {
     const currentTab = contentSlides[currentContentSlide].key;
     switch (currentTab) {
       case 'accommodations':
-        navigate('/accommodations');
+        if (item && item.id) {
+          const raw = rawAccommodations.find(a => String(a._id) === String(item.id));
+          const toPass = raw || item;
+          navigate(`/resort/${toPass.type || item.type}/${toPass._id || item.id}`, { state: { item: toPass } });
+        } else {
+          navigate('/accommodations');
+        }
         break;
       case 'activities':
-        navigate('/activities');
+        if (item && item.id) {
+          const rawAct = rawActivities.find(a => String(a._id) === String(item.id));
+          const toPassAct = rawAct || item;
+          navigate(`/activity/${toPassAct._id || item.id}`, { state: { item: toPassAct } });
+        } else {
+          navigate('/activities');
+        }
         break;
       case 'packages':
         navigate('/packageoffers');
