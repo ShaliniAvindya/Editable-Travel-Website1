@@ -51,7 +51,29 @@ const UIContentManagement = () => {
     buttonLink: '',
     slides: [],
     reviews: [],
+    offerings: { accommodations: [], activities: [], packages: [] },
+    footerLabels: {
+      quickLinks: {
+        header: '',
+        home: '',
+        accommodations: '',
+        activities: '',
+        packages: '',
+        blogs: '',
+      },
+      legal: {
+        header: '',
+        gtc: '',
+        privacy: '',
+      },
+      social: {
+        header: '',
+      },
+    },
   });
+  const [optionsAccommodations, setOptionsAccommodations] = useState([]);
+  const [optionsActivities, setOptionsActivities] = useState([]);
+  const [optionsPackages, setOptionsPackages] = useState([]);
   const [editingSlideIndex, setEditingSlideIndex] = useState(null);
   const [editingReviewIndex, setEditingReviewIndex] = useState(null);
   const [error, setError] = useState('');
@@ -136,6 +158,36 @@ const UIContentManagement = () => {
     }
   }, [pageContent, selectedSection]);
 
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        const [resortsRes, activitiesRes, packagesRes] = await Promise.all([
+          api.get(`${API_BASE_URL}/resorts`),
+          api.get(`${API_BASE_URL}/activities`),
+          api.get(`${API_BASE_URL}/packages`),
+        ]);
+        setOptionsAccommodations(resortsRes.data || []);
+        setOptionsActivities(activitiesRes.data || []);
+        try {
+          const now = new Date();
+          const pkgs = (packagesRes.data || []).filter(p => {
+            if (typeof p.status !== 'undefined' && p.status === false) return false;
+            if (!p.expiry_date) return true;
+            const exp = new Date(p.expiry_date);
+            return exp > now;
+          });
+          setOptionsPackages(pkgs);
+        } catch (e) {
+          console.warn('Error filtering packages by expiry:', e);
+          setOptionsPackages(packagesRes.data || []);
+        }
+      } catch (err) {
+        console.error('Failed to load offerings options:', err);
+      }
+    };
+    if (user?.isAdmin) fetchOptions();
+  }, [user, api]);
+
   // Intersection Observer for animations
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -216,7 +268,7 @@ const UIContentManagement = () => {
     const section = content?.sections?.find((s) => s.sectionId === sectionId);
     if (section) {
       console.log('Found section:', section);
-      setFormData({
+        setFormData({
         title: section.content.title || '',
         description: section.content.description || '',
         imageUrl: section.content.imageUrl || '',
@@ -229,6 +281,45 @@ const UIContentManagement = () => {
           date: review.date || '',
           avatar: review.avatar || '',
         })) : [],
+        offerings: section.content.offerings ? {
+          accommodations: Array.isArray(section.content.offerings.accommodations) ? section.content.offerings.accommodations.map(String) : [],
+          activities: Array.isArray(section.content.offerings.activities) ? section.content.offerings.activities.map(String) : [],
+          packages: Array.isArray(section.content.offerings.packages) ? section.content.offerings.packages.map(String) : [],
+        } : { accommodations: [], activities: [], packages: [] },
+          footerLabels: section.content.footerLabels ? {
+            quickLinks: {
+         header: section.content.footerLabels.quickLinks?.header || '',
+              home: section.content.footerLabels.quickLinks?.home || '',
+              accommodations: section.content.footerLabels.quickLinks?.accommodations || '',
+              activities: section.content.footerLabels.quickLinks?.activities || '',
+              packages: section.content.footerLabels.quickLinks?.packages || '',
+              blogs: section.content.footerLabels.quickLinks?.blogs || '',
+            },
+            legal: {
+              header: section.content.footerLabels.legal?.header || '',
+              gtc: section.content.footerLabels.legal?.gtc || '',
+              privacy: section.content.footerLabels.legal?.privacy || '',
+            },
+            social: {
+              header: section.content.footerLabels.social?.header || '',
+            },
+          } : {
+            quickLinks: {
+              home: '',
+              accommodations: '',
+              activities: '',
+              packages: '',
+              blogs: '',
+            },
+            legal: {
+              header: '',
+              gtc: '',
+              privacy: '',
+            },
+            social: {
+              header: '',
+            },
+          },
       });
     } else {
       console.log('Section not found, resetting formData');
@@ -240,6 +331,22 @@ const UIContentManagement = () => {
         buttonLink: '',
         slides: [],
         reviews: [],
+        offerings: { accommodations: [], activities: [], packages: [] },
+        footerLabels: {
+          quickLinks: {
+            header: '',
+            home: '',
+            accommodations: '',
+            activities: '',
+            packages: '',
+            blogs: '',
+          },
+          legal: {
+            header: '',
+            gtc: '',
+            privacy: '',
+          },
+        },
       });
     }
     setEditingSlideIndex(null);
@@ -356,6 +463,8 @@ const UIContentManagement = () => {
                 buttonLink: formData.buttonLink,
                 slides: formData.slides,
                 reviews: formData.reviews,
+                offerings: formData.offerings,
+                footerLabels: formData.footerLabels,
               },
             }
           : section
@@ -372,12 +481,14 @@ const UIContentManagement = () => {
             buttonLink: formData.buttonLink,
             slides: formData.slides,
             reviews: formData.reviews,
+            offerings: formData.offerings,
+            footerLabels: formData.footerLabels,
           },
         });
       }
       const response = await api.put(`${API_BASE_URL}/ui-content/${selectedPage}`, { sections: newSections });
-      setPageContent(response.data);
-      setSuccess('Section updated successfully');
+  setPageContent(response.data);
+  setSuccess('Updated successfully');
       setEditingSlideIndex(null);
       setEditingReviewIndex(null);
       handleSectionChange(selectedSection, response.data);
@@ -397,7 +508,8 @@ const UIContentManagement = () => {
   };
 
   const resetForm = () => {
-    setFormData({
+    // Reset formData including offerings to avoid undefined access in the UI
+    const defaultForm = {
       title: '',
       description: '',
       imageUrl: '',
@@ -405,9 +517,29 @@ const UIContentManagement = () => {
       buttonLink: '',
       slides: [],
       reviews: [],
-    });
+      offerings: { accommodations: [], activities: [], packages: [] },
+      footerLabels: {
+        quickLinks: {
+          header: '',
+          home: '',
+          accommodations: '',
+          activities: '',
+          packages: '',
+          blogs: '',
+        },
+        legal: {
+          header: '',
+          gtc: '',
+          privacy: '',
+        },
+      },
+    };
+    setFormData(defaultForm);
     setEditingSlideIndex(null);
     setEditingReviewIndex(null);
+    const firstSectionId = pageContent?.sections?.[0]?.sectionId || 'hero';
+    setSelectedSection(firstSectionId);
+    if (pageContent) handleSectionChange(firstSectionId, pageContent);
   };
 
   if (loading || !user?.isAdmin) {
@@ -465,6 +597,7 @@ const UIContentManagement = () => {
               <option value="hero">Hero Section</option>
               <option value="welcome">Welcome Section</option>
               <option value="offerings">Offerings Section</option>
+              <option value="footer">Footer Section</option>
               <option value="blog">Blog Section</option>
               <option value="googleReviews">Google Reviews Section</option>
             </select>
@@ -677,7 +810,7 @@ const UIContentManagement = () => {
               </>
             )}
 
-            {['welcome', 'offerings', 'blog'].includes(selectedSection) && (
+            {['welcome', 'offerings', 'blog', 'footer'].includes(selectedSection) && (
               <>
                 <div>
                   <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
@@ -702,6 +835,136 @@ const UIContentManagement = () => {
                     style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                   />
                 </div>
+                {selectedSection === 'offerings' && (
+                  <div className="col-span-2">
+                    <h4 className="text-lg font-semibold mb-2 text-[#074a5b]">Offerings Selection</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block mb-2 text-[#074a5b] font-semibold">Accommodations</label>
+                        <div className="border border-gray-200 rounded-xl p-3 h-40 overflow-auto bg-white">
+                          {optionsAccommodations.length === 0 && <p className="text-sm text-gray-500">No accommodations available</p>}
+                          {optionsAccommodations.map(opt => (
+                            <label key={opt._id} className="flex items-center gap-2 mb-2">
+                              <input
+                                type="checkbox"
+                                checked={formData.offerings.accommodations.includes(String(opt._id))}
+                                onChange={(e) => {
+                                  const id = String(opt._id);
+                                  const current = new Set(formData.offerings.accommodations.map(String));
+                                  if (e.target.checked) current.add(id); else current.delete(id);
+                                  setFormData({ ...formData, offerings: { ...formData.offerings, accommodations: Array.from(current) } });
+                                }}
+                              />
+                              <span className="text-sm">{opt.name} {opt.type ? `(${opt.type})` : ''}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block mb-2 text-[#074a5b] font-semibold">Activities</label>
+                        <div className="border border-gray-200 rounded-xl p-3 h-40 overflow-auto bg-white">
+                          {optionsActivities.length === 0 && <p className="text-sm text-gray-500">No activities available</p>}
+                          {optionsActivities.map(opt => (
+                            <label key={opt._id} className="flex items-center gap-2 mb-2">
+                              <input
+                                type="checkbox"
+                                checked={formData.offerings.activities.includes(String(opt._id))}
+                                onChange={(e) => {
+                                  const id = String(opt._id);
+                                  const current = new Set(formData.offerings.activities.map(String));
+                                  if (e.target.checked) current.add(id); else current.delete(id);
+                                  setFormData({ ...formData, offerings: { ...formData.offerings, activities: Array.from(current) } });
+                                }}
+                              />
+                              <span className="text-sm">{opt.name}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block mb-2 text-[#074a5b] font-semibold">Packages</label>
+                        <div className="border border-gray-200 rounded-xl p-3 h-40 overflow-auto bg-white">
+                          {optionsPackages.length === 0 && <p className="text-sm text-gray-500">No packages available</p>}
+                          {optionsPackages.map(opt => (
+                            <label key={opt._id} className="flex items-center gap-2 mb-2">
+                              <input
+                                type="checkbox"
+                                checked={formData.offerings.packages.includes(String(opt._id))}
+                                onChange={(e) => {
+                                  const id = String(opt._id);
+                                  const current = new Set(formData.offerings.packages.map(String));
+                                  if (e.target.checked) current.add(id); else current.delete(id);
+                                  setFormData({ ...formData, offerings: { ...formData.offerings, packages: Array.from(current) } });
+                                }}
+                              />
+                              <span className="text-sm">{opt.title || opt.name}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {selectedSection === 'footer' && (
+                  <div className="col-span-2">
+                      {/* Quick Links labels (routes fixed) */}
+                      <h4 className="text-lg font-semibold mb-2 text-[#074a5b]">Quick Links Labels</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                        <div>
+                          <label className="block text-sm text-[#074a5b]">Column Header</label>
+                          <input
+                            type="text"
+                            value={formData.footerLabels?.quickLinks?.header || ''}
+                            onChange={(e) => setFormData({ ...formData, footerLabels: { ...formData.footerLabels, quickLinks: { ...formData.footerLabels.quickLinks, header: e.target.value } } })}
+                            className="w-full p-2 border border-gray-200 rounded-xl"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-[#074a5b]">Home Label</label>
+                          <input type="text" value={formData.footerLabels?.quickLinks?.home || ''} onChange={(e) => setFormData({ ...formData, footerLabels: { ...formData.footerLabels, quickLinks: { ...formData.footerLabels.quickLinks, home: e.target.value } } })} className="w-full p-2 border border-gray-200 rounded-xl" />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-[#074a5b]">Accommodations Label</label>
+                          <input type="text" value={formData.footerLabels?.quickLinks?.accommodations || ''} onChange={(e) => setFormData({ ...formData, footerLabels: { ...formData.footerLabels, quickLinks: { ...formData.footerLabels.quickLinks, accommodations: e.target.value } } })} className="w-full p-2 border border-gray-200 rounded-xl" />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-[#074a5b]">Activities Label</label>
+                          <input type="text" value={formData.footerLabels?.quickLinks?.activities || ''} onChange={(e) => setFormData({ ...formData, footerLabels: { ...formData.footerLabels, quickLinks: { ...formData.footerLabels.quickLinks, activities: e.target.value } } })} className="w-full p-2 border border-gray-200 rounded-xl" />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-[#074a5b]">Packages Label</label>
+                          <input type="text" value={formData.footerLabels?.quickLinks?.packages || ''} onChange={(e) => setFormData({ ...formData, footerLabels: { ...formData.footerLabels, quickLinks: { ...formData.footerLabels.quickLinks, packages: e.target.value } } })} className="w-full p-2 border border-gray-200 rounded-xl" />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-[#074a5b]">Blogs Label</label>
+                          <input type="text" value={formData.footerLabels?.quickLinks?.blogs || ''} onChange={(e) => setFormData({ ...formData, footerLabels: { ...formData.footerLabels, quickLinks: { ...formData.footerLabels.quickLinks, blogs: e.target.value } } })} className="w-full p-2 border border-gray-200 rounded-xl" />
+                        </div>
+                      </div>
+
+                      {/* Legal labels (button text editable) */}
+                      <h4 className="text-lg font-semibold mb-2 text-[#074a5b]">Legal Labels</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                        <div>
+                          <label className="block text-sm text-[#074a5b]">Legal Column Header</label>
+                          <input type="text" value={formData.footerLabels?.legal?.header || ''} onChange={(e) => setFormData({ ...formData, footerLabels: { ...formData.footerLabels, legal: { ...formData.footerLabels.legal, header: e.target.value } } })} className="w-full p-2 border border-gray-200 rounded-xl" />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-[#074a5b]">GTC Button Label</label>
+                          <input type="text" value={formData.footerLabels?.legal?.gtc || ''} onChange={(e) => setFormData({ ...formData, footerLabels: { ...formData.footerLabels, legal: { ...formData.footerLabels.legal, gtc: e.target.value } } })} className="w-full p-2 border border-gray-200 rounded-xl" />
+                        </div>
+                        <div>
+                          <label className="block text-sm text-[#074a5b]">Privacy Button Label</label>
+                          <input type="text" value={formData.footerLabels?.legal?.privacy || ''} onChange={(e) => setFormData({ ...formData, footerLabels: { ...formData.footerLabels, legal: { ...formData.footerLabels.legal, privacy: e.target.value } } })} className="w-full p-2 border border-gray-200 rounded-xl" />
+                        </div>
+                      </div>
+
+                      {/* Social header editable */}
+                      <div className="mb-4">
+                        <label className="block text-sm text-[#074a5b]">Social Column Header</label>
+                        <input type="text" value={formData.footerLabels?.social?.header || ''} onChange={(e) => setFormData({ ...formData, footerLabels: { ...formData.footerLabels, social: { ...formData.footerLabels.social, header: e.target.value } } })} className="w-full p-2 border border-gray-200 rounded-xl" />
+                      </div>
+                  </div>
+                )}
                 {selectedSection === 'blog' && (
                   <>
                     <div>
