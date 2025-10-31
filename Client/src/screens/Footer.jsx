@@ -76,12 +76,12 @@ const Footer = () => {
             </div>
           )}
 
-          {/* Quick Links - editable labels from admin, fixed routes */}
+          {/* Quick Links*/}
           {footerLabels?.quickLinks && (
             <div>
               {footerLabels.quickLinks.header && (
                 <h4 className="text-lg font-bold text-white mb-4 flex items-center">
-                  <span className="mr-2">🔗</span> {footerLabels.quickLinks.header}
+                {footerLabels.quickLinks.header}
                 </h4>
               )}
               <ul className="space-y-3 text-gray-300">
@@ -94,7 +94,7 @@ const Footer = () => {
             </div>
           )}
 
-          {/* Legal column - header and labels come from admin */}
+          {/* Legal column */}
           {footerLabels?.legal && (
             <div>
               {footerLabels.legal.header && (
