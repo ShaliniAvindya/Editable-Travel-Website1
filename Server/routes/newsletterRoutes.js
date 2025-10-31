@@ -332,7 +332,7 @@ const cron = require('node-cron');
   // create campaign (draft or schedule)
   router.post('/admin/campaigns', async (req, res, next) => {
     try {
-      const { title, subject, body, footer, scheduled_at, recipients, titleAlign } = req.body;
+      const { title, subject, body, footer, scheduled_at, recipients, titleAlign, images } = req.body;
       if (!title || !subject || !body) return res.status(400).json({ message: 'title, subject and body are required' });
       const safeBody = sanitizeHtml(body);
       const safeFooter = footer ? sanitizeHtml(footer) : undefined;
@@ -344,6 +344,7 @@ const cron = require('node-cron');
         body: safeBody,
         footer: safeFooter,
         titleAlign: align,
+        images: Array.isArray(images) ? images.filter(Boolean) : [],
         scheduled_at: scheduled_at ? parseDateInput(scheduled_at) : undefined,
         status: scheduled_at ? 'scheduled' : 'draft',
         recipients: recipients || { type: 'all' }
@@ -471,14 +472,21 @@ const cron = require('node-cron');
           const d = dom.window.document;
           d.querySelectorAll('script,iframe,video,object,embed,style').forEach(n => n.remove());
           d.querySelectorAll('img').forEach(img => {
-            const alt = img.getAttribute('alt') || img.getAttribute('title') || '';
-            if (alt) {
-              const p = d.createElement('p');
-              p.textContent = alt;
-              img.parentNode.replaceChild(p, img);
-            } else {
-              img.remove();
-            }
+            try {
+              let src = img.getAttribute('src') || '';
+              if (!src) { img.remove(); return; }
+              if (!/^https?:\/\//i.test(src) && !/^data:image\//i.test(src)) {
+                if (src.startsWith('/')) src = `${baseUrl}${src}`;
+                else src = `${baseUrl}/${src.replace(/^\/+/, '')}`;
+                img.setAttribute('src', src);
+              }
+              const prevStyle = img.getAttribute('style') || '';
+              const sep = prevStyle && prevStyle.trim().slice(-1) !== ';' ? ';' : '';
+              img.setAttribute('style', `${prevStyle}${sep}max-width:100%;height:auto;display:block;`);
+              Array.from(img.attributes).forEach(attr => {
+                if (/^on/i.test(attr.name)) img.removeAttribute(attr.name);
+              });
+            } catch (e) { try { img.remove(); } catch (_) {} }
           });
           // Convert Quill alignment classes
           d.querySelectorAll('[class]').forEach(n => {
@@ -671,10 +679,57 @@ const cron = require('node-cron');
   });
 
   // Send emails sequentially
+  let preparedAttachments = [];
+  if (Array.isArray(campaign.images) && campaign.images.length > 0) {
+    const http = require('http');
+    const https = require('https');
+    const { URL } = require('url');
+
+    const fetchUrlBuffer = (url) => new Promise((resolve) => {
+      try {
+        const parsed = new URL(url);
+        const getter = parsed.protocol === 'https:' ? https : http;
+        const req = getter.get(parsed, (res) => {
+          const status = res.statusCode || 0;
+          if (status >= 400) { res.resume(); return resolve(null); }
+          const chunks = [];
+          res.on('data', (c) => chunks.push(c));
+          res.on('end', () => {
+            const buffer = Buffer.concat(chunks);
+            const contentType = (res.headers['content-type'] || '').split(';')[0] || 'application/octet-stream';
+            let filename = (parsed.pathname && parsed.pathname.split('/').pop()) || '';
+            if (!filename || filename.length < 3) {
+              const ext = (contentType.split('/')[1] || 'bin').replace(/[^a-z0-9]/gi, '');
+              filename = `image.${ext}`;
+            }
+            resolve({ buffer, contentType, filename });
+          });
+        });
+        req.on('error', (e) => { resolve(null); });
+      } catch (e) { resolve(null); }
+    });
+
+    try {
+      const results = await Promise.allSettled(campaign.images.map(u => fetchUrlBuffer(u)));
+      preparedAttachments = results.map((r, idx) => {
+        if (r.status === 'fulfilled' && r.value) {
+          return { filename: r.value.filename || `image${idx}.bin`, content: r.value.buffer, contentType: r.value.contentType };
+        }
+        return null;
+      }).filter(Boolean);
+    } catch (e) {
+      console.error('Failed preparing attachments', e);
+      preparedAttachments = [];
+    }
+  }
+
   for (const r of recipients) {
     const toEmail = r.email;
     const html = await buildEmailHtml(toEmail);
     const mailOptions = { from: mailFrom, to: toEmail, subject: campaign.subject, html };
+    if (preparedAttachments && preparedAttachments.length > 0) {
+      mailOptions.attachments = preparedAttachments.map(a => ({ filename: a.filename, content: a.content, contentType: a.contentType }));
+    }
 
     try {
       await transporter.sendMail(mailOptions);
@@ -732,7 +787,7 @@ router.post('/admin/campaigns/:id/schedule', async (req, res, next) => {
 router.put('/admin/campaigns/:id', async (req, res, next) => {
     try {
         const id = req.params.id;
-        const { title, subject, body, footer, scheduled_at, recipients, titleAlign } = req.body;
+  const { title, subject, body, footer, scheduled_at, recipients, titleAlign, images } = req.body;
         const campaign = await NewsletterCampaign.findById(id);
         if (!campaign) return res.status(404).json({ message: 'Campaign not found' });
 
@@ -767,6 +822,10 @@ router.put('/admin/campaigns/:id', async (req, res, next) => {
       campaign.recipients = normalized;
     }
 
+    // store images array 
+    if (Array.isArray(images)) {
+      campaign.images = images.filter(Boolean);
+    }
         await campaign.save();
         return res.status(200).json({ message: 'Campaign updated', campaign });
     } catch (err) { next(err); }
