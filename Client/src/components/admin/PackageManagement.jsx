@@ -417,7 +417,7 @@ const PackageManagement = () => {
               />
             </div>
             <div>
-              <label className="block mb-2 text-[#074a5b] font-semibold">Resort</label>
+              <label className="block mb-2 text-[#074a5b] font-semibold">Accommodation</label>
               <input
                 type="text"
                 value={formData.resort}
@@ -597,4 +597,3 @@ const PackageManagement = () => {
 };
 
 export default PackageManagement;
-
