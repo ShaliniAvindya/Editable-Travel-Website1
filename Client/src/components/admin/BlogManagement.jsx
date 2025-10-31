@@ -1864,6 +1864,26 @@ const EnhancedBlogPreview = ({ blog, contentBlocks, theme, isOpen, onClose }) =>
       }
     };
 
+    const getResponsiveMediaStyle = (block) => {
+      const sizeMap = {
+        small: 300,
+        medium: 600,
+        large: 800,
+        full: '100%'
+      };
+
+      const maxWidth = sizeMap[block.size] || sizeMap.medium;
+      const margin = block.alignment === 'left' ? '0' : block.alignment === 'right' ? '0 0 0 auto' : '0 auto';
+
+      return {
+        width: '100%',
+        height: 'auto',
+        maxWidth: typeof maxWidth === 'number' ? `${maxWidth}px` : maxWidth,
+        margin,
+        display: 'block'
+      };
+    };
+
     switch (block.type) {
       case BLOCK_TYPES.HEADING:
         const HeadingTag = block.level || 'h2';
@@ -1899,14 +1919,9 @@ const EnhancedBlogPreview = ({ blog, contentBlocks, theme, isOpen, onClose }) =>
             <img
               src={block.url}
               alt={block.caption || 'Blog image'}
-              className={`rounded-xl ${
-                block.size === 'small' ? 'max-w-xs' :
-                block.size === 'large' ? 'max-w-4xl' :
-                block.size === 'full' ? 'w-full' : 'max-w-2xl'
-              }`}
-              style={{ 
-                margin: block.alignment === 'left' ? '0' : 
-                       block.alignment === 'right' ? '0 0 0 auto' : '0 auto'
+              className={`rounded-xl transition-all duration-300`}
+              style={{
+                ...getResponsiveMediaStyle(block)
               }}
             />
             {block.caption && (
@@ -1921,14 +1936,9 @@ const EnhancedBlogPreview = ({ blog, contentBlocks, theme, isOpen, onClose }) =>
             <video
               src={block.url}
               controls
-              className={`rounded-xl ${
-                block.size === 'small' ? 'max-w-xs' :
-                block.size === 'large' ? 'max-w-4xl' :
-                block.size === 'full' ? 'w-full' : 'max-w-2xl'
-              }`}
-              style={{ 
-                margin: block.alignment === 'left' ? '0' : 
-                       block.alignment === 'right' ? '0 0 0 auto' : '0 auto'
+              className={`rounded-xl transition-all duration-300`}
+              style={{
+                ...getResponsiveMediaStyle(block)
               }}
             />
             {block.caption && (
@@ -2021,13 +2031,13 @@ const EnhancedBlogPreview = ({ blog, contentBlocks, theme, isOpen, onClose }) =>
             {block.layout === 'grid' ? (
               <div className="grid grid-cols-3 gap-4">
                 {block.urls.map((url, i) => (
-                  <img key={i} src={url} alt={`Gallery ${i}`} className="w-full h-auto rounded-xl" />
+                  <img key={i} src={url} alt={`Gallery ${i}`} className="w-full rounded-xl" style={{ height: 'auto', objectFit: 'cover' }} />
                 ))}
               </div>
             ) : (
               <div className="flex overflow-x-auto gap-4">
                 {block.urls.map((url, i) => (
-                  <img key={i} src={url} alt={`Gallery ${i}`} className="h-64 object-cover rounded-xl flex-shrink-0" />
+                  <img key={i} src={url} alt={`Gallery ${i}`} className="rounded-xl flex-shrink-0" style={{ height: '16rem', objectFit: 'cover' }} />
                 ))}
               </div>
             )}
@@ -2086,18 +2096,22 @@ const EnhancedBlogPreview = ({ blog, contentBlocks, theme, isOpen, onClose }) =>
             {block.media && block.media.length > 0 && (
               <div className={`mb-3 ${block.layout === 'grid' ? 'grid grid-cols-3 gap-4' : 'flex overflow-x-auto gap-4'}`}>
                 {block.media.map((url, i) => (
-                  <div key={i}>
+                  <div key={i} className="relative">
                     {url.endsWith('.mp4') || url.endsWith('.webm') ? (
-                      <video src={url} controls className={`w-full rounded-xl ${block.size === 'small' ? 'h-24' : block.size === 'large' ? 'h-48' : 'h-32'}`} />
+                      <video src={url} controls className="rounded-xl" style={{ width: '100%', height: 'auto', maxWidth: block.size === 'small' ? '200px' : block.size === 'large' ? '600px' : '400px' }} />
                     ) : (
-                      <img src={url} alt={`Card media ${i}`} className={`w-full rounded-xl ${block.size === 'small' ? 'h-24' : block.size === 'large' ? 'h-48' : 'h-32'} object-cover`} />
+                      <img src={url} alt={`Card media ${i}`} className="rounded-xl object-cover" style={{ width: '100%', height: block.size === 'small' ? '6rem' : block.size === 'large' ? '12rem' : '8rem' }} />
                     )}
+                    <button
+                      onClick={() => handleContentChange('media', block.media.filter((_, j) => j !== i))}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                    >
+                      <X size={12} />
+                    </button>
                   </div>
                 ))}
               </div>
             )}
-            {block.title && <h3 className="text-xl font-bold mb-2">{block.title}</h3>}
-            {block.content && <p>{block.content}</p>}
           </div>
         );
 
