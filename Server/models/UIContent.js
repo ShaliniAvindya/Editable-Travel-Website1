@@ -37,6 +37,29 @@ const sectionSchema = new mongoose.Schema({
     twitter: { type: String },
     youtube: { type: String },
     tiktok: { type: String },
+    offerings: {
+      accommodations: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Resort' }],
+      activities: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Activity' }],
+      packages: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Package' }],
+    },
+    footerLabels: {
+      quickLinks: {
+        header: { type: String },
+        home: { type: String },
+        accommodations: { type: String },
+        activities: { type: String },
+        packages: { type: String },
+        blogs: { type: String },
+      },
+      legal: {
+        header: { type: String },
+        gtc: { type: String },
+        privacy: { type: String },
+      },
+        social: {
+          header: { type: String },
+        },
+    },
   },
 });
 
