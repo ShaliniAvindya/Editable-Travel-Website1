@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { useLocation } from 'react-router-dom';
 import {
   MapPin,
   MessageCircle,
@@ -24,6 +25,7 @@ const ActivityProfile = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalButtonType, setModalButtonType] = useState('bookNow');
   const { activityId } = useParams();
+  const { state } = useLocation();
 
   useEffect(() => {
     if (!activity?.media?.length) return;
@@ -96,20 +98,15 @@ const ActivityProfile = () => {
         setAtolls(atollsWithData);
 
         // Fetch activity details with populated atoll data
-        if (activityId) {
+        if (state?.item) {
+          const provided = state.item;
+          const availableAtollIds = provided.available_atoll_ids?.map(id => (typeof id === 'string' ? id : id._id)) || [];
+          setActivity({ ...provided, _id: provided._id || provided.id, available_atoll_ids: availableAtollIds });
+        } else if (activityId) {
           const activityResponse = await axios.get(`${API_BASE_URL}/activities/${activityId}`);
           const activityData = activityResponse.data;
-          
-          // Make sure atoll IDs properly formatted
-          const availableAtollIds = activityData.available_atoll_ids?.map(id => 
-            typeof id === 'string' ? id : id._id
-          ) || [];
-          
-          setActivity({
-            ...activityData,
-            _id: activityData._id,
-            available_atoll_ids: availableAtollIds
-          });
+          const availableAtollIds = activityData.available_atoll_ids?.map(id => (typeof id === 'string' ? id : id._id)) || [];
+          setActivity({ ...activityData, _id: activityData._id, available_atoll_ids: availableAtollIds });
         }
 
         setLoading(false);
