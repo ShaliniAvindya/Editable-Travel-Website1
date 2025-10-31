@@ -1170,12 +1170,14 @@ router.post('/reply', async (req, res) => {
   await sendMailSafe(replyMailOptions);
   console.log('Reply email send attempted to:', inquiry.email);
 
-    // Save reply message to inquiry
-    inquiry.replyMessage = message;
-    await inquiry.save();
-    console.log('Reply message saved to inquiry:', inquiry._id);
+  // Save reply message to inquiry and mark archived
+  inquiry.replyMessage = message;
+  inquiry.archived = true;
+  inquiry.archivedAt = new Date();
+  await inquiry.save();
+  console.log('Reply message saved and inquiry archived:', inquiry._id);
 
-    res.status(200).json({ msg: 'Reply sent and saved successfully' });
+  res.status(200).json({ msg: 'Reply sent, saved and archived successfully', inquiry });
   } catch (err) {
     console.error('Error processing reply:', err);
     res.status(500).json({ msg: 'Server error', details: err.message });
