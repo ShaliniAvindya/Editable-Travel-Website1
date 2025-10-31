@@ -11,6 +11,11 @@ const InquirySchema = new mongoose.Schema({
   },
   message: String,
   replyMessage: String, // New field to store reply message
+  archived: {
+    type: Boolean,
+    default: false,
+  },
+  archivedAt: Date,
   submitted_at: {
     type: Date,
     default: Date.now,
