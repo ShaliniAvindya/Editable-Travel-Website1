@@ -181,14 +181,6 @@ const Login = () => {
                   </div>
                   {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
                 </div>
-                <div className="text-right">
-                  <Link
-                    to="/forgot-password"
-                    className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200 hover:underline"
-                  >
-                    Passwort vergessen?
-                  </Link>
-                </div>
                 <button
                   type="submit"
                   disabled={loading}
