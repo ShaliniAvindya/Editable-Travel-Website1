@@ -5,6 +5,7 @@ const NewsletterCampaignSchema = new mongoose.Schema({
   subject: { type: String, required: true },
   body: { type: String, required: true },
   footer: { type: String },
+  images: [{ type: String }],
   titleAlign: { type: String, enum: ['left','center','right','justify'], default: 'left' },
   scheduled_at: { type: Date },
   sent_at: { type: Date },
