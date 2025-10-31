@@ -179,6 +179,7 @@ const ViewReplyModal = ({ isOpen, onClose, replyMessage }) => {
 const InquiryManagement = () => {
   const [inquiries, setInquiries] = useState([]);
   const [activeTab, setActiveTab] = useState('Accommodation');
+  const [showArchived, setShowArchived] = useState(false);
   const [packageSubTab, setPackageSubTab] = useState('Accommodation');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -486,10 +487,20 @@ const InquiryManagement = () => {
       return;
     }
     try {
-      await axios.post(`${API_BASE_URL}/inquiries/reply`, { inquiryId, subject, message });
-      setInquiries((prev) => prev.map((i) =>
-        (i._id && i._id.$oid === inquiryId) ? { ...i, replyMessage: message } : i
-      ));
+      const response = await axios.post(`${API_BASE_URL}/inquiries/reply`, { inquiryId, subject, message });
+      if (response.data && response.data.inquiry) {
+        const updated = response.data.inquiry;
+        setInquiries((prev) => prev.map((i) => {
+          const id = (i._id && i._id.$oid) ? i._id.$oid : (i._id || '');
+          const updId = (updated._id && updated._id.$oid) ? updated._id.$oid : (updated._id || '');
+          if (id && updId && id === updId) return updated;
+          return i;
+        }));
+      } else {
+        setInquiries((prev) => prev.map((i) =>
+          (i._id && i._id.$oid === inquiryId) ? { ...i, replyMessage: message, archived: true, archivedAt: new Date().toISOString() } : i
+        ));
+      }
       setSuccess('Reply sent successfully');
       setViewReplyModal({ isOpen: true, replyMessage: message });
     } catch (err) {
@@ -534,6 +545,8 @@ const InquiryManagement = () => {
       </div>
     ) : null;
 
+    const activeInquiries = filteredInquiries.filter(i => !i.archived);
+    const archivedInquiries = filteredInquiries.filter(i => i.archived);
     if (filteredInquiries.length === 0) {
       return (
         <div>
@@ -582,10 +595,23 @@ const InquiryManagement = () => {
       return base;
     })();
 
+    const listToRender = showArchived ? archivedInquiries : activeInquiries;
     return (
-      <div className="overflow-x-auto">
+      <div>
         {packageSubTabs}
-        <table className="min-w-full bg-white rounded-2xl shadow-lg table-fixed font-sans">
+        <div className="flex items-center justify-between mb-3 sticky top-0 bg-white z-30" style={{ paddingTop: 8 }}>
+          <div className="text-sm text-gray-700">Showing: <strong>{showArchived ? 'Archived' : 'Active'}</strong> — {listToRender.length} / {filteredInquiries.length}</div>
+          <div>
+            <button
+              onClick={() => setShowArchived(!showArchived)}
+              className={`px-3 py-1 rounded-xl text-sm ${showArchived ? 'bg-gray-200' : 'bg-[#074a5b] text-white'}`}
+            >
+              {showArchived ? 'Show Active' : `Show Archived (${archivedInquiries.length})`}
+            </button>
+          </div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-white rounded-2xl shadow-lg table-fixed font-sans">
           <thead>
             <tr className="bg-[#074a5b] text-white">
               {headersToShow.map((header) => (
@@ -599,7 +625,7 @@ const InquiryManagement = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredInquiries.map((inquiry) => {
+            {listToRender.map((inquiry) => {
               const rowId = (inquiry._id && inquiry._id.$oid) ? inquiry._id.$oid : inquiry._id;
               const deleteId = (inquiry._id && inquiry._id.$oid) ? inquiry._id.$oid : inquiry._id;
               const cells = [
@@ -777,6 +803,7 @@ const InquiryManagement = () => {
           </tbody>
         </table>
       </div>
+    </div>
     );
   };
 
