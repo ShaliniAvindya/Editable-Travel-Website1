@@ -3,14 +3,14 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Traveliccted</title>
+  <title translate="no" class="notranslate"></title>
     <link rel="stylesheet" href="/src/index.css" />
     <link rel="icon" href="/favicon.ico" id="favicon" />
     <link href="https://fonts.googleapis.com/css2?family=Comic+Neue&display=swap" rel="stylesheet">
 
     <script>
       document.addEventListener('DOMContentLoaded', () => {
-        fetch('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/logo-favicon')
+        fetch('http://localhost:8000/api/ui-content/logo-favicon')
           .then(response => response.json())
           .then(data => {
             const faviconSection = data?.sections?.find(s => s.sectionId === 'favicon');
@@ -18,6 +18,14 @@
             if (faviconUrl) {
               const faviconLink = document.getElementById('favicon');
               faviconLink.href = faviconUrl;
+            }
+            const faviconTitle = faviconSection?.content?.title;
+            if (faviconTitle) {
+              try {
+                const titleEl = document.querySelector('title');
+                if (titleEl) titleEl.textContent = faviconTitle;
+                document.title = faviconTitle;
+              } catch (e) {}
             }
           })
           .catch(err => console.error('Failed to load favicon:', err));
