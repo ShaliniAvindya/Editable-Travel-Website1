@@ -65,7 +65,7 @@ const Footer = () => {
             <div>
               {footerTitle && (
                 <h3 className="text-2xl font-bold text-white mb-4 bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-                  {footerTitle}
+                  <span className="notranslate" translate="no">{footerTitle}</span>
                 </h3>
               )}
               {footerDescription && (
@@ -188,3 +188,4 @@ const Footer = () => {
 };
 
 export default Footer;
+
