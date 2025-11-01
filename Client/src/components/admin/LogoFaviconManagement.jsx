@@ -41,7 +41,7 @@ const LogoFaviconManagement = () => {
   const { user, api } = useContext(AuthContext);
   const navigate = useNavigate();
   const [selectedType, setSelectedType] = useState('logo');
-  const [formData, setFormData] = useState({ imageUrl: '' });
+  const [formData, setFormData] = useState({ imageUrl: '', title: '' });
   const [pageContent, setPageContent] = useState(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -83,7 +83,7 @@ const LogoFaviconManagement = () => {
         console.log('API Response:', response.data);
         setPageContent(response.data);
         const section = response.data?.sections?.find((s) => s.sectionId === selectedType);
-        setFormData({ imageUrl: section?.content?.imageUrl || '' });
+        setFormData({ imageUrl: section?.content?.imageUrl || '', title: section?.content?.title || '' });
       } catch (err) {
         console.error('Error fetching content:', err);
         setError(`Failed to load content: ${err.response?.data?.message || err.message}`);
@@ -155,9 +155,13 @@ const LogoFaviconManagement = () => {
         type: 'image',
         content: { imageUrl: formData.imageUrl },
       };
+      if (selectedType === 'favicon') {
+        newSection.content.title = formData.title || '';
+      }
 
       if (sectionIndex !== -1) {
-        newSections[sectionIndex] = newSection;
+        const existing = newSections[sectionIndex] || {};
+        newSections[sectionIndex] = { ...existing, ...newSection };
       } else {
         newSections.push(newSection);
       }
@@ -177,9 +181,10 @@ const LogoFaviconManagement = () => {
       let newSections = pageContent?.sections ? [...pageContent.sections] : [];
       const sectionIndex = newSections.findIndex((s) => s.sectionId === modal.id);
       if (sectionIndex !== -1) {
+        const existingContent = newSections[sectionIndex].content || {};
         newSections[sectionIndex] = {
           ...newSections[sectionIndex],
-          content: { imageUrl: '' },
+          content: { ...existingContent, imageUrl: '' },
         };
       } else {
         newSections.push({
@@ -212,7 +217,7 @@ const LogoFaviconManagement = () => {
         {
           sectionId: 'favicon',
           type: 'image',
-          content: { imageUrl: '' },
+          content: { imageUrl: '', title: 'Traveliccted' },
         },
       ];
       const response = await api.put(`${API_BASE_URL}/ui-content/logo-favicon`, { sections: defaultSections });
@@ -342,6 +347,22 @@ const LogoFaviconManagement = () => {
                   </div>
                 )}
               </div>
+              {/* Favicon title editor */}
+              {selectedType === 'favicon' && (
+                <div>
+                  <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
+                    Favicon Title
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-[#1e809b] outline-none h-12 w-full md:w-1/2"
+                    placeholder="Site Title (e.g., Traveliccted)"
+                    style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
+                  />
+                </div>
+              )}
               <div className="flex gap-4">
                 <button
                   type="submit"
