@@ -10,7 +10,7 @@
 
     <script>
       document.addEventListener('DOMContentLoaded', () => {
-        fetch('http://localhost:8000/api/ui-content/logo-favicon')
+        fetch('https://editable-travel-website1-rpfv.vercel.app/api/ui-content/logo-favicon')
           .then(response => response.json())
           .then(data => {
             const faviconSection = data?.sections?.find(s => s.sectionId === 'favicon');
@@ -38,3 +38,4 @@
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
+
