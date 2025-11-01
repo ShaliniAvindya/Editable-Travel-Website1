@@ -7,10 +7,15 @@ import { BrowserRouter } from 'react-router-dom';
 // Dynamically set favicon from API
 const setFavicon = async () => {
   try {
-    const res = await fetch('/api/ui-content/favicon');
-    const data = await res.json();
+    let res = await fetch('/api/ui-content/logo-favicon');
+    let data = await res.json();
+    if (!data || (!data.sections || data.sections.length === 0)) {
+      res = await fetch('/api/ui-content/favicon');
+      data = await res.json();
+    }
     const faviconSection = data.sections?.find(s => s.sectionId === 'favicon');
     const faviconUrl = faviconSection?.content?.imageUrl;
+    const faviconTitle = faviconSection?.content?.title;
     if (faviconUrl) {
       let link = document.querySelector("link[rel~='icon']");
       if (!link) {
@@ -19,6 +24,13 @@ const setFavicon = async () => {
         document.head.appendChild(link);
       }
       link.href = faviconUrl;
+    }
+    if (faviconTitle) {
+      try {
+        const titleEl = document.querySelector('title');
+        if (titleEl) titleEl.textContent = faviconTitle;
+        document.title = faviconTitle;
+      } catch (e) {}
     }
   } catch (e) {}
 };
