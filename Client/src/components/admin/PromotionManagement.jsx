@@ -558,6 +558,7 @@ const PromotionManagement = ({ searchTerm }) => {
                 onChange={(e) => setFormData({ ...formData, trustIndicator1: e.target.value })}
                 className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
                 style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
+                translate="no"
               />
             </div>
             <div>
@@ -570,6 +571,7 @@ const PromotionManagement = ({ searchTerm }) => {
                 onChange={(e) => setFormData({ ...formData, trustIndicator2: e.target.value })}
                 className="border border-gray-200 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none h-12 w-full"
                 style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
+                translate="no"
               />
             </div>
             <div className="col-span-2 flex gap-4">
@@ -647,10 +649,10 @@ const PromotionManagement = ({ searchTerm }) => {
                     <strong>Countdown Label:</strong> {promotion.countdownLabel}
                   </p>
                   <p className="text-gray-600 mb-3" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
-                    <strong>Trust Indicator 1:</strong> {promotion.trustIndicator1}
+                    <strong>Trust Indicator 1:</strong> <span translate="no">{promotion.trustIndicator1}</span>
                   </p>
                   <p className="text-gray-600 mb-3" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
-                    <strong>Trust Indicator 2:</strong> {promotion.trustIndicator2}
+                    <strong>Trust Indicator 2:</strong> <span translate="no">{promotion.trustIndicator2}</span>
                   </p>
                   <p className="text-gray-600 mb-3" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
                     <strong>Status:</strong> {promotion.status ? 'Active' : 'Inactive'}
@@ -702,3 +704,4 @@ const PromotionManagement = ({ searchTerm }) => {
 };
 
 export default PromotionManagement;
+
