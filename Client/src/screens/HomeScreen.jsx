@@ -273,7 +273,11 @@ const HomeScreen = () => {
 
   const nextItem = () => {
     const originalItems = contentSlides[currentContentSlide].items;
-    if (originalItems.length < 3) return;
+    if (!originalItems || originalItems.length === 0) return;
+    if (originalItems.length < 3) {
+      setCurrentItemIndex((prev) => (prev + 1) % originalItems.length);
+      return;
+    }
     setCurrentItemIndex((prev) => {
       const newIndex = prev + 1;
       if (newIndex >= originalItems.length * 2) {
@@ -290,7 +294,11 @@ const HomeScreen = () => {
 
   const prevItem = () => {
     const originalItems = contentSlides[currentContentSlide].items;
-    if (originalItems.length < 3) return;
+    if (!originalItems || originalItems.length === 0) return;
+    if (originalItems.length < 3) {
+      setCurrentItemIndex((prev) => (prev - 1 + originalItems.length) % originalItems.length);
+      return;
+    }
     setCurrentItemIndex((prev) => {
       const newIndex = prev - 1;
       if (newIndex < originalItems.length) {
@@ -625,9 +633,17 @@ const HomeScreen = () => {
               {contentSlides[currentContentSlide].items.map((_, index) => (
                 <button
                   key={index}
-                  onClick={() => setCurrentItemIndex(index + originalItemsLength)}
+                  onClick={() => {
+                    if (originalItemsLength >= 3) {
+                      setCurrentItemIndex(index + originalItemsLength);
+                    } else {
+                      setCurrentItemIndex(index);
+                    }
+                  }}
                   className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all duration-300 ${
-                    ((currentItemIndex - originalItemsLength) % originalItemsLength) === index
+                    (originalItemsLength >= 3
+                      ? ((currentItemIndex - originalItemsLength + originalItemsLength * 100) % originalItemsLength) === index
+                      : (currentItemIndex % (originalItemsLength || 1)) === index)
                       ? 'bg-[#1e809b] scale-125'
                       : 'bg-gray-300 hover:bg-gray-400'
                   }`}
