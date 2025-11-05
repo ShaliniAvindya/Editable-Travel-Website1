@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { X, Calendar, Users, MapPin, Phone, Mail, MessageSquare, Minus, Plus, ChevronLeft, ChevronRight, MessageCircle } from 'lucide-react';
+import { X, Calendar, Users, MapPin, Phone, Mail, MessageSquare, Minus, Plus, ChevronLeft, ChevronRight, MessageCircle, Trash2 } from 'lucide-react';
 import { API_BASE_URL } from '../components/apiConfig';
 
 const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonType, resortName, roomName, isPackage, packageInquiryFormType }) => {
@@ -86,7 +86,7 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
       phone: 'Telefonnummer',
       message: 'Ihre Nachricht',
       fromDate: 'Check-in Datum',
-      toDate: 'Check-out Datum',
+      toDate: 'Abreisetag',
       travellers: 'Anzahl der Reisenden',
       children: 'Alter der Kinder (falls vorhanden)',
       addChild: 'Kind hinzufügen',
@@ -380,13 +380,13 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
 
        <div className="flex items-center gap-3">
         <input id="bookWholeBoat" type="checkbox" checked={!!formData.bookWholeBoat} onChange={(e) => setFormData((p) => ({ ...p, bookWholeBoat: e.target.checked }))} />
-        <label htmlFor="bookWholeBoat" className="text-sm">Sie müssen das ganze Boot buchen</label>
+        <label htmlFor="bookWholeBoat" className="text-sm">Ich möchte das ganze Boot buchen</label>
       </div>
 
       <div>
         <label className="block text-sm font-bold text-gray-700 mb-2">Optionen auswählen (Sie können mehrere auswählen)</label>
         <div className="flex flex-wrap gap-4">
-          {['Vervierfachen', 'Verdreifachen', 'Doppelt', 'Einzel'].map((opt) => (
+          {['Vierbett', 'Dreibett', 'Doppel', 'Einzel'].map((opt) => (
             <label key={opt} className="flex items-center gap-2">
               <input type="checkbox" name="adventureOptions" value={opt} checked={(formData.adventureOptions || []).includes(opt)} onChange={(e) => {
                 const checked = e.target.checked;
@@ -455,9 +455,14 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
                     }} className="px-3 py-2 border rounded w-full sm:w-auto">
                       {ageCategories.map((ac) => <option key={ac} value={ac}>{ac}</option>)}
                     </select>
-                    <button type="button" onClick={() => {
-                      setFormData((p) => ({ ...p, participantsByOption: (p.participantsByOption||[]).map(g => g.option === group.option ? { ...g, participants: g.participants.filter((_, i) => i !== idx) } : g) }));
-                    }} className="px-3 py-2 bg-red-100 rounded w-full sm:w-auto mt-2 sm:mt-0">Entfernen</button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData((p) => ({ ...p, participantsByOption: (p.participantsByOption||[]).map(g => g.option === group.option ? { ...g, participants: g.participants.filter((_, i) => i !== idx) } : g) }));
+                      }}
+                      className="p-2 bg-red-100 rounded w-full sm:w-auto mt-2 sm:mt-0 flex items-center justify-center" >
+                      <Trash2 size={14} className="text-red-600" />
+                    </button>
                   </div>
                 </div>
               ))}
@@ -540,7 +545,7 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
             <button type="button" onClick={() => setFormData((p) => ({ ...p, nondivers_children: (p.nondivers_children ?? 0) + 1 }))} className="p-3 sm:p-4 hover:bg-[#1e809b]/10 transition-colors"><Plus size={16} style={{ color: '#074a5b' }} /></button>
           </div>
 
-          <label className="block text-sm font-bold text-gray-700 mb-2">Kleinkinder (Unten 2)</label>
+          <label className="block text-sm font-bold text-gray-700 mb-2">Kleinkinder (unter 2)</label>
           <div className="flex items-center border-2 rounded-xl" style={{ borderColor: '#074a5b' }}>
             <button type="button" onClick={() => setFormData((p) => ({ ...p, nondivers_infants: Math.max(0, (p.nondivers_infants ?? 0) - 1) }))} className="p-3 sm:p-4 hover:bg-[#1e809b]/10 transition-colors"><Minus size={16} style={{ color: '#074a5b' }} /></button>
             <span className="flex-1 text-center py-2 sm:py-3 text-sm sm:text-base font-bold" style={{ color: '#074a5b' }}>{formData.nondivers_infants ?? 0}</span>
@@ -550,7 +555,7 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
       </div>
 
       <div className="mt-4">
-        <label className="block text-sm font-bold text-gray-700 mb-2">Wählen Sie Aktivitäten aus</label>
+        <label className="block text-sm font-bold text-gray-700 mb-2">Sie können hier bereits Aktivitäten hinzufügen, die Sie gerne unternehmen möchten</label>
         <div className="grid grid-cols-1 gap-2 max-h-32 sm:max-h-40 overflow-y-auto border-2 rounded-xl p-2" style={{ borderColor: '#074a5b' }}>
           {activities.length === 0 && <div className="text-sm text-gray-500">Keine Aktivitäten verfügbar</div>}
           {activities.map((a) => (
@@ -891,7 +896,7 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
                     onChange={handleChange}
                     className={`w-full px-3 sm:px-4 py-2 sm:py-3 border-2 rounded-xl focus:ring-2 focus:border-transparent outline-none transition-all input-field ${fieldErrors.name ? 'border-red-500' : ''}`}
                     style={{ borderColor: fieldErrors.name ? '#ef4444' : '#074a5b' }}
-                    placeholder="Enter your nameGeben Sie Ihren Namen ein"
+                    placeholder="Geben Sie Ihren Namen ein"
                   />
                   {fieldErrors.name && <div className="mt-1 text-xs text-red-600">{fieldErrors.name}</div>}
                 </div>
@@ -1098,4 +1103,3 @@ const InquiryFormModal = ({ isOpen, onClose, item, onSubmit, language, buttonTyp
 };
 
 export default React.memo(InquiryFormModal);
-
