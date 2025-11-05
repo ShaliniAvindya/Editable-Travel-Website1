@@ -9,6 +9,7 @@ const BlogPage = () => {
   const [currentVideo, setCurrentVideo] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const [videoFallbacks, setVideoFallbacks] = useState({});
   const [readingTime, setReadingTime] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -231,45 +232,42 @@ const BlogPage = () => {
           </div>
         );
 
-      case 'video':
+      case 'video': {
         const videoAlignment = blockData.alignment || 'center';
         const videoSize = blockData.size || 'medium';
         const videoAlignmentClass = `text-${videoAlignment}`;
         const videoSizeClass = videoSize === 'small' ? 'max-w-xs' : 
                               videoSize === 'large' ? 'max-w-3xl sm:max-w-4xl' : 
                               videoSize === 'full' ? 'w-full' : 'max-w-lg sm:max-w-2xl';
-        
+        const isEmbedLink = typeof section.image === 'string' && (/youtube\.com\/watch\?v=|youtu\.be\/|vimeo\.com\//i).test(section.image);
+
         return (
           <div key={index} className={`${videoAlignmentClass} ${spacingClass}`} style={blockStyle}>
-            <video
-              src={section.image}
-              controls
-              className={`rounded-xl w-full ${videoSizeClass}`}
-              style={{ 
-                margin: videoAlignment === 'left' ? '0' : 
-                       videoAlignment === 'right' ? '0 0 0 auto' : '0 auto'
-              }}
-            />
+            <div className={`relative rounded-xl overflow-hidden ${videoSizeClass} mx-auto`} style={{ aspectRatio: '16/9' }}>
+              {isEmbedLink ? (
+                <iframe
+                  src={getEmbedUrl(section.image)}
+                  className="w-full h-full"
+                  allowFullScreen
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  title={`content-video-embed-${index}`}
+                />
+              ) : (
+                <video
+                  src={section.image}
+                  controls
+                  className="w-full h-full object-cover"
+                  {...(section.thumbnail ? { poster: section.thumbnail } : {})}
+                  onError={() => setError('Failed to load video')}
+                />
+              )}
+            </div>
             {blockData.caption && (
               <p className="text-xs sm:text-sm text-gray-600 italic mt-3">{blockData.caption}</p>
             )}
           </div>
         );
-
-      case 'list':
-        let listData = { items: [], listType: 'unordered', listStyle: 'disc', checkedItems: {} };
-        try {
-          listData = JSON.parse(section.text);
-        } catch (e) {
-          listData = {
-            items: blockData.items || [],
-            listType: blockData.listType || 'unordered',
-            listStyle: blockData.listStyle || 'disc',
-            checkedItems: blockData.checkedItems || {}
-          };
-        }
-
-        if (!listData.items || listData.items.length === 0) return null;
+      }
         
         if (listData.listType === 'checklist') {
           return (
@@ -524,10 +522,27 @@ const BlogPage = () => {
           featuredImage: blogData.images[0],
           content: blogData.content || [],
           images: blogData.images || [],
-          videos: (blogData.videos || []).map((url) => ({
-            src: url,
-            thumbnail: url.includes('cloudinary'),
-          })),
+          videos: (blogData.videos || []).map((url) => {
+            const src = (url || '').trim();
+            const isYouTube = /youtube\.com\/watch\?v=|youtu\.be\//i.test(src);
+            const isVimeo = /vimeo\.com\//i.test(src);
+            let thumbnail;
+            if (isYouTube) {
+              try {
+                const id = src.includes('watch?v=') ? src.split('watch?v=')[1].split('&')[0] : src.split('youtu.be/')[1].split('?')[0];
+                thumbnail = `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+              } catch (e) { thumbnail = undefined; }
+            } else if (src.includes('cloudinary')) {
+              try {
+                thumbnail = src.replace(/\.(mp4|webm|ogg)(\?.*)?$/i, '.jpg');
+              } catch (e) { thumbnail = undefined; }
+            } else {
+              thumbnail = undefined;
+            }
+
+            const isEmbed = isYouTube || isVimeo || /tiktok\.com|player\.|\/embed\//i.test(src);
+            return { src, thumbnail: thumbnail || 'https://via.placeholder.com/800x450?text=Video', isEmbed };
+          }),
           tags: blogData.tags || [],
           author: blogData.author,
           theme: blogData.theme
@@ -716,16 +731,27 @@ const BlogPage = () => {
               {currentVideo !== null && (
                 <div className="mb-6 sm:mb-8 bg-black rounded-2xl overflow-hidden shadow-2xl">
                   <div className="relative aspect-video">
-                    <video
-                      id="blog-video-player"
-                      className="w-full h-full"
-                      src={blog.videos[currentVideo].src}
-                      poster={blog.videos[currentVideo].thumbnail}
-                      controls={false}
-                      autoPlay={isPlaying}
-                      muted={isMuted}
-                      onError={() => setError('Failed to load video')}
-                    />
+                    {blog.videos[currentVideo]?.isEmbed ? (
+                      <iframe
+                        src={getEmbedUrl(blog.videos[currentVideo].src)}
+                        className="w-full h-full"
+                        allowFullScreen
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        title={`video-embed-${currentVideo}`}
+                      />
+                    ) : (
+                      <video
+                        id="blog-video-player"
+                        className="w-full h-full"
+                        src={blog.videos[currentVideo].src}
+                        {...(blog.videos[currentVideo].thumbnail ? { poster: blog.videos[currentVideo].thumbnail } : {})}
+                        controls={false}
+                        autoPlay={isPlaying}
+                        muted={isMuted}
+                        onError={() => setError('Failed to load video')}
+                      />
+                    )}
+
                     {/* Custom Controls Overlay */}
                     <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-white">
                       <div className="flex items-center gap-3 sm:gap-4">
