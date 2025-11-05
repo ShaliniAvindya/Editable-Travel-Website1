@@ -49,6 +49,7 @@ const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
 const ReplyModal = ({ isOpen, onClose, onSubmit, inquiry }) => {
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
+  const [cc, setCc] = useState('');
 
   if (!isOpen) return null;
 
@@ -69,9 +70,11 @@ const ReplyModal = ({ isOpen, onClose, onSubmit, inquiry }) => {
       alert('Invalid inquiry id for reply.');
       return;
     }
-    onSubmit({ inquiryId, subject, message });
+    const ccList = (cc || '').split(/[,;\s]+/).map(s => s.trim()).filter(Boolean);
+    onSubmit({ inquiryId, subject, message, cc: ccList });
     setSubject('');
     setMessage('');
+    setCc('');
   };
 
   return (
@@ -103,6 +106,20 @@ const ReplyModal = ({ isOpen, onClose, onSubmit, inquiry }) => {
               required
               style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
             />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-600 mb-2" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
+              CC (comma separated emails)
+            </label>
+            <input
+              type="text"
+              value={cc}
+              onChange={(e) => setCc(e.target.value)}
+              placeholder="e.g. other@example.com, another@example.com"
+              className="w-full border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:border-[#1e809b]"
+              style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
+            />
+            <p className="text-xs text-gray-500 mt-1">Optional: recipients to CC.</p>
           </div>
           <div className="mb-4">
             <label className="block text-gray-600 mb-2" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
@@ -140,15 +157,19 @@ const ReplyModal = ({ isOpen, onClose, onSubmit, inquiry }) => {
   );
 };
 
-const ViewReplyModal = ({ isOpen, onClose, replyMessage }) => {
-  if (!isOpen) return null;
+const ViewReplyModal = ({ isOpen, onClose, inquiry }) => {
+  if (!isOpen || !inquiry) return null;
+
+  const toEmail = inquiry.email || (inquiry.inquiry && inquiry.inquiry.email) || 'N/A';
+  const cc = Array.isArray(inquiry.cc) ? inquiry.cc : (typeof inquiry.cc === 'string' && inquiry.cc.trim() ? [inquiry.cc.trim()] : (inquiry.inquiry && Array.isArray(inquiry.inquiry.cc) ? inquiry.inquiry.cc : []));
+  const replyMessage = inquiry.replyMessage || null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-semibold text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
-            Reply Message
+            Reply
           </h3>
           <button
             onClick={onClose}
@@ -159,9 +180,17 @@ const ViewReplyModal = ({ isOpen, onClose, replyMessage }) => {
             <X size={20} />
           </button>
         </div>
-        <p className="text-gray-600 mb-6" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
-          {replyMessage || 'No reply message sent yet.'}
-        </p>
+
+        <div className="mb-4 text-sm text-gray-700">
+          <div className="mb-2"><strong>To:</strong> <a href={`mailto:${toEmail}`} className="text-[#1e809b]">{toEmail}</a></div>
+          <div className="mb-2"><strong>CC:</strong> {cc && cc.length ? cc.join(', ') : 'None'}</div>
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-gray-600 mb-2" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>Message</label>
+          <div className="whitespace-pre-wrap bg-gray-50 p-3 rounded-lg text-gray-800" style={{ minHeight: 80 }}>{replyMessage}</div>
+        </div>
+
         <div className="flex justify-end">
           <button
             onClick={onClose}
@@ -185,7 +214,7 @@ const InquiryManagement = () => {
   const [success, setSuccess] = useState('');
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, id: null, name: '' });
   const [replyModal, setReplyModal] = useState({ isOpen: false, inquiry: null });
-  const [viewReplyModal, setViewReplyModal] = useState({ isOpen: false, replyMessage: '' });
+  const [viewReplyModal, setViewReplyModal] = useState({ isOpen: false, inquiry: null });
   const [viewDetailsModal, setViewDetailsModal] = useState({ isOpen: false, inquiry: null });
   const [refreshing, setRefreshing] = useState(false);
 
@@ -480,14 +509,16 @@ const InquiryManagement = () => {
     setReplyModal({ isOpen: true, inquiry });
   };
 
-  const handleSendReply = async ({ inquiryId, subject, message }) => {
+  const handleSendReply = async ({ inquiryId, subject, message, cc = [] }) => {
     if (!inquiryId || typeof inquiryId !== 'string' || !/^[a-fA-F0-9]{24}$/.test(inquiryId)) {
       setError('Invalid inquiry id for reply');
       setReplyModal({ isOpen: false, inquiry: null });
       return;
     }
     try {
-      const response = await axios.post(`${API_BASE_URL}/inquiries/reply`, { inquiryId, subject, message });
+      const payload = { inquiryId, subject, message };
+      if (Array.isArray(cc) && cc.length) payload.cc = cc;
+      const response = await axios.post(`${API_BASE_URL}/inquiries/reply`, payload);
       if (response.data && response.data.inquiry) {
         const updated = response.data.inquiry;
         setInquiries((prev) => prev.map((i) => {
@@ -502,7 +533,12 @@ const InquiryManagement = () => {
         ));
       }
       setSuccess('Reply sent successfully');
-      setViewReplyModal({ isOpen: true, replyMessage: message });
+      const found = (inquiries || []).find((i) => {
+        const id = (i._id && i._id.$oid) ? i._id.$oid : (i._id || '');
+        return id === inquiryId;
+      });
+      const viewInquiry = found ? { ...found, replyMessage: message, cc } : { email: 'N/A', replyMessage: message, cc };
+      setViewReplyModal({ isOpen: true, inquiry: viewInquiry });
     } catch (err) {
       console.error('Send reply error:', err);
       setError('Failed to send reply');
@@ -511,8 +547,8 @@ const InquiryManagement = () => {
     }
   };
 
-  const handleViewReply = (replyMessage) => {
-    setViewReplyModal({ isOpen: true, replyMessage });
+  const handleViewReply = (inquiry) => {
+    setViewReplyModal({ isOpen: true, inquiry });
   };
 
   const tabs = ['Accommodation', 'Adventure', 'Activity', 'Package', 'Contact', 'Newsletter'];
@@ -790,7 +826,7 @@ const InquiryManagement = () => {
                     Reply
                   </button>
                   <button
-                    onClick={() => handleViewReply(inquiry.replyMessage)}
+                    onClick={() => handleViewReply(inquiry)}
                     className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-3 py-1 rounded-xl text-sm transition-all duration-300"
                     style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
                   >
@@ -824,8 +860,8 @@ const InquiryManagement = () => {
       />
       <ViewReplyModal
         isOpen={viewReplyModal.isOpen}
-        onClose={() => setViewReplyModal({ isOpen: false, replyMessage: '' })}
-        replyMessage={viewReplyModal.replyMessage}
+        onClose={() => setViewReplyModal({ isOpen: false, inquiry: null })}
+        inquiry={viewReplyModal.inquiry}
       />
       <DetailsModal
         isOpen={viewDetailsModal.isOpen}
