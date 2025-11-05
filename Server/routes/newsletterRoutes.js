@@ -8,6 +8,9 @@ const crypto = require('crypto');
 const jsdom = require('jsdom');
 const nodemailer = require('nodemailer');
 const cron = require('node-cron');
+const fs = require('fs');
+const path = require('path');
+const UPLOADS_DIR = path.join(__dirname, '..', 'public', 'uploads');
 
   let createDOMPurify;
   try {
@@ -53,6 +56,91 @@ const cron = require('node-cron');
       if (!dirty || typeof dirty !== 'string') return '';
       return DOMPurify.sanitize(dirty, { ADD_ATTR: ['target', 'class', 'style'] });
     };
+  }
+
+  async function buildNewsletterHeaderHtml(title, align, baseUrl) {
+    try {
+      const logoDoc = await UIContent.findOne({ pageId: 'logo' });
+      const logoSection = logoDoc?.sections?.find(s => s.sectionId === 'logo')?.content;
+      let logoUrl = logoSection?.imageUrl || '';
+      const companyName = process.env.COMPANY_NAME || 'Traveliccted';
+      const safeTitle = title || companyName;
+      const textAlign = align || 'left';
+      // resolve relative URLs using baseUrl if provided
+      if (logoUrl && baseUrl && !/^https?:\/\//i.test(logoUrl) && !/^data:image\//i.test(logoUrl)) {
+        if (logoUrl.startsWith('/')) logoUrl = `${baseUrl.replace(/\/\/$/, '')}${logoUrl}`;
+        else logoUrl = `${baseUrl.replace(/\/\/$/, '')}/${logoUrl.replace(/^\/+/, '')}`;
+      }
+      const imgHtml = logoUrl ? `<div style="margin-bottom:8px;"><img src="${logoUrl}" alt="${companyName}" style="max-height:48px; display:block; margin:0 auto;"/></div>` : '';
+      return `
+        <tr>
+          <td style="padding:20px 30px; background:linear-gradient(135deg,#1e809b 0%,#074a5b 100%); color:#fff;">
+            <div style="text-align:${textAlign};">
+              ${imgHtml}
+              <h1 style="margin:0; font-size:20px;">${escapeHtml(safeTitle)}</h1>
+            </div>
+          </td>
+        </tr>
+      `;
+    } catch (e) {
+      const companyName = process.env.COMPANY_NAME || 'Traveliccted';
+      return `
+        <tr>
+          <td style="padding:20px 30px; background:linear-gradient(135deg,#1e809b 0%,#074a5b 100%); color:#fff;">
+            <h1 style="margin:0; font-size:20px;">${escapeHtml(title || companyName)}</h1>
+          </td>
+        </tr>
+      `;
+    }
+  }
+
+  // Return public URL for locally cached logo if present
+  function getLocalLogoPublicUrlForNewsletter(baseUrl) {
+    try {
+      if (!fs.existsSync(UPLOADS_DIR)) return null;
+      const files = fs.readdirSync(UPLOADS_DIR);
+      const logoFile = files.find(f => f.startsWith('logo_latest.'));
+      if (!logoFile) return null;
+      const base = (baseUrl || process.env.SERVER_BASE_URL || '').replace(/\/$/, '');
+      const publicPath = `/uploads/${logoFile}`;
+      return base ? `${base}${publicPath}` : publicPath;
+    } catch (e) {
+      console.warn('Error locating local newsletter logo:', e.message || e);
+      return null;
+    }
+  }
+
+  async function buildBrandHeaderHtml(baseUrl) {
+    try {
+      let logoUrl = getLocalLogoPublicUrlForNewsletter(baseUrl) || '';
+      if (!logoUrl) {
+        const logoDoc = await UIContent.findOne({ pageId: 'logo' });
+        const logoSection = logoDoc?.sections?.find(s => s.sectionId === 'logo')?.content;
+        logoUrl = logoSection?.imageUrl || '';
+      }
+      const companyName = process.env.COMPANY_NAME || 'Traveliccted';
+      if (logoUrl && baseUrl && !/^https?:\/\//i.test(logoUrl) && !/^data:image\//i.test(logoUrl)) {
+        if (logoUrl.startsWith('/')) logoUrl = `${baseUrl.replace(/\/$/, '')}${logoUrl}`;
+        else logoUrl = `${baseUrl.replace(/\/$/, '')}/${logoUrl.replace(/^\/+/, '')}`;
+      }
+      const logoHtml = logoUrl ? `<img src=\"${logoUrl}\" alt=\"${companyName}\" style=\"max-height:48px; display:inline-block; vertical-align:middle; margin-right:12px;\"/>` : '';
+      return `
+        <tr>
+          <td style=\"padding:12px 20px; background:#074a5b; text-align:left;\">
+            <table width=\"100%\" cellpadding=\"0\" cellspacing=\"0\">
+              <tr>
+                <td style=\"vertical-align:middle; text-align:left;\">
+                  ${logoHtml}
+                  <span style=\"font-size:18px; font-weight:700; color:#ffffff; vertical-align:middle;\">${escapeHtml(companyName)}</span>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      `;
+    } catch (e) {
+      return '';
+    }
   }
 
   const parseDateInput = (val) => {
@@ -400,26 +488,39 @@ const cron = require('node-cron');
     const { testEmail, toSelected, selectedIds, language, listId, listIds, customEmails } = options;
     const buildFooterHtml = async (recipientEmail) => {
       let footer = process.env.MAIL_FOOTER || '';
+      const base = (baseUrl || process.env.SERVER_BASE_URL || '').replace(/\/$/, '');
+      const unsubscribeUrl = base ? `${base}/api/newsletter/unsubscribe?email=${encodeURIComponent(recipientEmail)}&t=${generateUnsubscribeToken(recipientEmail)}` : `/api/newsletter/unsubscribe?email=${encodeURIComponent(recipientEmail)}&t=${generateUnsubscribeToken(recipientEmail)}`;
       try {
         const contactDoc = await UIContent.findOne({ pageId: 'contact' });
         const contactSection = contactDoc?.sections?.find(s => s.sectionId === 'contact-info')?.content;
+        let logoUrl = getLocalLogoPublicUrlForNewsletter(baseUrl) || '';
+        if (!logoUrl) {
+          const logoDoc = await UIContent.findOne({ pageId: 'logo' });
+          const logoSection = logoDoc?.sections?.find(s => s.sectionId === 'logo')?.content;
+          logoUrl = logoSection?.imageUrl || '';
+        }
+        if (logoUrl && baseUrl && !/^https?:\/\//i.test(logoUrl) && !/^data:image\//i.test(logoUrl)) {
+          if (logoUrl.startsWith('/')) logoUrl = `${baseUrl.replace(/\/$/, '')}${logoUrl}`;
+          else logoUrl = `${baseUrl.replace(/\/$/, '')}/${logoUrl.replace(/^\/+/, '')}`;
+        }
         if (contactSection) {
-          const companyName = 'Traveliccted';
+          const companyName = process.env.COMPANY_NAME || 'Traveliccted';
           const phone = contactSection.callPhone || '';
           const email = contactSection.email || '';
           const address = contactSection.address || '';
-          const unsubscribeUrl = `${baseUrl}/api/newsletter/unsubscribe?email=${encodeURIComponent(recipientEmail)}&t=${generateUnsubscribeToken(recipientEmail)}`;
+          // unsubscribeUrl is defined above and will be used here
           footer = `
-					<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="font-family: Arial, Helvetica, sans-serif; font-size:13px; color:#6b7280;">
-						<tr>
-							<td style="padding:12px 0; border-top:1px solid #e6e9ec;">
-								<table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-									<tr>
-										<td style="vertical-align:top; padding-right:12px; width:60%">
-											<div style="font-weight:700; color:#111827; font-size:14px;">${companyName}</div>
-											<div style="margin-top:6px; color:#6b7280; font-size:13px; line-height:1.4;">
-												${phone ? `<div>Phone: ${phone}</div>` : ''}
-												${email ? `<div>Email: <a href=\"mailto:${email}\" style=\"color:#1e809b; text-decoration:none\">${email}</a></div>` : ''}
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="font-family: Arial, Helvetica, sans-serif; font-size:13px; color:#6b7280;">
+            <tr>
+              <td style="padding:12px 0; border-top:1px solid #e6e9ec;">
+                <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                  <tr>
+                    <td style="vertical-align:top; padding-right:12px; width:60%">
+                      ${logoUrl ? `<div style="margin-bottom:8px;"><img src=\"${logoUrl}\" alt=\"${companyName}\" style=\"max-height:48px; display:inline-block; margin:0 auto;\"/></div>` : ''}
+                      <div style="font-weight:700; color:#111827; font-size:14px;">${companyName}</div>
+                      <div style="margin-top:6px; color:#6b7280; font-size:13px; line-height:1.4;">
+                        ${phone ? `<div>Phone: ${phone}</div>` : ''}
+                        ${email ? `<div>Email: <a href=\"mailto:${email}\" style=\"color:#1e809b; text-decoration:none\">${email}</a></div>` : ''}
                         ${address ? `<div>Address: ${address}</div>` : ''}
 											</div>
 										</td>
@@ -534,6 +635,8 @@ const cron = require('node-cron');
       console.warn('Failed to prepare campaign body for email, sending raw sanitized HTML', e.message || e);
       bodyHtml = campaign.body || '';
     }
+    const brandHeaderHtml = await buildBrandHeaderHtml(baseUrl);
+    const headerHtml = await buildNewsletterHeaderHtml(campaign.title || '', campaign.titleAlign, baseUrl);
     const html = `
       <!doctype html>
       <html>
@@ -547,11 +650,8 @@ const cron = require('node-cron');
           <tr>
             <td align="center">
               <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="600" style="margin:20px auto; background:#ffffff; border-radius:8px; overflow:hidden;">
-                <tr>
-                  <td style="padding:20px 30px; background:linear-gradient(135deg,#1e809b 0%,#074a5b 100%); color:#fff;">
-                    <h1 style="margin:0; font-size:20px; text-align:${campaign.titleAlign || 'left'};">${campaign.title || ''}</h1>
-                  </td>
-                </tr>
+            ${brandHeaderHtml}
+            ${headerHtml}
                 <tr>
                   <td style="padding:30px; color:#111827;">
                     ${bodyHtml}
