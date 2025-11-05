@@ -515,7 +515,7 @@ const ResortProfile = () => {
       <div className="mb-6 p-4 bg-gradient-to-br from-white/90 via-blue-50/80 to-cyan-50/60 rounded-xl border border-blue-200/40 shadow-sm">
         <div className="flex items-center mb-2">
           <MapPin size={18} className="mr-2 text-[#1e809b]" />
-          <span className="text-sm font-medium text-gray-600">Standort</span>
+          <span className="text-sm font-medium text-gray-600">{type === 'adventure' ? 'Route' : 'Standort'}</span>
         </div>
         <div className="text-gray-600">
           {resortData.atoll?.name || 'Insel'}
