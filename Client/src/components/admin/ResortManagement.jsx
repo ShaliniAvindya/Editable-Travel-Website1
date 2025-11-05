@@ -524,7 +524,7 @@ const ResortManagement = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <p className="text-xl text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
-          Loading resorts...
+          Loading Accommodations...
         </p>
       </div>
     );
@@ -546,7 +546,7 @@ const ResortManagement = () => {
       />
       <div className="container mx-auto p-6">
         <h1 className="text-4xl font-bold mb-8 text-[#074a5b]" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
-          Resort Management
+          Accommodation Management
         </h1>
 
         {error && (
@@ -570,7 +570,7 @@ const ResortManagement = () => {
           <form onSubmit={handleResortSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block mb-2 text-[#074a5b] font-semibold" style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}>
-                Resort Name
+                Accommodation Name
               </label>
               <input
                 type="text"
@@ -741,7 +741,7 @@ const ResortManagement = () => {
                 disabled={uploading}
                 style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
               >
-                {selectedResort ? 'Update Resort' : 'Add Resort'}
+                {selectedResort ? 'Update Accommodation' : 'Add Accommodation'}
               </button>
               {selectedResort && (
                 <button
@@ -763,7 +763,7 @@ const ResortManagement = () => {
             className="text-2xl font-semibold mb-6 text-[#074a5b]"
             style={{ fontFamily: "'Comic Sans MS', 'Comic Neue'" }}
           >
-            Resorts
+            Accommodations
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {resorts.map((resort) => (
