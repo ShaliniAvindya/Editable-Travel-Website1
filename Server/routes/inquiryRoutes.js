@@ -7,9 +7,66 @@ const Activity = require('../models/Activity');
 const Resort = require('../models/Resort');
 const Newsletter = require('../models/Newsletter');
 const List = require('../models/List');
+const UIContent = require('../models/UIContent');
 const nodemailer = require('nodemailer');
 const twilio = require('twilio');
 require('dotenv').config();
+
+const fs = require('fs');
+const path = require('path');
+const UPLOADS_DIR = path.join(__dirname, '..', 'public', 'uploads');
+
+function getLocalLogoFilePath() {
+  try {
+    if (!fs.existsSync(UPLOADS_DIR)) return null;
+    const files = fs.readdirSync(UPLOADS_DIR);
+    const logoFile = files.find(f => f.startsWith('logo_latest.'));
+    if (!logoFile) return null;
+    return path.join(UPLOADS_DIR, logoFile);
+  } catch (e) {
+    console.warn('Error finding local logo file:', e);
+    return null;
+  }
+}
+
+function mimeTypeForFilename(filename) {
+  const ext = (path.extname(filename) || '').toLowerCase();
+  if (ext === '.png') return 'image/png';
+  if (ext === '.jpg' || ext === '.jpeg') return 'image/jpeg';
+  if (ext === '.gif') return 'image/gif';
+  if (ext === '.svg') return 'image/svg+xml';
+  return 'application/octet-stream';
+}
+
+function getLocalLogoPublicUrl() {
+  try {
+    if (!fs.existsSync(UPLOADS_DIR)) return null;
+    const files = fs.readdirSync(UPLOADS_DIR);
+    const logoFile = files.find(f => f.startsWith('logo_latest.'));
+    if (!logoFile) return null;
+    const base = (process.env.SERVER_BASE_URL || '').replace(/\/$/, '');
+    const publicPath = `/uploads/${logoFile}`;
+    return base ? `${base}${publicPath}` : publicPath;
+  } catch (e) {
+    console.warn('Error checking local logo file:', e);
+    return null;
+  }
+}
+
+const getCurrentLogo = async () => {
+  try {
+    // local cached logo if available
+    const local = getLocalLogoPublicUrl();
+    if (local) return local;
+
+    const uiContent = await UIContent.findOne({ pageId: 'logo-favicon' });
+    const logoSection = uiContent?.sections?.find(s => s.sectionId === 'logo');
+    return logoSection?.content?.imageUrl || null;
+  } catch (error) {
+    console.error('Error fetching logo:', error);
+    return null;
+  }
+};
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -73,8 +130,9 @@ function htmlRowIf(label, value) {
 }
 
 // Function to generate admin email template
-const generateAdminEmailTemplate = (data) => {
+const generateAdminEmailTemplate = (data, logoUrl) => {
   const { entityType, entityTitle, resortName, roomName, name, email, phone_number, message, entity, from_date, to_date, adults, children, infants, country, buttonType, submitted_at, travellers, number_of_rooms, selectedActivities, preferredMonth, preferredYear, adventureOption, adventureOptions, participants, participantsByOption, bookWholeBoat, divers_adults, divers_children, nondivers_adults, nondivers_children, nondivers_infants } = data;
+  const logoHtml = logoUrl ? `<img src="${logoUrl}" alt="logo" style="max-height:48px; display:inline-block; vertical-align:middle; margin-right:10px;">` : '';
   
   const plainText = `
     New Inquiry: ${entityTitle}
@@ -106,9 +164,18 @@ const generateAdminEmailTemplate = (data) => {
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 20px auto; background-color: #ffffff; border: 1px solid #e0e0e0;">
         <!-- Header -->
         <tr>
-          <td style="background-color: #074a5b; color: #ffffff; padding: 20px; text-align: center;">
-            <h1 style="margin: 0; font-size: 26px; font-weight: bold;">Traveliccted</h1>
-            <p style="margin: 5px 0; font-size: 14px; color: #a1d6e2;">New Inquiry Notification</p>
+          <td style="background-color: #074a5b; color: #ffffff; padding: 20px;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="vertical-align: middle; text-align: left;">
+                  ${logoHtml}
+                  <span style="font-size:26px; font-weight:bold; color:#ffffff; vertical-align:middle;">Traveliccted</span>
+                </td>
+                <td style="vertical-align: middle; text-align: right;">
+                  <span style="display:block; color:#a1d6e2; font-size:14px;">New Inquiry Notification</span>
+                </td>
+              </tr>
+            </table>
           </td>
         </tr>
         <!-- Content -->
@@ -210,8 +277,9 @@ const generateAdminEmailTemplate = (data) => {
 };
 
 // Function to generate user confirmation email template
-const generateUserConfirmationTemplate = (data) => {
+const generateUserConfirmationTemplate = (data, logoUrl) => {
   const { entityType, entityTitle, resortName, roomName, name, email, phone_number, message, entity, from_date, to_date, adults, children, infants, country, submitted_at, travellers, number_of_rooms, selectedActivities, preferredMonth, preferredYear, adventureOption, adventureOptions, participants, participantsByOption, bookWholeBoat, divers_adults, divers_children, nondivers_adults, nondivers_children, nondivers_infants } = data;
+  const logoHtml = logoUrl ? `<img src="${logoUrl}" alt="logo" style="max-height:48px; display:inline-block; vertical-align:middle; margin-right:10px;">` : '';
   let plainText = `Dear ${name},\n\nWe have received your booking details for ${entityTitle}\n\n`;
   if (entityType === 'Accommodation') plainText += `Resort: ${resortName}\n${isFilled(roomName) ? `Room: ${roomName}\n` : ''}`;
     plainText += plainIf('Name', name);
@@ -258,9 +326,18 @@ const generateUserConfirmationTemplate = (data) => {
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 20px auto; background-color: #ffffff; border: 1px solid #e0e0e0;">
         <!-- Header -->
         <tr>
-          <td style="background-color: #074a5b; color: #ffffff; padding: 20px; text-align: center;">
-            <h1 style="margin: 0; font-size: 26px; font-weight: bold;">Traveliccted</h1>
-            <p style="margin: 5px 0; font-size: 14px; color: #a1d6e2;">Your Travel Dreams, Our Passion</p>
+          <td style="background-color: #074a5b; color: #ffffff; padding: 20px;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="vertical-align: middle; text-align: left;">
+                  ${logoHtml}
+                  <span style="font-size:26px; font-weight:bold; color:#ffffff; vertical-align:middle;">Traveliccted</span>
+                </td>
+                <td style="vertical-align: middle; text-align: right;">
+                  <span style="display:block; color:#a1d6e2; font-size:14px;">Your Travel Dreams, Our Passion</span>
+                </td>
+              </tr>
+            </table>
           </td>
         </tr>
         <!-- Content -->
@@ -364,7 +441,7 @@ const generateUserConfirmationTemplate = (data) => {
         <tr>
           <td style="background-color: #f4f4f4; padding: 15px; text-align: center; font-size: 12px; color: #666666;">
             <p style="margin: 0; font-weight: bold;">Traveliccted</p>
-            <p style="margin: 5px 0;">Follow us: <a href="#" style="color: #1e809b; text-decoration: none;">Facebook</a> | <a href="#" style="color: #1e809b; text-decoration: none;">Twitter</a> | <a href="#" style="color: #1e809b; text-decoration: none;">Instagram</a></p>
+            <p style="margin: 5px 0;"><a>Phone: +960 7799950<a></a> Email: mail@traveliccted.com</a></p>
             <p style="margin: 5px 0;">© 2025 Traveliccted. All rights reserved.</p>
           </td>
         </tr>
@@ -377,8 +454,9 @@ const generateUserConfirmationTemplate = (data) => {
 };
 
 // Function to generate contact confirmation email template
-const generateContactConfirmationTemplate = (data) => {
+const generateContactConfirmationTemplate = (data, logoUrl) => {
   const { name, email, message, submitted_at } = data;
+  const logoHtml = logoUrl ? `<img src="${logoUrl}" alt="logo" style="max-height:48px; display:inline-block; vertical-align:middle; margin-right:10px;">` : '';
   
   const plainText = `
     Dear ${name},
@@ -408,9 +486,18 @@ const generateContactConfirmationTemplate = (data) => {
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 20px auto; background-color: #ffffff; border: 1px solid #e0e0e0;">
         <!-- Header -->
         <tr>
-          <td style="background-color: #074a5b; color: #ffffff; padding: 20px; text-align: center;">
-            <h1 style="margin: 0; font-size: 26px; font-weight: bold;">Traveliccted</h1>
-            <p style="margin: 5px 0; font-size: 14px; color: #a1d6e2;">Thank you for contacting us!</p>
+          <td style="background-color: #074a5b; color: #ffffff; padding: 20px;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="vertical-align: middle; text-align: left;">
+                  ${logoHtml}
+                  <span style="font-size:26px; font-weight:bold; color:#ffffff; vertical-align:middle;">Traveliccted</span>
+                </td>
+                <td style="vertical-align: middle; text-align: right;">
+                  <span style="display:block; color:#a1d6e2; font-size:14px;">Thank you for contacting us!</span>
+                </td>
+              </tr>
+            </table>
           </td>
         </tr>
         <!-- Content -->
@@ -473,7 +560,7 @@ const generateContactConfirmationTemplate = (data) => {
         <tr>
           <td style="background-color: #f4f4f4; padding: 15px; text-align: center; font-size: 12px; color: #666666;">
             <p style="margin: 0; font-weight: bold;">Traveliccted</p>
-            <p style="margin: 5px 0;">Follow us: <a href="#" style="color: #1e809b; text-decoration: none;">Facebook</a> | <a href="#" style="color: #1e809b; text-decoration: none;">Twitter</a> | <a href="#" style="color: #1e809b; text-decoration: none;">Instagram</a></p>
+            <p style="margin: 5px 0;"><a>Phone: +960 7799950<a></a> Email: mail@traveliccted.com</a></p>
             <p style="margin: 5px 0;">© 2025 Traveliccted. All rights reserved.</p>
           </td>
         </tr>
@@ -486,8 +573,10 @@ const generateContactConfirmationTemplate = (data) => {
 };
 
 // Function to generate admin contact email template
-const generateAdminContactEmailTemplate = (data) => {
+const generateAdminContactEmailTemplate = (data, logoUrl) => {
   const { name, email, message, submitted_at } = data;
+
+  const logoHtml = logoUrl ? `<img src="${logoUrl}" alt="logo" style="max-height:48px; display:inline-block; vertical-align:middle; margin-right:10px;">` : '';
   
   const plainText = `
     New Contact Inquiry
@@ -510,9 +599,18 @@ const generateAdminContactEmailTemplate = (data) => {
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 20px auto; background-color: #ffffff; border: 1px solid #e0e0e0;">
         <!-- Header -->
         <tr>
-          <td style="background-color: #074a5b; color: #ffffff; padding: 20px; text-align: center;">
-            <h1 style="margin: 0; font-size: 26px; font-weight: bold;">Traveliccted</h1>
-            <p style="margin: 5px 0; font-size: 14px; color: #a1d6e2;">New Contact Inquiry Notification</p>
+          <td style="background-color: #074a5b; color: #ffffff; padding: 20px;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="vertical-align: middle; text-align: left;">
+                  ${logoHtml}
+                  <span style="font-size:26px; font-weight:bold; color:#ffffff; vertical-align:middle;">Traveliccted</span>
+                </td>
+                <td style="vertical-align: middle; text-align: right;">
+                  <span style="display:block; color:#a1d6e2; font-size:14px;">New Contact Inquiry Notification</span>
+                </td>
+              </tr>
+            </table>
           </td>
         </tr>
         <!-- Content -->
@@ -578,8 +676,9 @@ const generateAdminContactEmailTemplate = (data) => {
 };
 
 // Updated function to generate reply email template with inquiry details
-const generateReplyEmailTemplate = (data) => {
+const generateReplyEmailTemplate = (data, logoUrl) => {
   const { name, email, subject, message, inquiry } = data;
+  const logoHtml = logoUrl ? `<img src="${logoUrl}" alt="logo" style="max-height:48px; display:inline-block; vertical-align:middle; margin-right:10px;">` : '';
 
   let plainText = `Dear ${name},\n\nSubject: ${subject}\n\n${message}\n\n---\n\nOriginal Inquiry Details:\n`;
   // Type intentionally not displayed per request
@@ -623,8 +722,18 @@ const generateReplyEmailTemplate = (data) => {
     <body style="margin: 0; padding: 0; font-family: Helvetica, Arial, sans-serif; background-color: #f4f4f4;">
       <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 20px auto; background-color: #ffffff; border: 1px solid #e0e0e0;">
         <tr>
-          <td style="background-color: #074a5b; color: #ffffff; padding: 20px; text-align: center;">
-            <h1 style="margin: 0; font-size: 26px; font-weight: bold;">Traveliccted</h1>
+          <td style="background-color: #074a5b; color: #ffffff; padding: 20px;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td style="vertical-align: middle; text-align: left;">
+                  ${logoHtml}
+                  <span style="font-size:26px; font-weight:bold; color:#ffffff; vertical-align:middle;">Traveliccted</span>
+                </td>
+                <td style="vertical-align: middle; text-align: right;">
+                  <span style="display:block; color:#a1d6e2; font-size:14px;">${subject}</span>
+                </td>
+              </tr>
+            </table>
           </td>
         </tr>
         <tr>
@@ -951,16 +1060,26 @@ router.post('/', async (req, res) => {
       Submitted At: ${inquiry.submitted_at.toISOString()}
     `;
 
+    let adminLogoUrl = null;
+    try {
+      adminLogoUrl = await getCurrentLogo();
+      console.log('Fetched admin logo URL:', adminLogoUrl);
+    } catch (e) {
+      console.warn('Could not fetch admin logo for emails:', e?.message || e);
+    }
+
     // Send admin notification
     if (buttonType === 'bookNow') {
-      const adminEmail = generateAdminEmailTemplate(emailData);
+      const adminEmail = generateAdminEmailTemplate(emailData, adminLogoUrl);
+      let adminHtml = adminEmail.html;
       const adminMailOptions = {
         from: process.env.SMTP_USER,
         to: process.env.SMTP_USER,
-  subject: `New Inquiry: ${entityTitle}`,
-        html: adminEmail.html,
+        subject: `New Inquiry: ${entityTitle}`,
+        html: adminHtml,
         text: adminEmail.text,
       };
+
       await sendMailSafe(adminMailOptions);
       console.log('Admin email send attempted');
     } else if (buttonType === 'whatsapp') {
@@ -968,13 +1087,22 @@ router.post('/', async (req, res) => {
       console.log('WhatsApp send attempted');
     }
 
+    let userLogoUrl = null;
+    try {
+      userLogoUrl = await getCurrentLogo();
+      console.log('Fetched user logo URL:', userLogoUrl);
+    } catch (e) {
+      console.warn('Could not fetch user logo for emails:', e?.message || e);
+    }
+
     // User confirmation email
-  const userEmail = generateUserConfirmationTemplate(emailData);
+    const userEmail = generateUserConfirmationTemplate(emailData, userLogoUrl);
+    let userHtml = userEmail.html;
     const userMailOptions = {
       from: process.env.SMTP_USER,
       to: email,
   subject: `Booking Confirmation: ${entityTitle}`,
-      html: userEmail.html,
+      html: userHtml,
       text: userEmail.text,
     };
   await sendMailSafe(userMailOptions);
@@ -1079,24 +1207,34 @@ router.post('/contact', async (req, res) => {
       submitted_at: inquiry.submitted_at
     };
 
-    const adminEmail = generateAdminContactEmailTemplate(adminEmailData);
+   // fetch logo for email header
+    let logoUrl = null;
+    try {
+      logoUrl = await getCurrentLogo();
+    } catch (e) {
+      console.warn('Could not fetch logo for contact emails:', e?.message || e);
+    }
+
+    const adminEmail = generateAdminContactEmailTemplate(adminEmailData, logoUrl);
+    let adminContactHtml = adminEmail.html;
     const adminMailOptions = {
       from: process.env.SMTP_USER,
       to: process.env.SMTP_USER,
       subject: 'New Contact Inquiry',
-      html: adminEmail.html,
+      html: adminContactHtml,
       text: adminEmail.text,
     };
   await sendMailSafe(adminMailOptions);
   console.log('Admin contact inquiry email send attempted');
 
     // User confirmation email
-    const userEmail = generateContactConfirmationTemplate(adminEmailData);
+    const userEmail = generateContactConfirmationTemplate(adminEmailData, logoUrl);
+    let userContactHtml = userEmail.html;
     const userMailOptions = {
       from: process.env.SMTP_USER,
       to: email,
       subject: 'Inquiry Confirmation: Contact Inquiry',
-      html: userEmail.html,
+      html: userContactHtml,
       text: userEmail.text,
     };
   await sendMailSafe(userMailOptions);
@@ -1111,7 +1249,7 @@ router.post('/contact', async (req, res) => {
 //  POST /reply route to include inquiry details
 router.post('/reply', async (req, res) => {
   try {
-    const { inquiryId, subject, message } = req.body;
+    const { inquiryId, subject, message, cc } = req.body;
 
     if (!inquiryId || !subject || !message) {
       return res.status(400).json({ error: 'Missing required fields: inquiryId, subject, message' });
@@ -1122,6 +1260,15 @@ router.post('/reply', async (req, res) => {
     if (!inquiry) {
       return res.status(404).json({ msg: 'Inquiry not found' });
     }
+
+    let ccList = [];
+    if (Array.isArray(cc)) {
+      ccList = cc.map(c => String(c).trim()).filter(Boolean);
+    } else if (typeof cc === 'string' && cc.trim()) {
+      ccList = cc.split(/[;,\s]+/).map(s => s.trim()).filter(Boolean);
+    }
+    // Deduplicate
+    ccList = Array.from(new Set(ccList));
 
     // Send reply email with inquiry details
     const replyEmailData = {
@@ -1159,23 +1306,37 @@ router.post('/reply', async (req, res) => {
       }
     };
 
-    const replyEmail = generateReplyEmailTemplate(replyEmailData);
+   // fetch logo for reply email header
+    let logoUrl = null;
+    try {
+      logoUrl = await getCurrentLogo();
+    } catch (e) {
+      console.warn('Could not fetch logo for reply email:', e?.message || e);
+    }
+
+    const replyEmail = generateReplyEmailTemplate(replyEmailData, logoUrl);
+    let replyHtml = replyEmail.html;
     const replyMailOptions = {
       from: process.env.SMTP_USER,
       to: inquiry.email,
       subject,
-      html: replyEmail.html,
+      html: replyHtml,
       text: replyEmail.text,
     };
-  await sendMailSafe(replyMailOptions);
-  console.log('Reply email send attempted to:', inquiry.email);
 
-  // Save reply message to inquiry and mark archived
-  inquiry.replyMessage = message;
-  inquiry.archived = true;
-  inquiry.archivedAt = new Date();
-  await inquiry.save();
-  console.log('Reply message saved and inquiry archived:', inquiry._id);
+    if (ccList.length) {
+      replyMailOptions.cc = ccList;
+      console.log('Including CC recipients on reply:', ccList);
+    }
+
+    await sendMailSafe(replyMailOptions);
+    console.log('Reply email send attempted to:', inquiry.email, 'cc:', ccList);
+    inquiry.replyMessage = message;
+    inquiry.archived = true;
+    inquiry.archivedAt = new Date();
+    if (ccList.length) inquiry.cc = ccList;
+    await inquiry.save();
+    console.log('Reply message saved and inquiry archived:', inquiry._id);
 
   res.status(200).json({ msg: 'Reply sent, saved and archived successfully', inquiry });
   } catch (err) {
