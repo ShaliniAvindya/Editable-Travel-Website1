@@ -2,8 +2,56 @@ const express = require('express');
 const router = express.Router();
 const UIContent = require('../models/UIContent');
 const auth = require('../middleware/auth');
+const fs = require('fs');
+const path = require('path');
+const http = require('http');
+const https = require('https');
 
-// Get maintenance status  
+const UPLOADS_DIR = path.join(__dirname, '..', 'public', 'uploads');
+
+async function downloadAndSaveLogo(imageUrl) {
+  return new Promise((resolve, reject) => {
+    try {
+      const urlObj = new URL(imageUrl);
+      const client = urlObj.protocol === 'https:' ? https : http;
+      const req = client.get(urlObj, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; TravelicctedBot/1.0)' } }, (res) => {
+        if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
+          return reject(new Error('Failed to download image, status: ' + res.statusCode));
+        }
+        const contentType = res.headers['content-type'] || '';
+        let ext = '.png';
+        if (contentType.includes('jpeg')) ext = '.jpg';
+        else if (contentType.includes('png')) ext = '.png';
+        else if (contentType.includes('gif')) ext = '.gif';
+        else {
+          const parsed = path.parse(urlObj.pathname || '');
+          if (parsed.ext) ext = parsed.ext;
+        }
+
+        try { fs.mkdirSync(UPLOADS_DIR, { recursive: true }); } catch (e) {}
+        const filename = `logo_latest${ext}`;
+        const outPath = path.join(UPLOADS_DIR, filename);
+        const fileStream = fs.createWriteStream(outPath);
+        res.pipe(fileStream);
+        fileStream.on('finish', () => {
+          fileStream.close(() => {
+            const base = (process.env.SERVER_BASE_URL || '').replace(/\/$/, '');
+            const publicPath = `/uploads/${filename}`;
+            const publicUrl = base ? `${base}${publicPath}` : publicPath;
+            resolve(publicUrl);
+          });
+        });
+        fileStream.on('error', (err) => { try { fs.unlinkSync(outPath); } catch(e){}; reject(err); });
+      });
+      req.on('error', (err) => reject(err));
+      req.setTimeout(15000, () => { req.abort(); reject(new Error('Timeout downloading image')); });
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
+
+// Get maintenance status
 router.get('/maintenance-status', async (req, res) => {
   try {
     const content = await UIContent.findOne({ pageId: 'global' });
@@ -72,6 +120,25 @@ router.put('/:pageId', auth, async (req, res) => {
       { $set: { sections, lastUpdated: new Date() } },
       { new: true, upsert: true }
     );
+    if (req.params.pageId === 'logo-favicon') {
+      try {
+        const logoSection = Array.isArray(sections) ? sections.find(s => s.sectionId === 'logo') : null;
+        const imageUrl = logoSection?.content?.imageUrl;
+        if (imageUrl) {
+          try {
+            const savedLocalUrl = await downloadAndSaveLogo(imageUrl);
+            const resp = content.toObject ? content.toObject() : content;
+            resp.localUrl = savedLocalUrl;
+            return res.json(resp);
+          } catch (dlErr) {
+            console.warn('ui-content: failed to download local logo copy:', dlErr.message || dlErr);
+            return res.json(content);
+          }
+        }
+      } catch (e) {
+        console.warn('ui-content: error handling local logo save:', e.message || e);
+      }
+    }
     res.json(content);
   } catch (error) {
     console.error('Error updating content:', error.message);
@@ -80,4 +147,3 @@ router.put('/:pageId', auth, async (req, res) => {
 });
 
 module.exports = router;
-
