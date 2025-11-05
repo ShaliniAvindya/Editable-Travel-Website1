@@ -11,6 +11,7 @@ const InquirySchema = new mongoose.Schema({
   },
   message: String,
   replyMessage: String, // New field to store reply message
+    cc: [{ type: String }],
   archived: {
     type: Boolean,
     default: false,
@@ -132,3 +133,4 @@ InquirySchema.set('toJSON', {
 });
 
 module.exports = mongoose.model('Inquiry', InquirySchema);
+
