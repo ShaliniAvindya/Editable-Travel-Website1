@@ -79,6 +79,37 @@ const THEME_PRESETS = {
   }
 };
 
+const getEmbedUrl = (url) => {
+  if (!url) return '';
+  try {
+    // YouTube URL handling
+    if (url.includes('youtube.com/watch?v=')) {
+      const videoId = url.split('watch?v=')[1].split('&')[0];
+      return `https://www.youtube.com/embed/${videoId}`;
+    } else if (url.includes('youtu.be/')) {
+      const videoId = url.split('youtu.be/')[1].split('?')[0];
+      return `https://www.youtube.com/embed/${videoId}`;
+    }
+    // Vimeo URL handling
+    else if (url.includes('vimeo.com/')) {
+      const videoId = url.split('vimeo.com/')[1].split('?')[0];
+      return `https://player.vimeo.com/video/${videoId}`;
+    }
+    // TikTok URL handling
+    else if (url.includes('tiktok.com')) {
+      return url.replace('/video/', '/embed/');
+    }
+    // For other embed URLs, return as is
+    else if (url.includes('/embed/') || url.includes('player.')) {
+      return url;
+    }
+    return url;
+  } catch (error) {
+    console.error('Error processing embed URL:', error);
+    return url;
+  }
+};
+
 // Rich Text Toolbar Component
 const AdvancedRichTextToolbar = ({ onFormat, activeFormats, blockId }) => {
   const [showMoreOptions, setShowMoreOptions] = useState(false);
@@ -513,40 +544,6 @@ const ContentBlock = ({
     }
     
     return style;
-  };
-
-  // Embed URL conversion function
-  const getEmbedUrl = (url) => {
-    if (!url) return '';
-    
-    try {
-      // YouTube URL handling
-      if (url.includes('youtube.com/watch?v=')) {
-        const videoId = url.split('watch?v=')[1].split('&')[0];
-        return `https://www.youtube.com/embed/${videoId}`;
-      } else if (url.includes('youtu.be/')) {
-        const videoId = url.split('youtu.be/')[1].split('?')[0];
-        return `https://www.youtube.com/embed/${videoId}`;
-      } 
-      // Vimeo URL handling
-      else if (url.includes('vimeo.com/')) {
-        const videoId = url.split('vimeo.com/')[1].split('?')[0];
-        return `https://player.vimeo.com/video/${videoId}`;
-      }
-      // TikTok URL handling
-      else if (url.includes('tiktok.com')) {
-        return url.replace('/video/', '/embed/');
-      }
-      // For other embed URLs, return as is
-      else if (url.includes('/embed/') || url.includes('player.')) {
-        return url;
-      }
-      
-      return url;
-    } catch (error) {
-      console.error('Error processing embed URL:', error);
-      return url;
-    }
   };
 
   const renderBlockContent = () => {
@@ -1875,9 +1872,16 @@ const EnhancedBlogPreview = ({ blog, contentBlocks, theme, isOpen, onClose }) =>
       const maxWidth = sizeMap[block.size] || sizeMap.medium;
       const margin = block.alignment === 'left' ? '0' : block.alignment === 'right' ? '0 0 0 auto' : '0 auto';
 
+      const minHeightMap = {
+        small: '200px',
+        medium: '360px',
+        large: '480px',
+        full: '480px'
+      };
       return {
         width: '100%',
         height: 'auto',
+        minHeight: minHeightMap[block.size] || minHeightMap.medium,
         maxWidth: typeof maxWidth === 'number' ? `${maxWidth}px` : maxWidth,
         margin,
         display: 'block'
@@ -2517,7 +2521,7 @@ const BlogManagement = () => {
     if (user?.isAdmin) {
       fetchBlogs();
     }
-  }, [user, api, logout, navigate]);
+  }, [user, logout, navigate]);
 
   // Intersection observer for animations
   useEffect(() => {
@@ -2749,10 +2753,22 @@ const BlogManagement = () => {
       setError('Please upload valid video files (max 100MB each).');
       return;
     }
-    
-    const uploadPromises = files.map(uploadVideo);
-    const urls = (await Promise.all(uploadPromises)).filter((url) => url);
-    setFormData((prev) => ({ ...prev, videos: [...prev.videos, ...urls] }));
+    if (!api) {
+      setError('API instance not available. Please check your authentication or configuration.');
+      return;
+    }
+
+    try {
+      const uploadPromises = files.map(uploadVideo);
+      const urls = (await Promise.all(uploadPromises)).filter((url) => url);
+      if (urls.length > 0) {
+        setFormData((prev) => ({ ...prev, videos: [...prev.videos, ...urls] }));
+      }
+    } catch (err) {
+      console.error('Batch video upload failed:', err);
+      const message = err?.response?.data?.msg || err?.message || 'Network error while uploading videos. Check server and CORS.';
+      setError(`Video upload failed: ${message}`);
+    }
   };
 
   const handleRemoveMainImage = (index) => {
@@ -3514,20 +3530,37 @@ const BlogManagement = () => {
                 disabled={uploading}
               />
               <div className="mt-2 flex flex-wrap gap-2">
-                {formData.videos.map((vid, index) => (
-                  <div key={index} className="relative">
-                    <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center">
-                      <Video size={24} className="text-gray-500" />
+                {formData.videos.map((vid, index) => {
+                  const trimmed = (vid || '').trim();
+                  const isFile = /\.(mp4|webm|ogg)$/i.test(trimmed);
+                  const isEmbed = /youtube\.com|youtu\.be|vimeo\.com|tiktok\.com|\/embed\/|player\./i.test(trimmed);
+                  return (
+                    <div key={index} className="relative">
+                      {isFile ? (
+                        <video src={trimmed} controls className="w-20 h-20 object-cover rounded-lg" />
+                      ) : isEmbed ? (
+                        <iframe
+                          src={getEmbedUrl(trimmed)}
+                          className="w-20 h-20 rounded-lg"
+                          title={`uploaded-embed-${index}`}
+                          allowFullScreen
+                        />
+                      ) : (
+                        <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center text-xs text-gray-600 p-1 text-center">
+                          Preview not available
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveVideo(index)}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                      >
+                        <X size={12} />
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveVideo(index)}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                    >
-                      <X size={12} />
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </form>
