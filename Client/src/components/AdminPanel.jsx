@@ -133,7 +133,7 @@ const AdminPanel = () => {
   };
 
   const menuItems = [
-    { key: '1', label: 'Resorts', component: <ResortManagement searchTerm={searchTerm} /> },
+    { key: '1', label: 'Accommodations', component: <ResortManagement searchTerm={searchTerm} /> },
     { key: '2', label: 'Islands', component: <AtollManagement searchTerm={searchTerm} /> },
     { key: '3', label: 'Activities', component: <ActivityManagement searchTerm={searchTerm} /> },
     { key: '4', label: 'Packages', component: <PackageManagement searchTerm={searchTerm} /> },
