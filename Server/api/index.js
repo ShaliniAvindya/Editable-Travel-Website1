@@ -18,6 +18,8 @@ const promotionRoutes = require('../routes/promotionRoutes');
 const newsletterRoutes = require('../routes/newsletterRoutes');
 
 const app = express();
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 
 // ✅ CORS Setup: Allow frontend and backend Vercel URLs
 const allowedOrigins = [
